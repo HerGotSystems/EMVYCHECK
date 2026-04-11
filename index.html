@@ -181,46 +181,27 @@ footer a{color:var(--am);text-decoration:none}
   <footer><span>EMVY CHECK</span><a href="mailto:emvycheck@gmail.com">emvycheck@gmail.com</a></footer>
 </div>
 <script>
-const ALBUMS=[
-  {name:"UPRIGHT MOVEMENT",desc:"Protest · resistance · consciousness",tracks:[
-    {title:"BENT",src:"https://media.emvycheck.com/AUDIO/UPRIGHT%20MOVEMENT/BENT.mp3"},
-    {title:"CONSCIENCE",src:"https://media.emvycheck.com/AUDIO/UPRIGHT%20MOVEMENT/CONSCIENCE.mp3"},
-    {title:"CREDENTIALS",src:"https://media.emvycheck.com/AUDIO/UPRIGHT%20MOVEMENT/CREDENTIALS.mp3"},
-    {title:"CROWDED MIND",src:"https://media.emvycheck.com/AUDIO/UPRIGHT%20MOVEMENT/CROWDED%20MIND.mp3"},
-    {title:"Czech123",src:"https://media.emvycheck.com/AUDIO/UPRIGHT%20MOVEMENT/Czech123.mp3"},
-    {title:"NO SAFETY PROMISED",src:"https://media.emvycheck.com/AUDIO/UPRIGHT%20MOVEMENT/NO%20SAFETY%20PROMISED.mp3"},
-    {title:"NO SAVIORS",src:"https://media.emvycheck.com/AUDIO/UPRIGHT%20MOVEMENT/NO%20SAVIORS.mp3"},
-    {title:"NOTHING IS FOREVER",src:"https://media.emvycheck.com/AUDIO/UPRIGHT%20MOVEMENT/NOTHING%20IS%20FOREVER.mp3"},
-    {title:"SPINE",src:"https://media.emvycheck.com/AUDIO/UPRIGHT%20MOVEMENT/SPINE.mp3"},
-    {title:"STAND UPRIGHT",src:"https://media.emvycheck.com/AUDIO/UPRIGHT%20MOVEMENT/STAND%20UPRIGHT.mp3"},
-    {title:"UNBORN OBEDIENCE",src:"https://media.emvycheck.com/AUDIO/UPRIGHT%20MOVEMENT/UNBORN%20OBEDIENCE.mp3"},
-    {title:"UPRIGHT",src:"https://media.emvycheck.com/AUDIO/UPRIGHT%20MOVEMENT/UPRIGHT.mp3"},
-  ]},
-  {name:"BACHA NA RIT",desc:"Czech · rhythmic · machine pressure",tracks:[
-    {title:"BACHA NA RIT ONE",src:"https://media.emvycheck.com/AUDIO/BACHA%20NA%20RIT/BACHA%20NA%20RIT%20ONE.mp3"},
-    {title:"BACHA NA RIT TWO",src:"https://media.emvycheck.com/AUDIO/BACHA%20NA%20RIT/BACHA%20NA%20RIT%20TWO.mp3"},
-    {title:"BACHA NA RIT THREE",src:"https://media.emvycheck.com/AUDIO/BACHA%20NA%20RIT/BACHA%20NA%20RIT%20THREE.mp3"},
-    {title:"BACHA NA RIT FOUR",src:"https://media.emvycheck.com/AUDIO/BACHA%20NA%20RIT/BACHA%20NA%20RIT%20FOUR.mp3"},
-    {title:"BACHA NA RIT FIVE",src:"https://media.emvycheck.com/AUDIO/BACHA%20NA%20RIT/BACHA%20NA%20RIT%20FIVE.mp3"},
-    {title:"BACHA NA RIT SIX",src:"https://media.emvycheck.com/AUDIO/BACHA%20NA%20RIT/BACHA%20NA%20RIT%20SIX.mp3"},
-    {title:"BACHA NA RIT SEVEN",src:"https://media.emvycheck.com/AUDIO/BACHA%20NA%20RIT/BACHA%20NA%20RIT%20SEVEN.mp3"},
-    {title:"BACHA NA RIT EIGHT",src:"https://media.emvycheck.com/AUDIO/BACHA%20NA%20RIT/BACHA%20NA%20RIT%20EIGHT.mp3"},
-    {title:"BACHA NA RIT NINE",src:"https://media.emvycheck.com/AUDIO/BACHA%20NA%20RIT/BACHA%20NA%20RIT%20NINE.mp3"},
-    {title:"BACHA NA RIT TEN",src:"https://media.emvycheck.com/AUDIO/BACHA%20NA%20RIT/BACHA%20NA%20RIT%20TEN.mp3"},
-  ]},
-];
+
+const PLAYLIST_URL = "https://media.emvycheck.com/playlist.json";
+let ALBUMS = [];
+let cA=0,cT=-1,muted=false,aCtx,anl,dArr,conn=false;
 const au=document.getElementById('au');
 const ntl=document.getElementById('ntl'),na=document.getElementById('na'),nc=document.getElementById('nc');
 const pf=document.getElementById('pf'),tc=document.getElementById('tc'),tt=document.getElementById('tt');
-let cA=0,cT=-1,muted=false,aCtx,anl,dArr,conn=false;
 const GR=[['#1a0800','#060e16'],['#12001a','#06081a'],['#04001a','#100018'],['#001a08','#030c06'],['#0a0a0a','#050a0e'],['#180000','#050004'],['#1a0a00','#0c0800'],['#001018','#060410'],['#0e0018','#060014'],['#180800','#0a0402'],['#001a14','#030e08'],['#12100a','#08060a']];
+
 function fm(s){if(isNaN(s))return'0:00';return Math.floor(s/60)+':'+(Math.floor(s%60)<10?'0':'')+Math.floor(s%60);}
 function iA(){if(conn)return;aCtx=new(window.AudioContext||window.webkitAudioContext)();anl=aCtx.createAnalyser();anl.fftSize=512;dArr=new Uint8Array(anl.frequencyBinCount);const s=aCtx.createMediaElementSource(au);s.connect(anl);anl.connect(aCtx.destination);conn=true;}
-const tabsEl=document.getElementById('tabs');
-ALBUMS.forEach((a,i)=>{const b=document.createElement('button');b.className='ab'+(i===0?' on':'');b.textContent=a.name;b.onclick=()=>swA(i);tabsEl.appendChild(b);});
+
+function buildTabs(){
+  const tabsEl=document.getElementById('tabs');
+  tabsEl.innerHTML='';
+  ALBUMS.forEach((a,i)=>{const b=document.createElement('button');b.className='ab'+(i===0?' on':'');b.textContent=a.name;b.onclick=()=>swA(i);tabsEl.appendChild(b);});
+}
 function swA(i){cA=i;document.querySelectorAll('.ab').forEach((t,x)=>t.classList.toggle('on',x===i));bPl();}
 function bPl(){
   const pl=document.getElementById('pl');pl.innerHTML='';
+  if(!ALBUMS[cA]) return;
   ALBUMS[cA].tracks.forEach((t,i)=>{
     const d=document.createElement('div');
     d.className='tr'+(i===cT&&cA===cA?' on':'');
@@ -236,7 +217,7 @@ function pT(ai,ti){
   document.querySelectorAll('.tr')[ti]?.classList.add('on');
   const tk=ALBUMS[ai].tracks[ti];
   ntl.textContent=tk.title;
-  na.textContent=ALBUMS[ai].name+' · '+ALBUMS[ai].desc;
+  na.textContent=ALBUMS[ai].name+(ALBUMS[ai].desc?' · '+ALBUMS[ai].desc:'');
   nc.style.background='linear-gradient(135deg,'+GR[ti%GR.length].join(',')+')';
   nc.textContent=String(ti+1).padStart(2,'0');
   au.src=tk.src;iA();au.play().catch(()=>{});
@@ -252,20 +233,51 @@ document.getElementById('bpa').addEventListener('click',()=>au.pause());
 document.getElementById('bpv').addEventListener('click',()=>{if(cT>0)pT(cA,cT-1);});
 document.getElementById('bnx').addEventListener('click',()=>{if(cT<ALBUMS[cA].tracks.length-1)pT(cA,cT+1);});
 document.getElementById('bvo').addEventListener('click',()=>{muted=!muted;au.muted=muted;document.getElementById('bvo').innerHTML=muted?'&#128264;':'&#128266;';});
+
+// VIZ
 const vc=document.getElementById('viz'),v2=vc.getContext('2d');
 function dV(){requestAnimationFrame(dV);const W=vc.clientWidth,H=vc.clientHeight,dp=devicePixelRatio||1;if(vc.width!==W*dp||vc.height!==H*dp){vc.width=W*dp;vc.height=H*dp;v2.setTransform(dp,0,0,dp,0,0);}v2.clearRect(0,0,W,H);let ar=null;if(anl&&dArr){anl.getByteFrequencyData(dArr);ar=dArr;}const t=Date.now()*.001,B=64,gp=2,bw=(W-(B-1)*gp)/B;let bx=0;for(let i=0;i<B;i++){const v=ar?ar[Math.floor(i*ar.length/B)]:28+Math.sin(t*2+i*.3)*18;const n=Math.max(.03,Math.min(1,v/255)),bh=Math.max(2,n*H*.88),hu=38+(i/B)*150;v2.fillStyle='hsla('+hu+',100%,62%,'+(0.5+n*0.45)+')';v2.fillRect(bx,H-bh,bw,bh);bx+=bw+gp;}}
-dV();bPl();
+dV();
+
+// ORDER
 function sP(el,i){document.querySelectorAll('.pc').forEach(p=>p.classList.remove('sl'));el.classList.add('sl');document.getElementById('fp').selectedIndex=i;document.getElementById('order').scrollIntoView({behavior:'smooth',block:'start'});}
 function dO(e){
   e.preventDefault();
   const n=document.getElementById('fn').value.trim(),em=document.getElementById('fe').value.trim(),pk=document.getElementById('fp').value,mo=document.getElementById('fm').value.trim(),ge=document.getElementById('fg2').value.trim(),st=document.getElementById('fs2').value.trim();
   const sub=encodeURIComponent('EMVY CHECK ORDER - '+pk+' - from '+n);
-  const bod=encodeURIComponent('EMVY CHECK ORDER\n==========================\n\nName:    '+n+'\nEmail:   '+em+'\nPackage: '+pk+'\n\nMood/Vibe:   '+(mo||'not specified')+'\nGenre/Style: '+(ge||'not specified')+'\n\nStory/Instructions:\n'+(st||'none provided')+'\n\n==========================\nSent from emvycheck.com');
+  const bod=encodeURIComponent('EMVY CHECK ORDER
+==========================
+
+Name:    '+n+'
+Email:   '+em+'
+Package: '+pk+'
+
+Mood/Vibe:   '+(mo||'not specified')+'
+Genre/Style: '+(ge||'not specified')+'
+
+Story/Instructions:
+'+(st||'none provided')+'
+
+==========================
+Sent from emvycheck.com');
   window.location.href='mailto:emvycheck@gmail.com?subject='+sub+'&body='+bod;
   document.getElementById('no').classList.add('sh');
   setTimeout(()=>e.target.closest('form').reset(),700);
   return false;
 }
+
+// LOAD PLAYLIST from R2
+fetch(PLAYLIST_URL)
+  .then(r=>r.json())
+  .then(data=>{
+    ALBUMS=data.albums;
+    buildTabs();
+    bPl();
+  })
+  .catch(()=>{
+    document.getElementById('pl').innerHTML='<div style="padding:16px;font-size:12px;color:rgba(255,255,255,.3);text-align:center">Could not load playlist. Check back soon.</div>';
+  });
+
 </script>
 </body>
 </html>
