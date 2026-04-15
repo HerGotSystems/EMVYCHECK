@@ -68,6 +68,8 @@ canvas#bg{position:fixed;inset:0;width:100%;height:100%;z-index:0}
 .ctrl.on{background:rgba(255,179,71,.15);border-color:rgba(255,179,71,.4);color:#ffb347}
 .ctrl.active-pl{background:rgba(78,240,255,.12);border-color:rgba(78,240,255,.35);color:#4ef0ff}
 .ctrl.shuffle-on{background:rgba(200,255,74,.12);border-color:rgba(200,255,74,.38);color:#c8ff4a}
+.ctrl.surprise{background:rgba(255,220,50,.08);border-color:rgba(255,220,50,.28);color:rgba(255,220,50,.7)}
+.ctrl.surprise:hover,.ctrl.surprise:active{background:rgba(255,220,50,.2);border-color:rgba(255,220,50,.5);color:#ffdc32;box-shadow:0 0 16px rgba(255,220,50,.2)}
 
 /* PANEL */
 .panel{position:fixed;top:0;right:0;bottom:0;z-index:20;width:min(340px,92vw);
@@ -240,7 +242,8 @@ canvas#bg{position:fixed;inset:0;width:100%;height:100%;z-index:0}
   <button class="ctrl play-btn" id="btnPlay">&#9654;</button>
   <button class="ctrl" id="btnPause">&#9646;&#9646;</button>
   <button class="ctrl" id="btnNext">&#9654;&#9654;</button>
-  <button class="ctrl" id="btnShuffle" title="Shuffle">&#9858;</button>
+  <button class="ctrl" id="btnShuffle" title="Shuffle all">&#9858;</button>
+  <button class="ctrl surprise" id="btnSurprise" title="Surprise Me" onclick="surpriseMe()">&#9734;</button>
   <button class="ctrl" id="btnPl" title="Playlist">&#9776;</button>
 </div>
 
@@ -456,17 +459,36 @@ function pT(ai,ti){
   updateURL(ai,ti);
 }
 
+function totalTracks(){
+  var c=0;for(var i=0;i<ALBUMS.length;i++)c+=ALBUMS[i].tracks.length;return c;
+}
+function randomGlobal(){
+  var r=Math.floor(Math.random()*totalTracks()),c=0;
+  for(var ai=0;ai<ALBUMS.length;ai++){
+    if(r<c+ALBUMS[ai].tracks.length)return{ai:ai,ti:r-c};
+    c+=ALBUMS[ai].tracks.length;
+  }
+  return{ai:0,ti:0};
+}
+function surpriseMe(){
+  var r=randomGlobal();plMode=false;pT(r.ai,r.ti);
+  showToast('\u25b6 '+ALBUMS[r.ai].tracks[r.ti].title);
+}
 function nextTrack(){
   if(plMode){
-    var n=shuffleOn?Math.floor(Math.random()*playlist.length):plIdx+1;
-    if(shuffleOn||n<playlist.length)playFromPlaylist(shuffleOn?n:n);
+    if(shuffleOn){playFromPlaylist(Math.floor(Math.random()*playlist.length));return;}
+    var n=plIdx+1;
+    if(n<playlist.length)playFromPlaylist(n);
     else{document.getElementById('btnPlay').classList.remove('on');plMode=false;}
   } else {
-    var n;
-    if(shuffleOn){n=Math.floor(Math.random()*ALBUMS[cA].tracks.length);}
-    else{n=cT+1;}
-    if(n<ALBUMS[cA].tracks.length)pT(cA,n);
-    else document.getElementById('btnPlay').classList.remove('on');
+    if(shuffleOn){var r=randomGlobal();pT(r.ai,r.ti);return;}
+    var n=cT+1;
+    if(n<ALBUMS[cA].tracks.length){pT(cA,n);}
+    else{
+      // auto-advance to next album
+      var nextAlb=(cA+1)%ALBUMS.length;
+      pT(nextAlb,0);
+    }
   }
 }
 
@@ -499,7 +521,7 @@ document.getElementById('btnNext').addEventListener('click',nextTrack);
 document.getElementById('btnShuffle').addEventListener('click',function(){
   shuffleOn=!shuffleOn;
   document.getElementById('btnShuffle').classList.toggle('shuffle-on',shuffleOn);
-  showToast(shuffleOn?'Shuffle on':'Shuffle off');
+  showToast(shuffleOn?'Shuffle on — all albums':'Shuffle off');
 });
 document.getElementById('btnPl').addEventListener('click',function(){togglePanel('playlist');});
 document.addEventListener('keydown',function(e){if(e.key==='Escape'){closePanel();closeShare();}});
