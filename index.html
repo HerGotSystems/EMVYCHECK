@@ -100,6 +100,14 @@ canvas#bg{position:fixed;inset:0;width:100%;height:100%;z-index:0}
 .panel-body{flex:1;overflow-y:auto;padding:5px 7px 16px}
 .panel-body::-webkit-scrollbar{width:2px}
 .panel-body::-webkit-scrollbar-thumb{background:rgba(255,179,71,.22);border-radius:1px}
+.panel-search{padding:8px 8px 4px;flex-shrink:0}
+.panel-search input{width:100%;padding:8px 12px;border-radius:7px;border:1px solid rgba(255,255,255,.1);
+  background:rgba(255,255,255,.05);color:#eef0f5;font-family:'Space Mono',monospace;font-size:11px;
+  outline:none;transition:border-color .18s;}
+.panel-search input:focus{border-color:rgba(255,179,71,.4)}
+.panel-search input::placeholder{color:rgba(255,255,255,.2)}
+.album-count-label{font-size:9px;letter-spacing:.1em;text-transform:uppercase;
+  color:rgba(255,255,255,.2);padding:6px 11px 3px}
 
 /* ALBUM LIST */
 .album-item{display:flex;align-items:center;justify-content:space-between;
@@ -259,6 +267,9 @@ canvas#bg{position:fixed;inset:0;width:100%;height:100%;z-index:0}
     </div>
     <div class="panel-close" onclick="closePanel()">&#10005;</div>
   </div>
+  <div class="panel-search" id="panelSearch">
+    <input type="search" id="albumSearch" placeholder="Search albums..." oninput="filterAlbums(this.value)" autocomplete="off" autocorrect="off" spellcheck="false"/>
+  </div>
   <div class="panel-body" id="panelBody"></div>
 </div>
 
@@ -314,24 +325,45 @@ function closePanel(){
   document.getElementById('overlay').classList.remove('show');
 }
 
-function showAlbums(){
-  document.getElementById('panelTitle').textContent='Albums';
-  document.getElementById('panelBack').classList.remove('show');
-  document.querySelectorAll('.ptab').forEach(function(t,i){t.classList.toggle('on',i===0);});
+function renderAlbumList(filter){
   var body=document.getElementById('panelBody');body.innerHTML='';
+  var q=(filter||'').toLowerCase().trim();
+  var shown=0;
   ALBUMS.forEach(function(a,i){
+    if(q&&a.name.toLowerCase().indexOf(q)===-1)return;
     var d=document.createElement('div');
     d.className='album-item'+(i===cA?' playing':'');
     d.innerHTML='<div><div class="album-name">'+a.name+'</div><div class="album-meta">'+a.tracks.length+' tracks'+(a.desc?' &middot; '+a.desc:'')+'</div></div><div class="album-arrow">&#8250;</div>';
     d.onclick=(function(x){return function(){showTracks(x);};})(i);
-    body.appendChild(d);
+    body.appendChild(d);shown++;
   });
+  if(shown===0){
+    var e=document.createElement('div');
+    e.className='album-count-label';e.textContent='No albums match "'+filter+'"';
+    body.appendChild(e);
+  } else if(!q){
+    var lbl=document.createElement('div');
+    lbl.className='album-count-label';
+    lbl.textContent=ALBUMS.length+' albums · '+totalTracks()+' tracks';
+    body.insertBefore(lbl,body.firstChild);
+  }
+}
+function filterAlbums(val){renderAlbumList(val);}
+function showAlbums(){
+  document.getElementById('panelTitle').textContent='Albums';
+  document.getElementById('panelBack').classList.remove('show');
+  document.getElementById('panelSearch').style.display='';
+  document.querySelectorAll('.ptab').forEach(function(t,i){t.classList.toggle('on',i===0);});
+  var search=document.getElementById('albumSearch');
+  search.value='';
+  renderAlbumList('');
 }
 
 function showTracks(ai){
   var alb=ALBUMS[ai];
   document.getElementById('panelTitle').textContent=alb.name;
   document.getElementById('panelBack').classList.add('show');
+  document.getElementById('panelSearch').style.display='none';
   document.querySelectorAll('.ptab').forEach(function(t,i){t.classList.toggle('on',i===0);});
   var body=document.getElementById('panelBody');body.innerHTML='';
   alb.tracks.forEach(function(t,i){
@@ -359,6 +391,7 @@ function showTracks(ai){
 function showPlaylist(){
   document.getElementById('panelTitle').textContent='Queue';
   document.getElementById('panelBack').classList.remove('show');
+  document.getElementById('panelSearch').style.display='none';
   document.querySelectorAll('.ptab').forEach(function(t,i){t.classList.toggle('on',i===1);});
   var body=document.getElementById('panelBody');body.innerHTML='';
   if(playlist.length===0){
@@ -601,15 +634,27 @@ var W,H,cx,cy,particles=[],lissajous=[];
 
 function resize(){W=canvas.width=window.innerWidth;H=canvas.height=window.innerHeight;cx=W/2;cy=H/2;initParts();initLiss();}
 function initParts(){
-  particles=[];var c=Math.min(160,Math.floor(W*H/7000));
+  particles=[];
+  var isMobile=window.innerWidth<600;
+  var c=isMobile?Math.min(60,Math.floor(W*H/12000)):Math.min(140,Math.floor(W*H/7000));
   for(var i=0;i<c;i++)particles.push({x:Math.random()*W,y:Math.random()*H,vx:(Math.random()-.5)*.4,vy:(Math.random()-.5)*.4,r:Math.random()*1.8+.3,hue:30+Math.random()*60,alpha:Math.random()*.5+.1,life:Math.random()});
 }
 function initLiss(){
   var r=Math.min(W,H);
   lissajous=[{a:3,b:2,d:Math.PI/4,col:'rgba(255,179,71,',r:r*.32},{a:5,b:4,d:Math.PI/3,col:'rgba(78,240,255,',r:r*.26},{a:4,b:3,d:Math.PI/6,col:'rgba(255,63,176,',r:r*.22},{a:7,b:6,d:Math.PI/5,col:'rgba(200,255,74,',r:r*.17}];
 }
-function draw(){
+var drawActive=true;
+var lastFrame=0;
+document.addEventListener('visibilitychange',function(){
+  drawActive=!document.hidden;
+});
+function draw(ts){
   requestAnimationFrame(draw);
+  if(!drawActive)return;
+  // throttle to ~30fps when paused, full 60fps when playing
+  var minGap=au.paused?33:16;
+  if(ts-lastFrame<minGap)return;
+  lastFrame=ts;
   var t=Date.now()*.001,bass=0,mid=0,hi=0,energy=0;
   if(anl&&dArr){
     anl.getByteFrequencyData(dArr);
@@ -625,8 +670,9 @@ function draw(){
   var sp=.0007+energy*.0004;
   lissajous.forEach(function(cfg,li){
     ctx.beginPath();
-    for(var i=0;i<320;i++){
-      var u=(i/320)*Math.PI*2,ph=t*sp*60*(1+li*.3);
+    var segs=window.innerWidth<600?160:320;
+    for(var i=0;i<segs;i++){
+      var u=(i/segs)*Math.PI*2,ph=t*sp*60*(1+li*.3);
       var wb=anl?((dArr[Math.floor(i/320*dArr.length/4)]||0)/255)*.12:Math.sin(t+i*.02)*.04;
       var rx=cfg.r*(1+wb)*(1+energy*.1),ry=cfg.r*.85*(1+wb*.5)*(1+energy*.08);
       var px=cx+Math.sin(cfg.a*u+ph+cfg.d)*rx,py=cy+Math.sin(cfg.b*u+ph)*ry;
@@ -663,7 +709,7 @@ function draw(){
   ctx.beginPath();ctx.moveTo(0,cy);ctx.lineTo(W,cy);ctx.stroke();
   ctx.beginPath();ctx.moveTo(cx,0);ctx.lineTo(cx,H);ctx.stroke();
 }
-window.addEventListener('resize',resize);resize();draw();
+window.addEventListener('resize',resize);resize();requestAnimationFrame(draw);
 
 fetch('https://media.emvycheck.com/playlist.json')
   .then(function(r){return r.json();})
