@@ -1,0 +1,105 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Flipbook Module Test</title>
+  <style>
+    body {
+      margin: 0;
+      background: #050507;
+      color: white;
+      font-family: system-ui, sans-serif;
+    }
+    canvas {
+      width: 100vw;
+      height: 70vh;
+      display: block;
+      background: #050507;
+    }
+    .bar {
+      padding: 12px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    button {
+      padding: 10px 14px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="scene" width="1280" height="720"></canvas>
+
+  <div class="bar">
+    <button id="start">Start</button>
+    <button id="mode">Toggle Mode</button>
+    <button id="flash">Flash</button>
+    <span id="status">waiting</span>
+  </div>
+
+  <script type="module">
+    import { scenePresets, createPoseSheetSet } from './dancer_scene_engine.js';
+    import { bindTimelineToScene, timelinePresets } from './scene_timeline_system.js';
+
+    const canvas = document.getElementById('scene');
+    const status = document.getElementById('status');
+
+    const scene = scenePresets.dnbWall({
+      canvas,
+      bpm: 174
+    });
+
+    const timeline = bindTimelineToScene({
+      scene,
+      audio: null,
+      timelineData: timelinePresets.dnbEnergyWall
+    });
+
+    let frameHookHits = 0;
+
+    scene.frameHooks.push(({ scene }) => {
+      frameHookHits++;
+      status.textContent =
+        `running | hooks: ${scene.frameHooks.length} | hook hits: ${frameHookHits} | timeline index: ${timeline.nextActionIndex}`;
+    });
+
+    scene.addDancer({
+      id: 'fallback-lead',
+      spriteSet: {},
+      archetype: 'punkIgnition',
+      role: 'lead'
+    });
+
+    scene.addDancer({
+      id: 'fallback-follow',
+      spriteSet: {},
+      archetype: 'serpentGroover',
+      role: 'follow',
+      mirror: true
+    });
+
+    document.getElementById('start').onclick = () => {
+      scene.start();
+      timeline.start(null);
+    };
+
+    document.getElementById('mode').onclick = () => {
+      scene.setMode(scene.mode === 'windowGrid' ? 'sharedStage' : 'windowGrid');
+      scene.relayout();
+    };
+
+    document.getElementById('flash').onclick = () => {
+      scene.flash += 2;
+      scene.addEvent({
+        time: scene.time,
+        type: 'drop',
+        amount: 1
+      });
+    };
+
+    window.scene = scene;
+    window.timeline = timeline;
+  </script>
+</body>
+</html>
