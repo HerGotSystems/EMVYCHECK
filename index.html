@@ -51,6 +51,42 @@ canvas#bg{position:fixed;inset:0;width:100%;height:100%;z-index:0}
   transition:all .22s;margin-bottom:2px;}
 .share-now-btn:hover,.share-now-btn:active{background:rgba(255,179,71,.18);border-color:rgba(255,179,71,.45);color:#ffb347}
  
+/* FAVOURITE BUTTON */
+.fav-btn{width:38px;height:38px;border-radius:50%;flex-shrink:0;cursor:pointer;
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);
+  color:rgba(255,255,255,.35);font-size:16px;display:grid;place-items:center;
+  transition:all .22s;margin-bottom:2px;}
+.fav-btn:hover,.fav-btn:active{background:rgba(255,63,176,.18);border-color:rgba(255,63,176,.45);color:#ff3fb0}
+.fav-btn.on{background:rgba(255,63,176,.18);border-color:rgba(255,63,176,.5);color:#ff3fb0;
+  box-shadow:0 0 14px rgba(255,63,176,.28);}
+.fav-btn.on:hover{background:rgba(255,63,176,.1);box-shadow:none}
+ 
+/* PANEL TABS */
+.panel-tabs{display:flex;gap:5px;flex-shrink:0}
+.ptab{font-size:9px;letter-spacing:.1em;text-transform:uppercase;padding:5px 10px;border-radius:5px;
+  cursor:pointer;font-family:'Space Mono',monospace;border:1px solid transparent;
+  color:rgba(255,255,255,.32);background:transparent;transition:all .14s;}
+.ptab:hover{color:rgba(255,255,255,.65)}
+.ptab.on{background:rgba(255,179,71,.08);border-color:rgba(255,179,71,.28);color:#ffb347}
+.ptab.fav-tab.on{background:rgba(255,63,176,.08);border-color:rgba(255,63,176,.28);color:#ff3fb0}
+ 
+/* NUDGE TOAST */
+.nudge{position:fixed;bottom:96px;left:50%;transform:translateX(-50%) translateY(16px);
+  z-index:50;background:rgba(4,6,10,.97);border:1px solid rgba(255,63,176,.35);
+  border-radius:10px;padding:11px 14px;opacity:0;transition:all .28s;pointer-events:none;
+  display:flex;align-items:center;gap:10px;white-space:nowrap;}
+.nudge.show{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:all}
+.nudge-txt{font-size:10px;letter-spacing:.07em;color:rgba(255,255,255,.55)}
+.nudge-heart{padding:6px 12px;border-radius:6px;cursor:pointer;font-size:11px;letter-spacing:.07em;
+  font-family:'Space Mono',monospace;
+  background:rgba(255,63,176,.14);border:1px solid rgba(255,63,176,.4);color:#ff3fb0;
+  transition:all .18s;}
+.nudge-heart:hover,.nudge-heart:active{background:rgba(255,63,176,.28)}
+.nudge-close{width:22px;height:22px;border-radius:5px;cursor:pointer;
+  background:transparent;border:1px solid rgba(255,255,255,.07);
+  color:rgba(255,255,255,.22);font-size:10px;display:grid;place-items:center;transition:all .14s;}
+.nudge-close:hover{background:rgba(255,255,255,.06);color:rgba(255,255,255,.5)}
+ 
 /* PROGRESS */
 .progress-wrap{position:fixed;bottom:80px;left:0;right:0;z-index:10;padding:0 16px}
 .progress-bar{width:100%;height:2px;background:rgba(255,255,255,.08);border-radius:1px;cursor:pointer}
@@ -344,8 +380,9 @@ canvas#bg{position:fixed;inset:0;width:100%;height:100%;z-index:0}
     <div class="track-album" id="tAlbum">EMVY CHECK</div>
     <div class="track-name idle" id="tName">Tap Albums to browse</div>
   </div>
+  <button class="fav-btn" id="favBtn" onclick="toggleFavCurrent()" title="Love this track">&#9825;</button>
   <button class="share-now-btn" id="shareTrackBtn" onclick="openShare('current')" title="Share this track">&#8679;</button>
-  <button class="add-now-btn" id="addNowBtn" onclick="addCurrentToPlaylist()" title="Add to playlist">+</button>
+  <button class="add-now-btn" id="addNowBtn" onclick="addCurrentToPlaylist()" title="Add to queue">+</button>
 </div>
  
 <div class="progress-wrap">
@@ -367,10 +404,21 @@ canvas#bg{position:fixed;inset:0;width:100%;height:100%;z-index:0}
 <div class="overlay" id="overlay" onclick="closePanel()"></div>
 <div class="panel" id="panel">
   <div class="panel-hd">
-    <div class="panel-title">Queue <span id="plCount"></span></div>
+    <div class="panel-title" id="panelTitle">Queue <span id="plCount"></span></div>
+    <div class="panel-tabs">
+      <button class="ptab fav-tab on" id="tabFav" onclick="switchTab('fav')">&#9825; Fav</button>
+      <button class="ptab" id="tabQueue" onclick="switchTab('queue')">&#9776; Queue</button>
+    </div>
     <div class="panel-close" onclick="closePanel()">&#10005;</div>
   </div>
   <div class="panel-body" id="panelBody"></div>
+</div>
+ 
+<!-- NUDGE TOAST -->
+<div class="nudge" id="nudge">
+  <span class="nudge-txt">loving this?</span>
+  <button class="nudge-heart" onclick="nudgeFav()">&#9825; yes</button>
+  <button class="nudge-close" onclick="hideNudge()">&#10005;</button>
 </div>
  
 <!-- ALBUMS MODAL (full screen) -->
@@ -413,6 +461,140 @@ var playlist = [];
 var plMode = false, plIdx = -1;
 var shareTarget = null;
 var GR=[['#ffb347','#ff6b00'],['#4ef0ff','#0066ff'],['#ff3fb0','#9900cc'],['#c8ff4a','#00aa00'],['#ff4444','#990000'],['#ffb347','#cc6600'],['#4ef0ff','#00ccaa'],['#ff3fb0','#ff0066'],['#ffdd00','#ff8800'],['#88ff44','#006600'],['#ff88aa','#cc0044'],['#44aaff','#0033cc']];
+ 
+// ── FAVOURITES ────────────────────────────────────────────────────────────────
+var favourites = JSON.parse(localStorage.getItem('emvy_favs') || '[]');
+var panelTab = 'fav'; // 'fav' | 'queue'
+ 
+function saveFavs() { localStorage.setItem('emvy_favs', JSON.stringify(favourites)); }
+ 
+function isFav(ai, ti) {
+  return favourites.some(function(f) { return f.ai === ai && f.ti === ti; });
+}
+ 
+function toggleFavCurrent() {
+  if (cT === -1) return;
+  toggleFav(cA, cT);
+}
+ 
+function toggleFav(ai, ti) {
+  var idx = favourites.findIndex(function(f) { return f.ai === ai && f.ti === ti; });
+  if (idx !== -1) {
+    favourites.splice(idx, 1);
+    saveFavs(); updateFavBtn();
+    showToast('Removed from favourites');
+  } else {
+    favourites.unshift({ ai: ai, ti: ti, title: ALBUMS[ai].tracks[ti].title, albumName: ALBUMS[ai].name, src: ALBUMS[ai].tracks[ti].src });
+    saveFavs(); updateFavBtn();
+    showToast('\u2665 Loved it');
+  }
+  if (document.getElementById('panel').classList.contains('open') && panelTab === 'fav') showFavourites();
+}
+ 
+function updateFavBtn() {
+  var btn = document.getElementById('favBtn');
+  var on = (cT !== -1) && isFav(cA, cT);
+  btn.classList.toggle('on', on);
+  btn.innerHTML = on ? '&#9829;' : '&#9825;';
+  btn.title = on ? 'Remove from favourites' : 'Love this track';
+}
+ 
+function switchTab(tab) {
+  panelTab = tab;
+  document.getElementById('tabFav').classList.toggle('on', tab === 'fav');
+  document.getElementById('tabQueue').classList.toggle('on', tab === 'queue');
+  if (tab === 'fav') showFavourites();
+  else showPlaylist();
+}
+ 
+function showFavourites() {
+  var body = document.getElementById('panelBody');
+  body.innerHTML = '';
+  document.getElementById('panelTitle').textContent = 'Favourites';
+  if (favourites.length === 0) {
+    body.innerHTML = '<div class="pl-empty">No favourites yet.<br>Tap &#9825; while a track plays<br>or use the "loving this?" prompt.</div>';
+    return;
+  }
+  var clr = document.createElement('div'); clr.className = 'pl-actions';
+  var cb = document.createElement('button'); cb.className = 'pl-act-btn clear'; cb.textContent = '\u2715 Clear all';
+  cb.onclick = function() { if (confirm('Clear all favourites?')) { favourites = []; saveFavs(); updateFavBtn(); showFavourites(); } };
+  clr.appendChild(cb); body.appendChild(clr);
+ 
+  favourites.forEach(function(item, i) {
+    var d = document.createElement('div');
+    var active = !plMode && item.ai === cA && item.ti === cT;
+    d.className = 'pl-track' + (active ? ' on' : '');
+    d.innerHTML =
+      '<div>' +
+        '<div class="pl-tname">' + item.title + '</div>' +
+        '<div class="pl-talb">' + item.albumName + '</div>' +
+      '</div>' +
+      '<button class="rm-btn" title="Remove">&#9825;</button>';
+    d.addEventListener('click', function(e) {
+      if (e.target.classList.contains('rm-btn')) return;
+      plMode = false; pT(item.ai, item.ti); closePanel();
+    });
+    d.querySelector('.rm-btn').addEventListener('click', function(e) {
+      e.stopPropagation();
+      toggleFav(item.ai, item.ti);
+    });
+    body.appendChild(d);
+  });
+}
+ 
+// ── ANALYTICS ─────────────────────────────────────────────────────────────────
+// Fires Cloudflare Web Analytics custom events if beacon is loaded.
+// Enable Web Analytics in Cloudflare Pages settings to activate.
+function trackEvent(name, props) {
+  try {
+    if (window.cf && window.cf.track) window.cf.track(name, props);
+  } catch(e) {}
+}
+ 
+var playStartTime = null;
+var nudgeTimer = null;
+var nudgeShown = false;
+ 
+function onTrackPlay() {
+  playStartTime = Date.now();
+  clearTimeout(nudgeTimer);
+  if (!nudgeShown && cT !== -1) {
+    nudgeTimer = setTimeout(showNudge, 45000);
+  }
+}
+ 
+function onTrackPauseOrEnd(ended) {
+  if (playStartTime && cT !== -1) {
+    var seconds = Math.round((Date.now() - playStartTime) / 1000);
+    trackEvent(ended ? 'track_completed' : 'track_pause', {
+      track: ALBUMS[cA].tracks[cT].title,
+      album: ALBUMS[cA].name,
+      seconds: seconds
+    });
+  }
+  playStartTime = null;
+  clearTimeout(nudgeTimer);
+}
+ 
+// ── NUDGE ─────────────────────────────────────────────────────────────────────
+function showNudge() {
+  if (au.paused || cT === -1) return;
+  nudgeShown = true;
+  document.getElementById('nudge').classList.add('show');
+  setTimeout(hideNudge, 8000);
+}
+function hideNudge() {
+  document.getElementById('nudge').classList.remove('show');
+}
+function nudgeFav() {
+  if (cT !== -1 && !isFav(cA, cT)) {
+    favourites.unshift({ ai: cA, ti: cT, title: ALBUMS[cA].tracks[cT].title, albumName: ALBUMS[cA].name, src: ALBUMS[cA].tracks[cT].src });
+    saveFavs(); updateFavBtn();
+    trackEvent('enjoyed_track', { track: ALBUMS[cA].tracks[cT].title, album: ALBUMS[cA].name });
+  }
+  hideNudge();
+  showToast('\u2665 Added to favourites');
+}
  
 // ── VISUALS TOGGLE ────────────────────────────────────────────────────────────
 var visualsOn = localStorage.getItem('visualsOn') !== 'false';
@@ -562,6 +744,7 @@ function openAmTracks(ai) {
   // Tracks
   alb.tracks.forEach(function(t, i) {
     var inPl = isInPlaylist(ai, i);
+    var inFav = isFav(ai, i);
     var active = !plMode && ai === cA && i === cT;
     var row = document.createElement('div');
     row.className = 'am-trow' + (active ? ' on' : '') + (inPl ? ' inpl' : '');
@@ -570,6 +753,7 @@ function openAmTracks(ai) {
       '<div class="am-tname">' + t.title + '</div>' +
       '<div class="am-tactions">' +
         '<div class="am-bars"><div class="am-bar"></div><div class="am-bar"></div><div class="am-bar"></div></div>' +
+        '<button class="am-tadd fav-icon" title="' + (inFav ? 'Unfavourite' : 'Love this') + '" style="color:' + (inFav ? '#ff3fb0' : '') + ';border-color:' + (inFav ? 'rgba(255,63,176,.4)' : '') + '">' + (inFav ? '&#9829;' : '&#9825;') + '</button>' +
         '<button class="am-tadd" title="' + (inPl ? 'In queue' : 'Add to queue') + '">' + (inPl ? '&#10003;' : '&#43;') + '</button>' +
       '</div>';
     row.addEventListener('click', function(e) {
@@ -578,10 +762,15 @@ function openAmTracks(ai) {
       pT(ai, i);
       closeAlbumsModal();
     });
-    row.querySelector('.am-tadd').addEventListener('click', function(e) {
+    row.querySelector('.fav-icon').addEventListener('click', function(e) {
+      e.stopPropagation();
+      toggleFav(ai, i);
+      openAmTracks(ai);
+    });
+    row.querySelectorAll('.am-tadd:not(.fav-icon)')[0].addEventListener('click', function(e) {
       e.stopPropagation();
       togglePlaylist(ai, i);
-      openAmTracks(ai); // re-render to update checkmarks
+      openAmTracks(ai);
     });
     body.appendChild(row);
   });
@@ -649,7 +838,7 @@ function togglePanel() {
 function openPanel() {
   document.getElementById('panel').classList.add('open');
   document.getElementById('overlay').classList.add('show');
-  showPlaylist();
+  switchTab(panelTab);
 }
 function closePanel() {
   document.getElementById('panel').classList.remove('open');
@@ -737,9 +926,10 @@ function playFromPlaylist(i) {
   document.getElementById('tName').textContent = item.title;
   document.getElementById('tName').classList.remove('idle');
   document.getElementById('tAlbum').textContent = item.albumName;
-  updateAddNowBtn();
+  updateAddNowBtn(); updateFavBtn();
   au.src = item.src; iA(); au.play().catch(function() {});
   document.getElementById('btnPlay').classList.add('on');
+  nudgeShown = false; hideNudge(); clearTimeout(nudgeTimer);
   setMediaSession(item.albumName, item.title);
 }
  
@@ -772,7 +962,8 @@ function pT(ai, ti) {
   document.getElementById('tName').textContent = tk.title;
   document.getElementById('tName').classList.remove('idle');
   document.getElementById('tAlbum').textContent = ALBUMS[ai].name;
-  updateAddNowBtn();
+  updateAddNowBtn(); updateFavBtn();
+  nudgeShown = false; hideNudge(); clearTimeout(nudgeTimer);
   au.src = tk.src; iA(); au.play().catch(function() {});
   document.getElementById('btnPlay').classList.add('on');
   updateURL(ai, ti);
@@ -833,14 +1024,17 @@ au.addEventListener('timeupdate', function() {
     });
   }
 });
-au.addEventListener('ended', nextTrack);
+au.addEventListener('ended', function() { onTrackPauseOrEnd(true); nextTrack(); });
 au.addEventListener('pause', function() {
   document.getElementById('btnPlay').classList.remove('on');
   if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
+  onTrackPauseOrEnd(false);
 });
 au.addEventListener('play', function() {
   document.getElementById('btnPlay').classList.add('on');
   if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
+  onTrackPlay();
+  if (cT !== -1) trackEvent('track_play', { track: ALBUMS[cA].tracks[cT].title, album: ALBUMS[cA].name });
 });
  
 document.getElementById('progBar').addEventListener('click', function(e) {
