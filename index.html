@@ -4,6 +4,13 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover"/>
 <meta name="theme-color" content="#000000"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="EMVY CHECK"/>
+<link rel="manifest" href="/manifest.webmanifest"/>
+<link rel="preconnect" href="https://media.emvycheck.com" crossorigin/>
+<link rel="dns-prefetch" href="https://media.emvycheck.com"/>
 <title>EMVY CHECK</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
 <style>
@@ -355,8 +362,78 @@ canvas#bg{position:fixed;inset:0;width:100%;height:100%;z-index:0}
   letter-spacing:.1em;text-transform:uppercase;line-height:2;
 }
  
+/* ── CAR MODE ────────────────────────────────────────────────────────────── */
+.car-mode-overlay{
+  position:fixed;inset:0;z-index:40;
+  background:#000;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:space-between;
+  padding:max(env(safe-area-inset-top,0px),24px) 20px max(env(safe-area-inset-bottom,0px),32px);
+  transform:translateY(100%);
+  transition:transform .32s cubic-bezier(.4,0,.2,1);
+}
+.car-mode-overlay.open{transform:translateY(0)}
+ 
+.car-exit{
+  align-self:flex-end;font-size:10px;letter-spacing:.15em;text-transform:uppercase;
+  padding:10px 16px;border-radius:8px;cursor:pointer;font-family:'Space Mono',monospace;
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);
+  color:rgba(255,255,255,.35);transition:all .18s;
+}
+.car-exit:hover,.car-exit:active{background:rgba(255,255,255,.1);color:#fff}
+ 
+.car-track-info{
+  text-align:center;flex:1;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:10px;padding:0 10px;
+  min-height:0;
+}
+.car-album{
+  font-size:11px;letter-spacing:.2em;text-transform:uppercase;
+  color:rgba(255,255,255,.3);
+}
+.car-title{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:clamp(28px,8vw,64px);
+  letter-spacing:.04em;line-height:1.05;
+  color:#fff;text-align:center;
+  text-shadow:0 0 30px rgba(255,179,71,.35);
+}
+.car-fav{
+  font-size:28px;cursor:pointer;background:none;border:none;
+  color:rgba(255,255,255,.25);transition:all .2s;padding:8px;
+}
+.car-fav.on{color:#ff3fb0;text-shadow:0 0 16px rgba(255,63,176,.5)}
+ 
+.car-progress{
+  width:100%;margin-bottom:24px;
+}
+.car-prog-bar{
+  width:100%;height:4px;background:rgba(255,255,255,.1);border-radius:2px;cursor:pointer;
+}
+.car-prog-fill{
+  height:100%;border-radius:2px;width:0%;
+  background:linear-gradient(90deg,#ffb347,#4ef0ff);transition:width .1s linear;
+}
+.car-times{
+  display:flex;justify-content:space-between;margin-top:6px;
+  font-size:11px;letter-spacing:.06em;color:rgba(255,255,255,.25);
+}
+ 
+.car-controls{
+  display:flex;align-items:center;justify-content:center;gap:16px;width:100%;
+}
+.car-ctrl{
+  border-radius:50%;cursor:pointer;display:grid;place-items:center;
+  background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);
+  color:rgba(255,255,255,.65);transition:all .18s;flex-shrink:0;
+}
+.car-ctrl:hover,.car-ctrl:active{background:rgba(255,179,71,.18);border-color:rgba(255,179,71,.45);color:#ffb347}
+.car-ctrl.sm{width:64px;height:64px;font-size:22px}
+.car-ctrl.lg{width:88px;height:88px;font-size:32px;
+  background:rgba(255,179,71,.14);border-color:rgba(255,179,71,.5);color:#ffb347}
+.car-ctrl.lg:hover,.car-ctrl.lg:active{background:rgba(255,179,71,.3);box-shadow:0 0 28px rgba(255,179,71,.3)}
+ 
 @keyframes bk{0%,100%{height:2px}50%{height:11px}}
-</style>
 </head>
 <body>
  
@@ -371,8 +448,28 @@ canvas#bg{position:fixed;inset:0;width:100%;height:100%;z-index:0}
  
 <div class="top-right">
   <button class="top-btn" id="btnVisuals" onclick="toggleVisuals()">&#9711; Vis</button>
+  <button class="top-btn" id="btnCar" onclick="openCarMode()">&#9656; Car</button>
   <button class="top-btn" id="btnShareSite" onclick="openShare(null)">&#8679; Share</button>
   <a class="top-btn amber" href="/order.html">Order &rarr;</a>
+</div>
+ 
+<!-- CAR MODE OVERLAY -->
+<div class="car-mode-overlay" id="carMode">
+  <button class="car-exit" onclick="closeCarMode()">&#10005; Exit Car Mode</button>
+  <div class="car-track-info">
+    <div class="car-album" id="carAlbum">EMVY CHECK</div>
+    <div class="car-title" id="carTitle">No track selected</div>
+    <button class="car-fav" id="carFavBtn" onclick="toggleFavCurrent()">&#9825;</button>
+  </div>
+  <div class="car-progress">
+    <div class="car-prog-bar" id="carProgBar"><div class="car-prog-fill" id="carProgFill"></div></div>
+    <div class="car-times"><span id="carCur">0:00</span><span id="carTot">0:00</span></div>
+  </div>
+  <div class="car-controls">
+    <button class="car-ctrl sm" onclick="document.getElementById('btnPrev').click()">&#9664;&#9664;</button>
+    <button class="car-ctrl lg" id="carPlayBtn" onclick="carPlayPause()">&#9654;</button>
+    <button class="car-ctrl sm" onclick="nextTrack()">&#9654;&#9654;</button>
+  </div>
 </div>
  
 <div class="track-block">
@@ -462,7 +559,106 @@ var plMode = false, plIdx = -1;
 var shareTarget = null;
 var GR=[['#ffb347','#ff6b00'],['#4ef0ff','#0066ff'],['#ff3fb0','#9900cc'],['#c8ff4a','#00aa00'],['#ff4444','#990000'],['#ffb347','#cc6600'],['#4ef0ff','#00ccaa'],['#ff3fb0','#ff0066'],['#ffdd00','#ff8800'],['#88ff44','#006600'],['#ff88aa','#cc0044'],['#44aaff','#0033cc']];
  
-// ── FAVOURITES ────────────────────────────────────────────────────────────────
+// ── SERVICE WORKER ────────────────────────────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('/service-worker.js').catch(function() {});
+  });
+}
+ 
+// ── STATE SAVE / RESTORE ──────────────────────────────────────────────────────
+function saveState() {
+  if (cT === -1) return;
+  try {
+    localStorage.setItem('emvy_state', JSON.stringify({
+      ai: cA, ti: cT,
+      pos: au.currentTime || 0,
+      albumName: ALBUMS[cA].name,
+      trackTitle: ALBUMS[cA].tracks[cT].title
+    }));
+  } catch(e) {}
+}
+ 
+function restoreState() {
+  try {
+    var s = JSON.parse(localStorage.getItem('emvy_state'));
+    if (!s || s.ai === undefined || !ALBUMS[s.ai] || !ALBUMS[s.ai].tracks[s.ti]) return;
+    // Show last track info without autoplay (user must tap play)
+    cA = s.ai; cT = s.ti;
+    document.getElementById('tName').textContent = s.trackTitle;
+    document.getElementById('tName').classList.remove('idle');
+    document.getElementById('tAlbum').textContent = s.albumName;
+    au.src = ALBUMS[s.ai].tracks[s.ti].src;
+    au.preload = 'metadata';
+    au.addEventListener('loadedmetadata', function handler() {
+      au.currentTime = Math.min(s.pos || 0, au.duration - 2);
+      au.removeEventListener('loadedmetadata', handler);
+    });
+    updateAddNowBtn(); updateFavBtn();
+    updateCarTrackInfo();
+    setMediaSession(s.albumName, s.trackTitle);
+    preloadNext(s.ai, s.ti);
+  } catch(e) {}
+}
+ 
+// Auto-save position every 5 seconds while playing
+setInterval(function() { if (!au.paused && cT !== -1) saveState(); }, 5000);
+ 
+// ── CAR MODE ─────────────────────────────────────────────────────────────────
+var carModeOn = false;
+var visualsBeforeCar = true;
+ 
+function openCarMode() {
+  carModeOn = true;
+  visualsBeforeCar = visualsOn;
+  // Force visuals off in car mode to save battery
+  if (visualsOn) {
+    visualsOn = false; drawActive = false;
+    ctx.clearRect(0, 0, W, H); ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H);
+    document.getElementById('btnVisuals').classList.remove('on');
+  }
+  updateCarTrackInfo();
+  document.getElementById('carMode').classList.add('open');
+  document.getElementById('btnCar').classList.add('on');
+}
+ 
+function closeCarMode() {
+  carModeOn = false;
+  document.getElementById('carMode').classList.remove('open');
+  document.getElementById('btnCar').classList.remove('on');
+  // Restore visuals to whatever they were before
+  if (visualsBeforeCar) {
+    visualsOn = true;
+    drawActive = !document.hidden;
+    localStorage.setItem('visualsOn', 'true');
+    document.getElementById('btnVisuals').classList.add('on');
+  }
+}
+ 
+function carPlayPause() {
+  iA(); if (aCtx && aCtx.state === 'suspended') aCtx.resume();
+  if (au.paused) {
+    if (cT === -1 && ALBUMS.length) { openCarMode(); return; }
+    au.play().catch(function() {});
+  } else {
+    au.pause();
+  }
+}
+ 
+function updateCarTrackInfo() {
+  if (cT === -1) return;
+  document.getElementById('carTitle').textContent = ALBUMS[cA].tracks[cT].title;
+  document.getElementById('carAlbum').textContent = ALBUMS[cA].name;
+  var on = isFav(cA, cT);
+  var fb = document.getElementById('carFavBtn');
+  fb.innerHTML = on ? '&#9829;' : '&#9825;';
+  fb.classList.toggle('on', on);
+  var pb = document.getElementById('carPlayBtn');
+  pb.innerHTML = au.paused ? '&#9654;' : '&#9646;&#9646;';
+}
+ 
+// Sync car mode progress bar with main progress
+var _origTimeUpdate = null;
 var favourites = JSON.parse(localStorage.getItem('emvy_favs') || '[]');
 var panelTab = 'fav'; // 'fav' | 'queue'
  
@@ -497,6 +693,9 @@ function updateFavBtn() {
   btn.classList.toggle('on', on);
   btn.innerHTML = on ? '&#9829;' : '&#9825;';
   btn.title = on ? 'Remove from favourites' : 'Love this track';
+  // sync car mode heart
+  var cb = document.getElementById('carFavBtn');
+  if (cb) { cb.innerHTML = on ? '&#9829;' : '&#9825;'; cb.classList.toggle('on', on); }
 }
  
 function switchTab(tab) {
@@ -931,6 +1130,8 @@ function playFromPlaylist(i) {
   document.getElementById('btnPlay').classList.add('on');
   nudgeShown = false; hideNudge(); clearTimeout(nudgeTimer);
   setMediaSession(item.albumName, item.title);
+  saveState();
+  if (carModeOn) updateCarTrackInfo();
 }
  
 // ── MEDIA SESSION ─────────────────────────────────────────────────────────────
@@ -969,6 +1170,8 @@ function pT(ai, ti) {
   updateURL(ai, ti);
   preloadNext(ai, ti);
   setMediaSession(ALBUMS[ai].name, tk.title);
+  saveState();
+  if (carModeOn) updateCarTrackInfo();
 }
  
 function preloadNext(ai, ti) {
@@ -1013,9 +1216,16 @@ function nextTrack() {
 // ── AUDIO EVENTS ──────────────────────────────────────────────────────────────
 au.addEventListener('timeupdate', function() {
   if (!au.duration) return;
-  document.getElementById('progFill').style.width = (au.currentTime / au.duration * 100) + '%';
+  var pct = (au.currentTime / au.duration * 100) + '%';
+  document.getElementById('progFill').style.width = pct;
   document.getElementById('tCur').textContent = fm(au.currentTime);
   document.getElementById('tTot').textContent = fm(au.duration);
+  // Car mode sync
+  if (carModeOn) {
+    document.getElementById('carProgFill').style.width = pct;
+    document.getElementById('carCur').textContent = fm(au.currentTime);
+    document.getElementById('carTot').textContent = fm(au.duration);
+  }
   if ('mediaSession' in navigator && au.duration) {
     navigator.mediaSession.setPositionState({
       duration: au.duration,
@@ -1027,17 +1237,24 @@ au.addEventListener('timeupdate', function() {
 au.addEventListener('ended', function() { onTrackPauseOrEnd(true); nextTrack(); });
 au.addEventListener('pause', function() {
   document.getElementById('btnPlay').classList.remove('on');
+  if (carModeOn) document.getElementById('carPlayBtn').innerHTML = '&#9654;';
   if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
   onTrackPauseOrEnd(false);
 });
 au.addEventListener('play', function() {
   document.getElementById('btnPlay').classList.add('on');
+  if (carModeOn) document.getElementById('carPlayBtn').innerHTML = '&#9646;&#9646;';
   if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
   onTrackPlay();
   if (cT !== -1) trackEvent('track_play', { track: ALBUMS[cA].tracks[cT].title, album: ALBUMS[cA].name });
 });
  
 document.getElementById('progBar').addEventListener('click', function(e) {
+  if (!au.duration) return;
+  var r = e.currentTarget.getBoundingClientRect();
+  au.currentTime = ((e.clientX - r.left) / r.width) * au.duration;
+});
+document.getElementById('carProgBar').addEventListener('click', function(e) {
   if (!au.duration) return;
   var r = e.currentTarget.getBoundingClientRect();
   au.currentTime = ((e.clientX - r.left) / r.width) * au.duration;
@@ -1218,7 +1435,9 @@ fetch('https://media.emvycheck.com/playlist.json')
     ALBUMS = data.albums;
     document.getElementById('splash').classList.add('hide');
     setTimeout(function() { document.getElementById('splash').style.display = 'none'; }, 700);
-    checkURLParams();
+    var params = new URLSearchParams(window.location.search);
+    if (params.get('a')) checkURLParams();
+    else restoreState();
   })
   .catch(function() {
     document.getElementById('splash').classList.add('hide');
