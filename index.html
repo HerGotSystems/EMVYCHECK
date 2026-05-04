@@ -1088,7 +1088,7 @@ function renderAmGrid() {
     if (amActiveTag && (a.tags || []).indexOf(amActiveTag) === -1) return;
     var card = document.createElement('div');
     card.className = 'am-card' + (i === cA && cT !== -1 ? ' playing' : '');
-    var coverUrl = a.cover || '';
+    var coverUrl = a.cover || ('https://media.emvycheck.com/IMAGES/ALBUMS/' + encodeURIComponent(a.name.toLowerCase()) + '.jpg');
     var bg = albumColor(a.name);
     var tagStr = (a.tags || []).slice(0, 2).join(' · ');
     card.innerHTML =
@@ -1324,10 +1324,14 @@ function playFromPlaylist(i) {
 // ── MEDIA SESSION ─────────────────────────────────────────────────────────────
 function setMediaSession(albumName, trackTitle) {
   if (!('mediaSession' in navigator)) return;
-  var artwork = 'https://media.emvycheck.com/IMAGES/LOGOS/EMVY_CHECK_LOGO_ORIGINAL.jpg';
+  var _albumCover = 'https://media.emvycheck.com/IMAGES/LOGOS/EMVY_CHECK_LOGO_ORIGINAL.jpg';
   for (var _i = 0; _i < ALBUMS.length; _i++) {
-    if (ALBUMS[_i].name === albumName && ALBUMS[_i].cover) { artwork = ALBUMS[_i].cover; break; }
+    if (ALBUMS[_i].name === albumName) {
+      _albumCover = ALBUMS[_i].cover || ('https://media.emvycheck.com/IMAGES/ALBUMS/' + encodeURIComponent(albumName.toLowerCase()) + '.jpg');
+      break;
+    }
   }
+  var artwork = _albumCover;
   navigator.mediaSession.metadata = new MediaMetadata({
     title: trackTitle,
     artist: 'EMVY CHECK',
@@ -1637,3 +1641,4 @@ fetch('https://media.emvycheck.com/playlist.json')
 </script>
 </body>
 </html>
+ 
