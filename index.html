@@ -368,23 +368,35 @@ canvas#bg{position:fixed;inset:0;width:100%;height:100%;z-index:0}
   background:#000;
   display:flex;flex-direction:column;
   align-items:center;justify-content:space-between;
-  padding:max(env(safe-area-inset-top,0px),24px) 20px max(env(safe-area-inset-bottom,0px),32px);
+  padding:max(env(safe-area-inset-top,0px),20px) 20px max(env(safe-area-inset-bottom,0px),24px);
   transform:translateY(100%);
   transition:transform .32s cubic-bezier(.4,0,.2,1);
 }
 .car-mode-overlay.open{transform:translateY(0)}
  
+.car-top-row{
+  display:flex;justify-content:space-between;align-items:center;
+  width:100%;
+}
 .car-exit{
-  align-self:flex-end;font-size:10px;letter-spacing:.15em;text-transform:uppercase;
+  font-size:10px;letter-spacing:.15em;text-transform:uppercase;
   padding:10px 16px;border-radius:8px;cursor:pointer;font-family:'Space Mono',monospace;
   background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);
   color:rgba(255,255,255,.35);transition:all .18s;
 }
 .car-exit:hover,.car-exit:active{background:rgba(255,255,255,.1);color:#fff}
+.car-ctrl-sm{
+  width:48px;height:48px;border-radius:50%;cursor:pointer;
+  display:grid;place-items:center;font-size:18px;
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);
+  color:rgba(255,255,255,.4);transition:all .18s;
+}
+.car-ctrl-sm.on{background:rgba(200,255,74,.12);border-color:rgba(200,255,74,.38);color:#c8ff4a}
+.car-ctrl-sm:hover,.car-ctrl-sm:active{background:rgba(255,255,255,.1);color:#fff}
  
 .car-track-info{
   text-align:center;flex:1;display:flex;flex-direction:column;
-  align-items:center;justify-content:center;gap:10px;padding:0 10px;
+  align-items:center;justify-content:center;gap:8px;padding:0 10px;
   min-height:0;
 }
 .car-album{
@@ -393,45 +405,109 @@ canvas#bg{position:fixed;inset:0;width:100%;height:100%;z-index:0}
 }
 .car-title{
   font-family:'Bebas Neue',sans-serif;
-  font-size:clamp(28px,8vw,64px);
+  font-size:clamp(26px,7vw,58px);
   letter-spacing:.04em;line-height:1.05;
   color:#fff;text-align:center;
   text-shadow:0 0 30px rgba(255,179,71,.35);
 }
-.car-fav{
-  font-size:28px;cursor:pointer;background:none;border:none;
-  color:rgba(255,255,255,.25);transition:all .2s;padding:8px;
-}
-.car-fav.on{color:#ff3fb0;text-shadow:0 0 16px rgba(255,63,176,.5)}
  
-.car-progress{
-  width:100%;margin-bottom:24px;
-}
-.car-prog-bar{
-  width:100%;height:4px;background:rgba(255,255,255,.1);border-radius:2px;cursor:pointer;
-}
-.car-prog-fill{
-  height:100%;border-radius:2px;width:0%;
-  background:linear-gradient(90deg,#ffb347,#4ef0ff);transition:width .1s linear;
-}
-.car-times{
-  display:flex;justify-content:space-between;margin-top:6px;
-  font-size:11px;letter-spacing:.06em;color:rgba(255,255,255,.25);
-}
+.car-progress{width:100%;margin-bottom:20px}
+.car-prog-bar{width:100%;height:4px;background:rgba(255,255,255,.1);border-radius:2px;cursor:pointer}
+.car-prog-fill{height:100%;border-radius:2px;width:0%;background:linear-gradient(90deg,#ffb347,#4ef0ff);transition:width .1s linear}
+.car-times{display:flex;justify-content:space-between;margin-top:6px;font-size:11px;letter-spacing:.06em;color:rgba(255,255,255,.25)}
  
-.car-controls{
-  display:flex;align-items:center;justify-content:center;gap:16px;width:100%;
-}
-.car-ctrl{
-  border-radius:50%;cursor:pointer;display:grid;place-items:center;
+.car-controls{display:flex;align-items:center;justify-content:center;gap:16px;width:100%}
+.car-ctrl{border-radius:50%;cursor:pointer;display:grid;place-items:center;
   background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);
-  color:rgba(255,255,255,.65);transition:all .18s;flex-shrink:0;
-}
+  color:rgba(255,255,255,.65);transition:all .18s;flex-shrink:0}
 .car-ctrl:hover,.car-ctrl:active{background:rgba(255,179,71,.18);border-color:rgba(255,179,71,.45);color:#ffb347}
 .car-ctrl.sm{width:64px;height:64px;font-size:22px}
 .car-ctrl.lg{width:88px;height:88px;font-size:32px;
   background:rgba(255,179,71,.14);border-color:rgba(255,179,71,.5);color:#ffb347}
 .car-ctrl.lg:hover,.car-ctrl.lg:active{background:rgba(255,179,71,.3);box-shadow:0 0 28px rgba(255,179,71,.3)}
+ 
+.car-action-row{
+  display:flex;gap:10px;width:100%;margin-top:16px;
+}
+.car-action-btn{
+  flex:1;padding:14px 8px;border-radius:12px;cursor:pointer;
+  font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.07em;
+  text-transform:uppercase;display:flex;align-items:center;justify-content:center;gap:6px;
+  transition:all .2s;
+}
+.car-action-btn.surprise{
+  background:rgba(255,220,50,.08);border:1px solid rgba(255,220,50,.28);color:rgba(255,220,50,.8);
+}
+.car-action-btn.surprise:hover,.car-action-btn.surprise:active{
+  background:rgba(255,220,50,.22);border-color:rgba(255,220,50,.5);color:#ffdc32;
+}
+.car-action-btn.fav{
+  background:rgba(255,63,176,.08);border:1px solid rgba(255,63,176,.28);color:rgba(255,63,176,.8);
+}
+.car-action-btn.fav.on{
+  background:rgba(255,63,176,.22);border-color:rgba(255,63,176,.55);color:#ff3fb0;
+  box-shadow:0 0 16px rgba(255,63,176,.2);
+}
+.car-action-btn.fav:hover,.car-action-btn.fav:active{background:rgba(255,63,176,.2);border-color:rgba(255,63,176,.5)}
+.car-action-btn.save{
+  background:rgba(78,240,255,.08);border:1px solid rgba(78,240,255,.28);color:rgba(78,240,255,.8);
+}
+.car-action-btn.save:hover,.car-action-btn.save:active{
+  background:rgba(78,240,255,.2);border-color:rgba(78,240,255,.5);color:#4ef0ff;
+}
+ 
+/* CAR SAVE SHEET */
+.car-save-overlay{
+  position:fixed;inset:0;z-index:44;background:rgba(0,0,0,.6);
+  opacity:0;pointer-events:none;transition:opacity .22s;
+}
+.car-save-overlay.show{opacity:1;pointer-events:all}
+.car-save-sheet{
+  position:fixed;bottom:0;left:0;right:0;z-index:45;
+  background:rgba(4,6,12,.99);border-top:1px solid rgba(255,255,255,.08);
+  border-radius:18px 18px 0 0;
+  padding:20px 18px max(env(safe-area-inset-bottom,0px),28px);
+  transform:translateY(100%);transition:transform .28s cubic-bezier(.4,0,.2,1);
+}
+.car-save-sheet.open{transform:translateY(0)}
+.css-title{
+  font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:.1em;
+  color:#4ef0ff;margin-bottom:14px;
+}
+.css-body{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;max-height:40vh;overflow-y:auto}
+.css-list-btn{
+  padding:13px 16px;border-radius:10px;cursor:pointer;
+  font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.06em;
+  text-align:left;display:flex;align-items:center;justify-content:space-between;
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);
+  color:rgba(255,255,255,.6);transition:all .15s;
+}
+.css-list-btn:hover,.css-list-btn:active{background:rgba(78,240,255,.1);border-color:rgba(78,240,255,.3);color:#4ef0ff}
+.css-list-btn.in{background:rgba(78,240,255,.12);border-color:rgba(78,240,255,.35);color:#4ef0ff}
+.css-list-btn .css-count{font-size:9px;color:rgba(255,255,255,.28);letter-spacing:.05em}
+.css-list-btn.in .css-count{color:rgba(78,240,255,.6)}
+.css-new{display:flex;gap:8px;margin-bottom:10px}
+.css-new input{
+  flex:1;padding:11px 14px;border-radius:8px;
+  border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);
+  color:#eef0f5;font-family:'Space Mono',monospace;font-size:12px;outline:none;
+}
+.css-new input:focus{border-color:rgba(78,240,255,.4)}
+.css-new input::placeholder{color:rgba(255,255,255,.2)}
+.css-new button{
+  padding:11px 16px;border-radius:8px;cursor:pointer;white-space:nowrap;
+  font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.08em;
+  background:rgba(78,240,255,.1);border:1px solid rgba(78,240,255,.35);color:#4ef0ff;
+  transition:all .18s;
+}
+.css-new button:hover{background:rgba(78,240,255,.22)}
+.css-cancel{
+  width:100%;padding:11px;border-radius:8px;cursor:pointer;
+  font-family:'Space Mono',monospace;font-size:9px;letter-spacing:.12em;text-transform:uppercase;
+  background:transparent;border:1px solid rgba(255,255,255,.07);color:rgba(255,255,255,.25);
+  transition:all .18s;
+}
+.css-cancel:hover{background:rgba(255,255,255,.04)}
  
 @keyframes bk{0%,100%{height:2px}50%{height:11px}}
 </style>
@@ -456,11 +532,13 @@ canvas#bg{position:fixed;inset:0;width:100%;height:100%;z-index:0}
  
 <!-- CAR MODE OVERLAY -->
 <div class="car-mode-overlay" id="carMode">
-  <button class="car-exit" onclick="closeCarMode()">&#10005; Exit Car Mode</button>
+  <div class="car-top-row">
+    <button class="car-exit" onclick="closeCarMode()">&#10005; Exit</button>
+    <button class="car-ctrl-sm" id="carShuffleBtn" onclick="carToggleShuffle()" title="Shuffle">&#9858;</button>
+  </div>
   <div class="car-track-info">
     <div class="car-album" id="carAlbum">EMVY CHECK</div>
     <div class="car-title" id="carTitle">No track selected</div>
-    <button class="car-fav" id="carFavBtn" onclick="toggleFavCurrent()">&#9825;</button>
   </div>
   <div class="car-progress">
     <div class="car-prog-bar" id="carProgBar"><div class="car-prog-fill" id="carProgFill"></div></div>
@@ -471,7 +549,24 @@ canvas#bg{position:fixed;inset:0;width:100%;height:100%;z-index:0}
     <button class="car-ctrl lg" id="carPlayBtn" onclick="carPlayPause()">&#9654;</button>
     <button class="car-ctrl sm" onclick="nextTrack()">&#9654;&#9654;</button>
   </div>
+  <div class="car-action-row">
+    <button class="car-action-btn surprise" onclick="surpriseMe()" title="Surprise Me">&#9734; Surprise</button>
+    <button class="car-action-btn fav" id="carFavBtn" onclick="toggleFavCurrent()" title="Favourite">&#9825; Love it</button>
+    <button class="car-action-btn save" onclick="openCarSave()" title="Save to list">&#43; Save</button>
+  </div>
 </div>
+ 
+<!-- CAR SAVE SHEET -->
+<div class="car-save-sheet" id="carSaveSheet">
+  <div class="css-title">Save track to...</div>
+  <div class="css-body" id="carSaveBody"></div>
+  <div class="css-new">
+    <input type="text" id="cssNewInput" placeholder="New list name..." maxlength="30" autocomplete="off" autocorrect="off" spellcheck="false"/>
+    <button onclick="carSaveNewList()">Create &amp; Add</button>
+  </div>
+  <button class="css-cancel" onclick="closeCarSave()">Cancel</button>
+</div>
+<div class="car-save-overlay" id="carSaveOverlay" onclick="closeCarSave()"></div>
  
 <div class="track-block">
   <div class="track-info">
@@ -605,19 +700,114 @@ function restoreState() {
 // Auto-save position every 5 seconds while playing
 setInterval(function() { if (!au.paused && cT !== -1) saveState(); }, 5000);
  
+// ── SAVED LISTS ───────────────────────────────────────────────────────────────
+// Each list: { name: string, tracks: [{ai, ti, title, albumName, src}] }
+var savedLists = JSON.parse(localStorage.getItem('emvy_lists') || '[]');
+ 
+function saveLists() { localStorage.setItem('emvy_lists', JSON.stringify(savedLists)); }
+ 
+function isInList(listIdx, ai, ti) {
+  return savedLists[listIdx].tracks.some(function(t) { return t.ai === ai && t.ti === ti; });
+}
+ 
+function toggleTrackInList(listIdx, ai, ti) {
+  if (cT === -1) return;
+  var list = savedLists[listIdx];
+  var idx = list.tracks.findIndex(function(t) { return t.ai === ai && t.ti === ti; });
+  if (idx !== -1) {
+    list.tracks.splice(idx, 1);
+    showToast('Removed from "' + list.name + '"');
+  } else {
+    list.tracks.push({ ai: ai, ti: ti, title: ALBUMS[ai].tracks[ti].title, albumName: ALBUMS[ai].name, src: ALBUMS[ai].tracks[ti].src });
+    showToast('Saved to "' + list.name + '"');
+  }
+  saveLists();
+  buildCarSaveBody();
+}
+ 
+function carSaveNewList() {
+  if (cT === -1) return;
+  var name = document.getElementById('cssNewInput').value.trim();
+  if (!name) return;
+  var newList = {
+    name: name,
+    tracks: [{ ai: cA, ti: cT, title: ALBUMS[cA].tracks[cT].title, albumName: ALBUMS[cA].name, src: ALBUMS[cA].tracks[cT].src }]
+  };
+  savedLists.push(newList);
+  saveLists();
+  document.getElementById('cssNewInput').value = '';
+  buildCarSaveBody();
+  showToast('Created "' + name + '" — track saved');
+}
+ 
+function openCarSave() {
+  if (cT === -1) return;
+  buildCarSaveBody();
+  document.getElementById('carSaveSheet').classList.add('open');
+  document.getElementById('carSaveOverlay').classList.add('show');
+}
+function closeCarSave() {
+  document.getElementById('carSaveSheet').classList.remove('open');
+  document.getElementById('carSaveOverlay').classList.remove('show');
+}
+ 
+function buildCarSaveBody() {
+  var body = document.getElementById('carSaveBody');
+  body.innerHTML = '';
+ 
+  // Always show Favourites and Queue as first two options
+  var favIn = (cT !== -1) && isFav(cA, cT);
+  var qIn = (cT !== -1) && isInPlaylist(cA, cT);
+ 
+  var favBtn = document.createElement('button');
+  favBtn.className = 'css-list-btn' + (favIn ? ' in' : '');
+  favBtn.innerHTML = (favIn ? '&#9829;' : '&#9825;') + ' Favourites <span class="css-count">' + (favIn ? 'saved' : favourites.length + ' tracks') + '</span>';
+  favBtn.onclick = function() { toggleFavCurrent(); buildCarSaveBody(); };
+  body.appendChild(favBtn);
+ 
+  var qBtn = document.createElement('button');
+  qBtn.className = 'css-list-btn' + (qIn ? ' in' : '');
+  qBtn.innerHTML = (qIn ? '&#10003;' : '&#43;') + ' Play Queue <span class="css-count">' + (qIn ? 'in queue' : playlist.length + ' tracks') + '</span>';
+  qBtn.onclick = function() { addCurrentToPlaylist(); buildCarSaveBody(); };
+  body.appendChild(qBtn);
+ 
+  // User-created lists
+  if (savedLists.length > 0) {
+    var sep = document.createElement('div');
+    sep.style.cssText = 'height:1px;background:rgba(255,255,255,.06);margin:6px 0';
+    body.appendChild(sep);
+  }
+  savedLists.forEach(function(list, i) {
+    var inIt = (cT !== -1) && isInList(i, cA, cT);
+    var btn = document.createElement('button');
+    btn.className = 'css-list-btn' + (inIt ? ' in' : '');
+    btn.innerHTML = '&#9654; ' + list.name + ' <span class="css-count">' + list.tracks.length + ' tracks</span>';
+    btn.onclick = (function(idx) { return function() { toggleTrackInList(idx, cA, cT); }; })(i);
+    body.appendChild(btn);
+  });
+}
+ 
 // ── CAR MODE ─────────────────────────────────────────────────────────────────
 var carModeOn = false;
 var visualsBeforeCar = true;
  
+function carToggleShuffle() {
+  shuffleOn = !shuffleOn;
+  document.getElementById('btnShuffle').classList.toggle('shuffle-on', shuffleOn);
+  document.getElementById('carShuffleBtn').classList.toggle('on', shuffleOn);
+  showToast(shuffleOn ? 'Shuffle on' : 'Shuffle off');
+}
+ 
 function openCarMode() {
   carModeOn = true;
   visualsBeforeCar = visualsOn;
-  // Force visuals off in car mode to save battery
   if (visualsOn) {
     visualsOn = false; drawActive = false;
     ctx.clearRect(0, 0, W, H); ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H);
     document.getElementById('btnVisuals').classList.remove('on');
   }
+  // Sync shuffle button state
+  document.getElementById('carShuffleBtn').classList.toggle('on', shuffleOn);
   updateCarTrackInfo();
   document.getElementById('carMode').classList.add('open');
   document.getElementById('btnCar').classList.add('on');
@@ -627,7 +817,7 @@ function closeCarMode() {
   carModeOn = false;
   document.getElementById('carMode').classList.remove('open');
   document.getElementById('btnCar').classList.remove('on');
-  // Restore visuals to whatever they were before
+  closeCarSave();
   if (visualsBeforeCar) {
     visualsOn = true;
     drawActive = !document.hidden;
@@ -639,7 +829,7 @@ function closeCarMode() {
 function carPlayPause() {
   iA(); if (aCtx && aCtx.state === 'suspended') aCtx.resume();
   if (au.paused) {
-    if (cT === -1 && ALBUMS.length) { openCarMode(); return; }
+    if (cT === -1 && ALBUMS.length) { closeCarMode(); openAlbumsModal(); return; }
     au.play().catch(function() {});
   } else {
     au.pause();
@@ -652,14 +842,10 @@ function updateCarTrackInfo() {
   document.getElementById('carAlbum').textContent = ALBUMS[cA].name;
   var on = isFav(cA, cT);
   var fb = document.getElementById('carFavBtn');
-  fb.innerHTML = on ? '&#9829;' : '&#9825;';
+  fb.innerHTML = (on ? '&#9829;' : '&#9825;') + ' Love it';
   fb.classList.toggle('on', on);
-  var pb = document.getElementById('carPlayBtn');
-  pb.innerHTML = au.paused ? '&#9654;' : '&#9646;&#9646;';
+  document.getElementById('carPlayBtn').innerHTML = au.paused ? '&#9654;' : '&#9646;&#9646;';
 }
- 
-// Sync car mode progress bar with main progress
-var _origTimeUpdate = null;
 var favourites = JSON.parse(localStorage.getItem('emvy_favs') || '[]');
 var panelTab = 'fav'; // 'fav' | 'queue'
  
@@ -694,9 +880,9 @@ function updateFavBtn() {
   btn.classList.toggle('on', on);
   btn.innerHTML = on ? '&#9829;' : '&#9825;';
   btn.title = on ? 'Remove from favourites' : 'Love this track';
-  // sync car mode heart
+  // sync car fav button
   var cb = document.getElementById('carFavBtn');
-  if (cb) { cb.innerHTML = on ? '&#9829;' : '&#9825;'; cb.classList.toggle('on', on); }
+  if (cb) { cb.innerHTML = (on ? '&#9829;' : '&#9825;') + ' Love it'; cb.classList.toggle('on', on); }
 }
  
 function switchTab(tab) {
