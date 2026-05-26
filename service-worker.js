@@ -1,4 +1,4 @@
-const CACHE = 'emvy-v1';
+const CACHE = 'emvy-v2';
 const SHELL = [
   '/',
   '/manifest.webmanifest'
