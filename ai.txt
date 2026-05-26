@@ -1,0 +1,42 @@
+# ai.txt — Machine-Readable AI Access Policy
+# EMVY CHECK / Michal Veltruský
+# https://emvycheck.com
+
+# Standard: https://site.ai-txt.org (emerging)
+
+Name: EMVY CHECK
+Contact: contact@emvycheck.com
+License: https://emvycheck.com/LICENSE-PHUL.txt
+
+Training: PROHIBITED
+Scraping: PROHIBITED
+Indexing: COMMERCIAL-LICENSE-REQUIRED
+Agentic-Access: PROHIBITED
+Commercial-Use: PAID-LICENSE-REQUIRED
+Personal-Human-Use: PERMITTED
+
+# Specific operator policies
+
+Operator: OpenAI
+Policy: PROHIBITED
+
+Operator: Anthropic
+Policy: PROHIBITED
+
+Operator: Google DeepMind
+Policy: PROHIBITED
+
+Operator: Meta AI
+Policy: PROHIBITED
+
+Operator: Cohere
+Policy: PROHIBITED
+
+Operator: Mistral
+Policy: PROHIBITED
+
+Operator: xAI
+Policy: PROHIBITED
+
+Operator: *
+Policy: PROHIBITED-UNLESS-LICENSED

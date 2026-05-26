@@ -1,0 +1,134 @@
+PERSONAL HUMAN USE LICENSE (PHUL) v1.0
+======================================
+© EMVY CHECK / Michal Veltruský. All rights reserved unless explicitly licensed.
+Effective: 2025
+
+GRANT OF LICENSE
+----------------
+This work and its contents are made freely available to individual human beings
+for personal, non-commercial use — including personal enjoyment, learning,
+creative play, and private non-profit sharing.
+
+No fee is charged for this use. No registration is required.
+
+PROHIBITED USES — LICENSE REQUIRED
+------------------------------------
+The following uses are PROHIBITED without an explicit paid commercial license:
+
+1. COMMERCIAL USE
+   Any use by a company, organisation, collective, or individual for profit,
+   commercial advantage, or business purposes.
+
+2. AI TRAINING
+   Any use of this material — in whole or in part — to train, fine-tune,
+   pre-train, adapt, evaluate, or otherwise develop machine learning models,
+   large language models, image generation models, multimodal models,
+   or any AI system.
+
+3. AUTOMATED SCRAPING AND INDEXING
+   Any automated crawling, scraping, indexing, or extraction of this content
+   by bots, spiders, crawlers, pipelines, or agents — whether for commercial
+   or non-commercial purposes — unless explicitly permitted in writing.
+
+4. DATASET CREATION
+   Any use of this material to create, contribute to, or augment datasets,
+   corpora, embedding stores, vector databases, knowledge bases, or retrieval
+   systems used in commercial or AI contexts.
+
+5. AGENTIC INTERACTION
+   Any autonomous AI agent, pipeline, or automated system interacting with
+   this content on behalf of a commercial entity or for the purpose of
+   data extraction, analysis, or derivative creation.
+
+6. EMBEDDING AND REDISTRIBUTION
+   Any embedding of this content within commercial products, SaaS platforms,
+   APIs, data products, or redistributed packages — without explicit license.
+
+CONSTRUCTIVE NOTICE AND CONSENT
+---------------------------------
+This license is publicly posted at:
+  https://emvycheck.com/LICENSE-PHUL.txt
+  https://emvycheck.com/llms.txt
+  https://emvycheck.com/ai.txt
+  https://emvycheck.com/robots.txt
+
+By accessing, downloading, copying, processing, indexing, training on,
+or interacting with this material using automated or commercial systems,
+you acknowledge and accept these terms — whether accessed directly by a human
+or indirectly through automated systems.
+
+This constitutes a valid browsewrap/accesswrap agreement under applicable
+laws governing constructive notice and conditional access.
+
+The "I didn't know" defence is explicitly waived by the presence of this
+notice at multiple machine-readable and human-readable access points.
+
+DEFINITIONS
+-----------
+"Personal use" means use by a single natural human being for their own
+non-commercial enjoyment, education, or creative expression.
+
+"Commercial entity" means any company, partnership, LLC, corporation,
+nonprofit operating commercially, DAO, or similar organised body.
+
+"Automated system" means any software, agent, bot, crawler, pipeline,
+or non-human process that accesses or processes this content.
+
+"AI training" means any process by which this content influences the
+parameters, weights, embeddings, or behaviour of a machine learning model.
+
+"Agentic interaction" means access by an autonomous AI system acting with
+delegated authority, whether or not a human is in the loop.
+
+PERMITTED AND PROHIBITED ACTIVITIES
+------------------------------------
+This license explicitly distinguishes between the following activities,
+as future AI law is expected to treat them differently:
+
+Activity                              | Status
+--------------------------------------|---------------------------
+Human reading / listening / playing   | PERMITTED — freely
+Human non-commercial remix / learning | PERMITTED — freely
+Academic citation and reference       | PERMITTED
+Search engine indexing                | PERMITTED (standard crawlers)
+Temporary caching for delivery        | PERMITTED (proportionate)
+AI-assisted summarisation for humans  | CONDITIONAL — attribution required
+Commercial use of any kind            | PROHIBITED — paid license required
+AI model training (any modality)      | PROHIBITED — paid license required
+Embedding / vectorisation             | PROHIBITED — paid license required
+Dataset creation or contribution      | PROHIBITED — paid license required
+Automated scraping for extraction     | PROHIBITED — paid license required
+Agentic access for commercial systems | PROHIBITED — paid license required
+Fine-tuning or model adaptation       | PROHIBITED — paid license required
+Transient inference on public content | LIMITED — no storage, no training
+
+ENFORCEMENT
+-----------
+Unauthorized commercial or automated use may constitute:
+- Copyright infringement under applicable national and international law
+- Breach of this license agreement
+- Unauthorised extraction of a protected database
+- Unlawful creation of derivative works
+
+The licensor reserves all rights to pursue legal remedies, including
+injunctive relief, damages, and recovery of legal costs.
+
+CONTACT FOR LICENSING
+----------------------
+To obtain a commercial, AI training, or institutional license:
+  contact@emvycheck.com
+
+LICENSE COMPATIBILITY
+---------------------
+This license is NOT compatible with:
+- CC0 / Public Domain
+- MIT / Apache / GPL (for AI training use)
+- Any open-data license that permits training or commercial redistribution
+
+This license IS compatible with:
+- Sharing by individual humans for personal non-commercial purposes
+- Academic citation and non-commercial research reference
+
+VERSION HISTORY
+---------------
+v1.0 — 2025 — Initial release
