@@ -802,7 +802,7 @@ function openCarMode() {
   carModeOn = true;
   visualsBeforeCar = visualsOn;
   if (visualsOn) {
-    visualsOn = false; drawActive = false;
+    visualsOn = false; drawActive = false; stopDraw();
     ctx.clearRect(0, 0, W, H); ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H);
     document.getElementById('btnVisuals').classList.remove('on');
   }
@@ -821,6 +821,7 @@ function closeCarMode() {
   if (visualsBeforeCar) {
     visualsOn = true;
     drawActive = !document.hidden;
+    if (drawActive) startDraw();
     localStorage.setItem('visualsOn', 'true');
     document.getElementById('btnVisuals').classList.add('on');
   }
@@ -983,15 +984,25 @@ function nudgeFav() {
 }
  
 // ── VISUALS TOGGLE ────────────────────────────────────────────────────────────
-var visualsOn = localStorage.getItem('visualsOn') !== 'false';
-var drawActive = visualsOn;
+var isMobileDevice = ('ontouchstart' in window) || navigator.maxTouchPoints > 1;
+var visualsOn = isMobileDevice ? false : (localStorage.getItem('visualsOn') !== 'false');
+var drawActive = visualsOn && !document.hidden;
 (function(){ document.getElementById('btnVisuals').classList.toggle('on', visualsOn); })();
- 
+
+function startDraw() {
+  if (rafId || !drawActive) return;
+  rafId = requestAnimationFrame(draw);
+}
+function stopDraw() {
+  if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+}
+
 function toggleVisuals() {
   visualsOn = !visualsOn;
   drawActive = visualsOn && !document.hidden;
   localStorage.setItem('visualsOn', String(visualsOn));
   document.getElementById('btnVisuals').classList.toggle('on', visualsOn);
+  if (drawActive) startDraw(); else stopDraw();
   if (!visualsOn) {
     ctx.clearRect(0, 0, W, H);
     ctx.fillStyle = '#000';
@@ -999,11 +1010,12 @@ function toggleVisuals() {
   }
   showToast(visualsOn ? 'Visuals on' : 'Visuals off — battery saving');
 }
- 
+
 document.addEventListener('visibilitychange', function() {
   drawActive = visualsOn && !document.hidden;
+  if (drawActive) startDraw(); else stopDraw();
 });
- 
+
 // ── UTILS ─────────────────────────────────────────────────────────────────────
 function fm(s){if(isNaN(s)||s===Infinity)return'0:00';var m=Math.floor(s/60),x=Math.floor(s%60);return m+':'+(x<10?'0':'')+x;}
 function iA(){
@@ -1557,10 +1569,11 @@ function initLiss() {
   lissajous = [{ a:3,b:2,d:Math.PI/4,col:'rgba(255,179,71,',r:r*.32 },{ a:5,b:4,d:Math.PI/3,col:'rgba(78,240,255,',r:r*.26 },{ a:4,b:3,d:Math.PI/6,col:'rgba(255,63,176,',r:r*.22 },{ a:7,b:6,d:Math.PI/5,col:'rgba(200,255,74,',r:r*.17 }];
 }
  
-var lastFrame = 0;
+var lastFrame = 0, rafId = null;
 function draw(ts) {
-  requestAnimationFrame(draw);
+  rafId = null;
   if (!drawActive) return;
+  rafId = requestAnimationFrame(draw);
   var minGap = au.paused ? 33 : 16;
   if (ts - lastFrame < minGap) return;
   lastFrame = ts;
@@ -1620,7 +1633,7 @@ function draw(ts) {
 }
 window.addEventListener('resize', resize);
 resize();
-requestAnimationFrame(draw);
+if (visualsOn) startDraw();
  
 // ── LOAD PLAYLIST ─────────────────────────────────────────────────────────────
 fetch('https://media.emvycheck.com/playlist.json')
@@ -1632,6 +1645,8 @@ fetch('https://media.emvycheck.com/playlist.json')
     var params = new URLSearchParams(window.location.search);
     if (params.get('a')) checkURLParams();
     else restoreState();
+    if (params.get('car') === '1') openCarMode();
+    if (params.get('surprise') === '1') surpriseMe();
   })
   .catch(function() {
     document.getElementById('splash').classList.add('hide');
