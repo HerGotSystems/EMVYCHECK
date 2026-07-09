@@ -1,8 +1,25 @@
-const CACHE = 'emvy-v1';
+const CACHE = 'emvy-v2-car-audio';
+const HARDENING_SCRIPT = '<script src="/car-audio-hardening.js?v=20260709"></script>';
 const SHELL = [
   '/',
-  '/manifest.webmanifest'
+  '/manifest.webmanifest',
+  '/car-audio-hardening.js'
 ];
+
+function injectCarHardening(html) {
+  if (!html || html.indexOf('car-audio-hardening.js') !== -1) return html;
+  return html.replace('</body>', HARDENING_SCRIPT + '\n</body>');
+}
+
+function htmlWithHardening(res) {
+  return res.text().then(function(html) {
+    return new Response(injectCarHardening(html), {
+      status: res.status,
+      statusText: res.statusText,
+      headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' }
+    });
+  });
+}
 
 // Install: cache the shell
 self.addEventListener('install', function(e) {
@@ -26,7 +43,7 @@ self.addEventListener('activate', function(e) {
 });
 
 // Fetch strategy:
-// - Shell (index.html): network first, fall back to cache
+// - Shell (index.html): network first, inject car audio hardening, fall back to cache
 // - playlist.json: network first, fall back to cache (stale ok)
 // - Audio / images (media.emvycheck.com): network only, no caching (files too large)
 // - Everything else: network first, fall back to cache
@@ -52,16 +69,21 @@ self.addEventListener('fetch', function(e) {
     return;
   }
 
-  // HTML shell — network first, cache fallback
+  // HTML shell — network first, inject car audio hardening, cache fallback
   if (e.request.mode === 'navigate') {
     e.respondWith(
       fetch(e.request)
         .then(function(res) {
           var clone = res.clone();
           caches.open(CACHE).then(function(c) { c.put(e.request, clone); });
-          return res;
+          return htmlWithHardening(res);
         })
-        .catch(function() { return caches.match('/'); })
+        .catch(function() {
+          return caches.match('/').then(function(cached) {
+            if (!cached) return cached;
+            return htmlWithHardening(cached);
+          });
+        })
     );
     return;
   }
