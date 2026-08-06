@@ -1,0 +1,251 @@
+{
+  "version": 4,
+  "controls": {
+    "bpm": "80",
+    "subdivision": "2",
+    "offset": "6",
+    "triggerMode": "hybrid",
+    "sensitivity": "200",
+    "cooldown": "398",
+    "dropStrength": "100",
+    "dancerCount": "3",
+    "dancerSize": "80",
+    "spread": "93",
+    "mirrorMode": "on",
+    "trailAmount": "2",
+    "flashIntensity": "100",
+    "cameraShake": "100",
+    "glitchChance": "100",
+    "barsAmount": "100",
+    "vignette": "0",
+    "kickLane": "100",
+    "snareLane": "100",
+    "accentLane": "100",
+    "stageTitleInput": "EMVY STAGE ENGINE",
+    "charA": "rubber",
+    "charB": "worker",
+    "charC": "breaker",
+    "charD": "serpent"
+  },
+  "packs": [
+    {
+      "key": "A",
+      "poses": [
+        {
+          "name": "Bivoj_01_pose_01",
+          "group": "idle"
+        },
+        {
+          "name": "Bivoj_02_pose_02",
+          "group": "kick"
+        },
+        {
+          "name": "Bivoj_03_pose_03",
+          "group": "kick"
+        },
+        {
+          "name": "Bivoj_04_pose_04",
+          "group": "snare"
+        },
+        {
+          "name": "Bivoj_05_pose_05",
+          "group": "snare"
+        },
+        {
+          "name": "Bivoj_06_pose_06",
+          "group": "jump"
+        },
+        {
+          "name": "Bivoj_07_pose_07",
+          "group": "accent"
+        },
+        {
+          "name": "Bivoj_08_pose_08",
+          "group": "jump"
+        },
+        {
+          "name": "Bivoj_09_pose_09",
+          "group": "kick"
+        },
+        {
+          "name": "Bivoj_10_pose_10",
+          "group": "snare"
+        },
+        {
+          "name": "Bivoj_11_pose_11",
+          "group": "idle"
+        },
+        {
+          "name": "Bivoj_12_pose_12",
+          "group": "kick"
+        },
+        {
+          "name": "Bivoj_13_pose_13",
+          "group": "snare"
+        },
+        {
+          "name": "Bivoj_14_pose_14",
+          "group": "kick"
+        },
+        {
+          "name": "Bivoj_15_pose_15",
+          "group": "jump"
+        }
+      ]
+    },
+    {
+      "key": "B",
+      "poses": [
+        {
+          "name": "GlitchBot_01_pose_01",
+          "group": "snare"
+        },
+        {
+          "name": "GlitchBot_02_pose_02",
+          "group": "snare"
+        },
+        {
+          "name": "GlitchBot_03_pose_03",
+          "group": "idle"
+        },
+        {
+          "name": "GlitchBot_04_pose_04",
+          "group": "kick"
+        },
+        {
+          "name": "GlitchBot_05_pose_05",
+          "group": "accent"
+        },
+        {
+          "name": "GlitchBot_06_pose_06",
+          "group": "jump"
+        },
+        {
+          "name": "GlitchBot_07_pose_07",
+          "group": "kick"
+        },
+        {
+          "name": "GlitchBot_08_pose_08",
+          "group": "idle"
+        },
+        {
+          "name": "GlitchBot_09_pose_09",
+          "group": "snare"
+        },
+        {
+          "name": "GlitchBot_10_pose_10",
+          "group": "jump"
+        },
+        {
+          "name": "GlitchBot_11_pose_11",
+          "group": "snare"
+        },
+        {
+          "name": "GlitchBot_12_pose_12",
+          "group": "jump"
+        },
+        {
+          "name": "GlitchBot_13_pose_13",
+          "group": "kick"
+        },
+        {
+          "name": "GlitchBot_14_pose_14",
+          "group": "idle"
+        },
+        {
+          "name": "GlitchBot_15_pose_15",
+          "group": "kick"
+        },
+        {
+          "name": "GlitchBot_16_pose_16",
+          "group": "snare"
+        },
+        {
+          "name": "GlitchBot_17_pose_17",
+          "group": "kick"
+        },
+        {
+          "name": "GlitchBot_18_pose_18",
+          "group": "accent"
+        },
+        {
+          "name": "GlitchBot_19_pose_19",
+          "group": "jump"
+        },
+        {
+          "name": "GlitchBot_20_pose_20",
+          "group": "snare"
+        }
+      ]
+    },
+    {
+      "key": "C",
+      "poses": [
+        {
+          "name": "CyberPunk_01_pose_01",
+          "group": "snare"
+        },
+        {
+          "name": "CyberPunk_02_pose_02",
+          "group": "snare"
+        },
+        {
+          "name": "CyberPunk_03_pose_03",
+          "group": "jump"
+        },
+        {
+          "name": "CyberPunk_04_pose_04",
+          "group": "kick"
+        },
+        {
+          "name": "CyberPunk_05_pose_05",
+          "group": "kick"
+        },
+        {
+          "name": "CyberPunk_06_pose_06",
+          "group": "accent"
+        },
+        {
+          "name": "CyberPunk_07_pose_07",
+          "group": "jump"
+        },
+        {
+          "name": "CyberPunk_08_pose_08",
+          "group": "snare"
+        },
+        {
+          "name": "CyberPunk_09_pose_09",
+          "group": "kick"
+        },
+        {
+          "name": "CyberPunk_10_pose_10",
+          "group": "idle"
+        },
+        {
+          "name": "CyberPunk_11_pose_11",
+          "group": "kick"
+        },
+        {
+          "name": "CyberPunk_12_pose_12",
+          "group": "snare"
+        },
+        {
+          "name": "CyberPunk_13_pose_13",
+          "group": "jump"
+        },
+        {
+          "name": "CyberPunk_14_pose_14",
+          "group": "accent"
+        },
+        {
+          "name": "CyberPunk_15_pose_15",
+          "group": "kick"
+        }
+      ]
+    },
+    {
+      "key": "D",
+      "poses": []
+    }
+  ]
+}

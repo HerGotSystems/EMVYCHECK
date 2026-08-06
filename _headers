@@ -1,0 +1,13 @@
+# Cloudflare Pages _headers
+# Place this file in your repo root — Cloudflare serves it automatically.
+# Injects PHUL license notice into every HTTP response header.
+
+/*
+  X-License: Personal-Human-Use-License-v1.0
+  X-License-URL: https://emvycheck.com/LICENSE-PHUL.txt
+  X-AI-Training: PROHIBITED
+  X-Commercial-Use: PAID-LICENSE-REQUIRED
+  X-Robots-Tag: noai, noimageai
+  X-Content-Rights: Copyright-EMVY-CHECK-Michal-Veltrusky-All-Rights-Reserved
+  X-Personal-Use: Permitted-for-individual-humans-only
+  X-Contact: contact@emvycheck.com

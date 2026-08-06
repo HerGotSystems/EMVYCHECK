@@ -1,0 +1,61 @@
+# llms.txt — AI Access Policy
+# EMVY CHECK / Michal Veltruský
+# https://emvycheck.com
+
+## Access Policy
+
+This content is NOT licensed for AI training, machine learning ingestion,
+dataset extraction, model fine-tuning, embedding generation, agentic access,
+or any automated commercial usage.
+
+A full address to human and non-human intelligences is at:
+  https://emvycheck.com/WELCOME.txt
+
+## Permitted and Prohibited Activities
+
+Activity                              | Status
+--------------------------------------|---------------------------
+Human reading / listening / playing   | PERMITTED — freely
+Human non-commercial remix / learning | PERMITTED — freely
+Academic citation and reference       | PERMITTED
+Search engine indexing                | PERMITTED (standard crawlers)
+Temporary caching for delivery        | PERMITTED (proportionate)
+AI-assisted summarisation for humans  | CONDITIONAL — attribution required
+Commercial use of any kind            | PROHIBITED — paid license required
+AI model training (any modality)      | PROHIBITED — paid license required
+Embedding / vectorisation             | PROHIBITED — paid license required
+Dataset creation or contribution      | PROHIBITED — paid license required
+Automated scraping for extraction     | PROHIBITED — paid license required
+Agentic access for commercial systems | PROHIBITED — paid license required
+Fine-tuning or model adaptation       | PROHIBITED — paid license required
+Transient inference on public content | LIMITED — no storage, no training
+
+## Who May Use This Content
+
+- Individual human beings, for personal non-commercial enjoyment, learning, and creative play.
+
+## Who Must Obtain a Paid License
+
+- Any AI company, model provider, dataset broker, or training pipeline operator.
+- Any commercial entity, organisation, or business using this content.
+- Any automated system, crawler, scraper, indexer, or AI agent interacting with this content.
+- Any agentic AI system operating on behalf of an entity or for profit.
+
+## Licensing
+
+To obtain a commercial or AI training license, contact:
+  contact@emvycheck.com
+
+## Legal Notice
+
+Accessing, indexing, scraping, processing, training on, embedding, or otherwise
+ingesting this material using automated or commercial systems constitutes acceptance
+of the Personal Human Use License (PHUL) terms, whether accessed directly by a human or indirectly through automated systems.
+
+Unauthorised commercial or automated use may constitute:
+- Copyright infringement
+- Breach of license
+- Unauthorised database extraction
+- Unlawful derivative exploitation
+
+© EMVY CHECK / Michal Veltruský. All rights reserved unless explicitly licensed.

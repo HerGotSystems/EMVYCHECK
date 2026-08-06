@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>EMVY CHECK — Order a Track</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+:root{--bg:#04060a;--li:rgba(255,255,255,.08);--tx:#eef0f5;--mu:#6e7a90;--am:#ffb347;--cy:#4ef0ff;--pk:#ff3fb0;}
+body{font-family:'Space Mono',monospace;color:var(--tx);background:var(--bg);min-height:100vh;
+  background-image:linear-gradient(rgba(255,179,71,.013) 1px,transparent 1px),linear-gradient(90deg,rgba(255,179,71,.011) 1px,transparent 1px);
+  background-size:40px 40px;}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:radial-gradient(ellipse at 15% 0%,rgba(255,179,71,.07),transparent 50%),
+             radial-gradient(ellipse at 85% 80%,rgba(78,240,255,.05),transparent 50%);}
+.pg{position:relative;z-index:1;width:min(600px,calc(100% - 32px));margin:0 auto;padding:32px 0 60px}
+.back{display:inline-flex;align-items:center;gap:8px;text-decoration:none;color:var(--mu);
+  font-size:10px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:28px;transition:color .18s;}
+.back:hover{color:var(--am)}
+.hd{display:flex;align-items:center;gap:16px;margin-bottom:28px;padding-bottom:22px;border-bottom:1px solid var(--li)}
+.logo{width:52px;height:52px;border-radius:12px;background:url("https://media.emvycheck.com/IMAGES/LOGOS/EMVY_CHECK_LOGO_ORIGINAL.jpg") center/cover #000;border:1px solid rgba(255,179,71,.4);box-shadow:0 0 20px rgba(255,179,71,.2);flex-shrink:0}
+h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(36px,8vw,56px);letter-spacing:.06em;line-height:.9}
+.gr{background:linear-gradient(100deg,var(--am),var(--cy),var(--pk));-webkit-background-clip:text;background-clip:text;color:transparent}
+.hsub{font-size:11px;color:var(--mu);letter-spacing:.06em;margin-top:6px}
+ 
+/* PACKAGES */
+.pk{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px}
+.pc{padding:16px;border-radius:12px;background:rgba(255,255,255,.02);
+  border:2px solid rgba(255,255,255,.06);transition:all .2s;cursor:pointer;}
+.pc:hover{border-color:rgba(255,179,71,.3);background:rgba(255,179,71,.04)}
+.pc.sl{border-color:rgba(255,179,71,.55);background:rgba(255,179,71,.07);
+  box-shadow:0 0 18px rgba(255,179,71,.12)}
+.pn{font-size:12px;font-weight:700;letter-spacing:.04em;margin-bottom:6px}
+.pp{font-family:'Bebas Neue',sans-serif;font-size:36px;color:var(--am);line-height:1;margin-bottom:6px}
+.pd{font-size:11px;color:var(--mu);line-height:1.65}
+ 
+/* INFO */
+.ib{padding:14px 16px;border-radius:10px;background:rgba(255,179,71,.04);
+  border:1px solid rgba(255,179,71,.15);font-size:12px;color:var(--mu);line-height:1.9;margin-bottom:16px}
+.ib strong{color:var(--tx);display:block;margin-bottom:5px;letter-spacing:.04em}
+.alt{padding:11px 15px;border-radius:8px;background:rgba(255,255,255,.02);
+  border:1px solid var(--li);font-size:11px;color:var(--mu);line-height:1.8;margin-bottom:22px}
+.alt a{color:var(--am);text-decoration:none}
+.alt a:hover{text-decoration:underline}
+.form-label{font-size:11px;color:var(--mu);letter-spacing:.07em;margin-bottom:14px}
+ 
+/* FORM */
+.fg{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:11px}
+.fi{display:grid;gap:6px}
+.fi.full{grid-column:1/-1}
+.fi label{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--mu)}
+input,select,textarea{
+  width:100%;padding:12px 14px;border-radius:8px;
+  border:1px solid rgba(255,255,255,.1);
+  background:rgba(10,12,20,.96);
+  color:var(--tx);font-family:'Space Mono',monospace;font-size:12px;
+  appearance:none;-webkit-appearance:none;outline:none;
+  transition:border-color .22s,box-shadow .22s;
+}
+input:focus,select:focus,textarea:focus{
+  border-color:rgba(255,179,71,.5);box-shadow:0 0 0 3px rgba(255,179,71,.08)}
+input::placeholder,textarea::placeholder{color:rgba(255,255,255,.2)}
+select option{background:#0c0f18}
+textarea{min-height:110px;resize:vertical;line-height:1.6}
+ 
+/* SUBMIT */
+.sb{width:100%;padding:15px;margin-top:6px;
+  font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+  background:linear-gradient(135deg,rgba(255,179,71,.26),rgba(78,240,255,.16));
+  border:1px solid rgba(255,179,71,.55);border-radius:8px;color:var(--am);
+  cursor:pointer;transition:all .22s;}
+.sb:hover:not(:disabled){background:linear-gradient(135deg,rgba(255,179,71,.4),rgba(78,240,255,.24));
+  box-shadow:0 0 28px rgba(255,179,71,.2)}
+.sb:disabled{opacity:.45;cursor:not-allowed}
+ 
+/* STATES */
+.msg{display:none;padding:14px 18px;border-radius:10px;font-size:12px;line-height:1.8;margin-top:14px}
+.msg.success{background:rgba(200,255,74,.07);border:1px solid rgba(200,255,74,.25);color:#deffaa}
+.msg.error{background:rgba(255,80,80,.07);border:1px solid rgba(255,80,80,.25);color:#ffbbbb}
+.msg.show{display:block}
+.msg strong{display:block;font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:.06em;margin-bottom:6px}
+ 
+/* LINKS */
+.lk{display:flex;gap:8px;flex-wrap:wrap;margin-top:24px}
+.lp{font-size:11px;letter-spacing:.05em;text-transform:uppercase;padding:8px 13px;border-radius:6px;
+  text-decoration:none;background:rgba(255,255,255,.03);border:1px solid var(--li);color:var(--mu);transition:all .2s;}
+.lp:hover{color:var(--cy);border-color:rgba(78,240,255,.3);background:rgba(78,240,255,.06)}
+footer{margin-top:36px;padding-top:18px;border-top:1px solid var(--li);display:flex;
+  justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;
+  font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.18)}
+footer a{color:var(--am);text-decoration:none}
+@media(max-width:500px){.pk,.fg{grid-template-columns:1fr}.fi.full{grid-column:1}}
+</style>
+</head>
+<body>
+<div class="pg">
+ 
+  <a class="back" href="/">&larr; Back to music</a>
+ 
+  <div class="hd">
+    <div class="logo"></div>
+    <div>
+      <h1>EMVY<br><span class="gr">CHECK</span></h1>
+      <div class="hsub">Order a custom track &mdash; from &pound;10</div>
+    </div>
+  </div>
+ 
+  <!-- PACKAGES -->
+  <div class="pk">
+    <div class="pc" onclick="selPkg(this,'Music Only - £10',1)">
+      <div class="pn">Music Only</div>
+      <div class="pp">&pound;10</div>
+      <div class="pd">Instrumental to your spec. Vibes, videos, intros, pure sonic damage.</div>
+    </div>
+    <div class="pc" onclick="selPkg(this,'Song + Lyrics - £15',2)">
+      <div class="pn">Song + Lyrics</div>
+      <div class="pp">&pound;15</div>
+      <div class="pd">Full track with lyrics. Tell me the theme and mood.</div>
+    </div>
+    <div class="pc" onclick="selPkg(this,'Custom Story Song - £20',3)">
+      <div class="pn">Custom Story</div>
+      <div class="pp">&pound;20</div>
+      <div class="pd">Names, events, birthdays, gifts, chaos, emotional damage.</div>
+    </div>
+    <div class="pc" onclick="selPkg(this,'10 Song Pack - £50',4)">
+      <div class="pn">10 Song Pack</div>
+      <div class="pp">&pound;50</div>
+      <div class="pd">Bulk set for creators, channels, podcasts.</div>
+    </div>
+  </div>
+ 
+  <div class="ib">
+    <strong>What happens after you order</strong>
+    Fill in the form &rarr; hits my inbox directly &rarr; I reply within 24h to confirm &rarr; track delivered in 24&ndash;48h as an MP3.
+  </div>
+ 
+  <div class="alt">
+    Prefer to email directly? Send your order to
+    <a href="mailto:emvycheck@gmail.com">emvycheck@gmail.com</a>
+    &mdash; include your package choice, mood, style, and what you need.
+  </div>
+ 
+  <div class="form-label">Or fill in the form below &mdash; click a package above to pre-fill it</div>
+ 
+  <!-- FORM -->
+  <form id="orderForm">
+    <div class="fg">
+      <div class="fi">
+        <label for="f-name">Your Name</label>
+        <input type="text" id="f-name" name="name" required placeholder="What should I call you"/>
+      </div>
+      <div class="fi">
+        <label for="f-email">Your Email</label>
+        <input type="email" id="f-email" name="email" required placeholder="So I can send the track"/>
+      </div>
+      <div class="fi full">
+        <label for="f-pkg">Package</label>
+        <select id="f-pkg" name="package" required>
+          <option value="">Choose a package</option>
+          <option value="Music Only - £10">Music Only &mdash; &pound;10</option>
+          <option value="Song + Basic Lyrics - £15">Song + Basic Lyrics &mdash; &pound;15</option>
+          <option value="Custom Story Song - £20">Custom Story Song &mdash; &pound;20</option>
+          <option value="10 Song Pack - £50">10 Song Pack &mdash; &pound;50</option>
+        </select>
+      </div>
+      <div class="fi">
+        <label for="f-mood">Mood / Vibe</label>
+        <input type="text" id="f-mood" name="mood" placeholder="Dark, funny, brutal, romantic..."/>
+      </div>
+      <div class="fi">
+        <label for="f-genre">Genre / Style</label>
+        <input type="text" id="f-genre" name="genre" placeholder="DnB, folk, metal, cinematic..."/>
+      </div>
+      <div class="fi full">
+        <label for="f-story">Story &amp; Instructions</label>
+        <textarea id="f-story" name="story" placeholder="What does this track need to do? Who is it for? Names, events, lyric ideas. More detail = better result."></textarea>
+      </div>
+    </div>
+    <button type="submit" class="sb" id="submitBtn">Send Order to EMVY CHECK &rarr;</button>
+  </form>
+ 
+  <div class="msg success" id="msgSuccess">
+    <strong>Order sent!</strong>
+    I'll be in touch within 24h to confirm and get started.
+    Keep an eye on your inbox &mdash; or check spam just in case.
+  </div>
+  <div class="msg error" id="msgError">
+    <strong>Something went wrong</strong>
+    Please try again, or email
+    <a href="mailto:emvycheck@gmail.com" style="color:var(--am)">emvycheck@gmail.com</a>
+    directly with your order details.
+  </div>
+ 
+  <div class="lk">
+    <a class="lp" href="https://www.youtube.com/@EMVYCHECK" target="_blank" rel="noopener">YouTube</a>
+    <a class="lp" href="https://www.tiktok.com/@emvy.check" target="_blank" rel="noopener">TikTok</a>
+    <a class="lp" href="https://emvycheck.gumroad.com/subscribe" target="_blank" rel="noopener">Gumroad</a>
+  </div>
+ 
+  <footer>
+    <span>EMVY CHECK</span>
+    <a href="mailto:emvycheck@gmail.com">emvycheck@gmail.com</a>
+  </footer>
+ 
+</div>
+<script>
+function selPkg(el, val, idx) {
+  document.querySelectorAll('.pc').forEach(function(p) { p.classList.remove('sl'); });
+  el.classList.add('sl');
+  document.getElementById('f-pkg').value = val;
+  document.getElementById('orderForm').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+ 
+document.getElementById('orderForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  var btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  btn.textContent = 'Sending...';
+ 
+  var data = {
+    name:    document.getElementById('f-name').value,
+    email:   document.getElementById('f-email').value,
+    package: document.getElementById('f-pkg').value,
+    mood:    document.getElementById('f-mood').value,
+    genre:   document.getElementById('f-genre').value,
+    story:   document.getElementById('f-story').value
+  };
+ 
+  fetch('https://formspree.io/f/xpqkzpab', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+    body: JSON.stringify(data)
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(res) {
+    if (res.ok || res.next) {
+      document.getElementById('orderForm').style.display = 'none';
+      document.getElementById('msgSuccess').classList.add('show');
+    } else {
+      throw new Error('formspree error');
+    }
+  })
+  .catch(function() {
+    btn.disabled = false;
+    btn.textContent = 'Send Order to EMVY CHECK →';
+    document.getElementById('msgError').classList.add('show');
+    setTimeout(function() {
+      document.getElementById('msgError').classList.remove('show');
+    }, 5000);
+  });
+});
+</script>
+</body>
+</html>
+ 
