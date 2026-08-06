@@ -8,20 +8,13 @@
     if (!menu || menu.querySelector('[data-emvy-site-link]')) return;
 
     const order = menu.querySelector('a[href="/order.html"]');
-    const links = [
-      { href: '/art/', label: 'Art', title: 'EMVY CHECK ART showcase' },
-      { href: '/canvas-grid/', label: 'Grid', title: 'Open Canvas Grid Art Forge' }
-    ];
-
-    for (const item of links) {
-      const link = document.createElement('a');
-      link.className = 'top-btn';
-      link.href = item.href;
-      link.textContent = item.label;
-      link.title = item.title;
-      link.dataset.emvySiteLink = 'true';
-      menu.insertBefore(link, order || null);
-    }
+    const link = document.createElement('a');
+    link.className = 'top-btn';
+    link.href = '/art/';
+    link.textContent = 'Art';
+    link.title = 'EMVY CHECK ART showcase';
+    link.dataset.emvySiteLink = 'true';
+    menu.insertBefore(link, order || null);
   }
 
   if (document.readyState === 'loading') {
