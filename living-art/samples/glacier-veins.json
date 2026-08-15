@@ -1,0 +1,15 @@
+{
+  "id": "glacier-veins",
+  "title": "Glacier Veins",
+  "seed": "EMVY-CG-027",
+  "palette": "Glacier",
+  "source": "living-art-engine-sample",
+  "layout": "1x1",
+  "compositionMode": "continuous",
+  "panels": [ { "index": 1, "label": "R1-C1" } ],
+  "masterImage": null,
+  "animationProfile": { "motion": "flowing", "speedHint": 34 },
+  "musicProfile": { "reactive": true, "primaryBand": "mid" },
+  "author": "EMVY CHECK",
+  "livingArtPreview": { "family": "veins", "note": "Sample only - rendered live by the public Living Art engine, not the private generator. Real Canvas Grid Studio publishes will populate masterImage/panels[].image instead." }
+}

@@ -1,1 +1,261 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>EMVY CHECK — Living Art</title><meta http-equiv="refresh" content="0; url=product.html"><script>location.replace('product.html'+location.search+location.hash)</script></head><body style="margin:0;background:#080808;color:#eee;font-family:system-ui;display:grid;place-items:center;height:100vh"><a href="product.html" style="color:#eee">Open EMVY CHECK Living Art</a></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<meta name="theme-color" content="#080808" />
+<title>EMVY CHECK — Living Art</title>
+<meta name="description" content="Original generative art for connected displays. One screen or a coordinated wall, live, static or music-reactive, every generation original." />
+<meta name="robots" content="noai, noimageai">
+<meta name="ai-training" content="disallowed">
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div class="app" id="app">
+
+  <header class="topbar" id="topbar">
+    <div class="brand"><strong>EMVY CHECK</strong><span>LIVING ART</span></div>
+    <span class="pill">V2</span>
+    <div class="top-actions">
+      <button class="btn hot" id="btnNewArt" title="New artwork">ART</button>
+      <button class="btn" id="btnPalette" title="New colour">COLOUR</button>
+      <button class="btn" id="btnStyle" title="Next visual family">STYLE</button>
+      <button class="btn" id="btnFullscreen" title="Fullscreen">FULLSCREEN</button>
+      <button class="btn icon" id="btnPresent" title="Presentation mode">▶ DEMO</button>
+    </div>
+  </header>
+
+  <main class="stage">
+    <section class="wall" id="wallSection">
+      <div class="overlay" id="overlay">
+        <h1>Your wall. Never the same twice.</h1>
+        <p>Original generative artwork for one display or a coordinated display wall.</p>
+      </div>
+      <div class="present-text" id="presentText"></div>
+      <div class="grid-wrap" id="gridWrap"><div class="grid" id="grid"></div></div>
+    </section>
+
+    <aside class="sidebar" id="sidebar">
+
+      <div class="section">
+        <div class="label">Screens <b id="lblLayout">3 × 3</b></div>
+        <div class="segment" id="segLayout">
+          <button class="small-btn" data-layout="1">1</button>
+          <button class="small-btn" data-layout="4">4</button>
+          <button class="small-btn on" data-layout="9">9</button>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="label">Composition <b id="lblComposition">One artwork</b></div>
+        <div class="segment three" id="segComposition">
+          <button class="small-btn on" data-composition="continuous">ONE ARTWORK</button>
+          <button class="small-btn" data-composition="family">SEED FAMILY</button>
+          <button class="small-btn" data-composition="independent">COLLECTION</button>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="label">Display <b id="lblMode">Paper</b></div>
+        <div class="segment three" id="segMode">
+          <button class="small-btn on" data-mode="paper">PAPER</button>
+          <button class="small-btn" data-mode="live">LIVE</button>
+          <button class="small-btn" data-mode="music">MUSIC</button>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="label">Shape <b id="lblAspect">Square</b></div>
+        <div class="segment" id="segAspect">
+          <button class="small-btn on" data-aspect="square">1:1</button>
+          <button class="small-btn" data-aspect="wide">16:9</button>
+          <button class="small-btn" data-aspect="classic">4:3</button>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="label">Style <b id="lblFamily">Contours</b></div>
+        <div class="row">
+          <button class="small-btn" id="btnFamilyPrev">←</button>
+          <button class="small-btn" id="btnFamilyNext">NEXT →</button>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="label">Seed <b>reproducible</b></div>
+        <div class="seed-row"><input class="seed-input" id="seedInput" maxlength="40" value="EMVY-0001" /><button class="small-btn" id="btnSeedApply">SET</button></div>
+      </div>
+
+      <div class="section">
+        <div class="label">Density <b id="lblDensity">58</b></div>
+        <input class="range" type="range" id="rangeDensity" min="20" max="100" value="58" />
+      </div>
+      <div class="section">
+        <div class="label">Motion <b id="lblSpeed">28</b></div>
+        <input class="range" type="range" id="rangeSpeed" min="5" max="100" value="28" />
+      </div>
+
+      <div class="section" id="musicSection">
+        <div class="label">Music <b id="lblMusicTrack">not playing</b></div>
+        <div class="segment three">
+          <button class="small-btn" data-music="emvy">EMVY MUSIC</button>
+          <button class="small-btn" data-music="local">YOUR MUSIC</button>
+          <button class="small-btn" data-music="demo">DEMO BEAT</button>
+        </div>
+        <input hidden id="audioFile" type="file" accept="audio/*" />
+        <div class="player-bar" id="playerBar">
+          <button class="icon-btn" id="btnPrev" title="Previous">⏮</button>
+          <button class="icon-btn" id="btnPlayPause" title="Play / pause">▶</button>
+          <button class="icon-btn" id="btnNext" title="Next">⏭</button>
+          <button class="icon-btn" id="btnShuffle" title="Shuffle">🔀</button>
+          <input class="range small" id="rangeProgress" type="range" min="0" max="1000" value="0" />
+          <input class="range small" id="rangeVolume" type="range" min="0" max="100" value="80" title="Volume" />
+        </div>
+        <div class="label" style="margin-top:8px">Sensitivity <b id="lblSensitivity">Normal</b></div>
+        <div class="segment three">
+          <button class="small-btn" data-sensitivity="calm">CALM</button>
+          <button class="small-btn on" data-sensitivity="normal">NORMAL</button>
+          <button class="small-btn" data-sensitivity="hard">HARD</button>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="label">Source <b id="lblSource">Generative</b></div>
+        <div class="segment two">
+          <button class="small-btn on" data-source="generative">GENERATIVE LIVE</button>
+          <button class="small-btn" data-source="canvasgrid">CANVAS GRID</button>
+        </div>
+        <div id="canvasGridPicker" class="cg-picker" hidden></div>
+      </div>
+
+      <details class="advanced">
+        <summary>More settings</summary>
+        <div class="section">
+          <div class="label">Quality <b id="lblQuality">Auto</b></div>
+          <div class="segment four">
+            <button class="small-btn on" data-quality="auto">AUTO</button>
+            <button class="small-btn" data-quality="low">LOW</button>
+            <button class="small-btn" data-quality="normal">NORMAL</button>
+            <button class="small-btn" data-quality="high">HIGH</button>
+          </div>
+        </div>
+        <div class="section">
+          <div class="label">Auto art <b id="lblAutoInterval">Manual</b></div>
+          <select class="select" id="selectAutoInterval">
+            <option value="manual">Manual</option>
+            <option value="minute">Every minute</option>
+            <option value="hour">Every hour</option>
+            <option value="day">Every day</option>
+            <option value="week">Every week</option>
+          </select>
+          <select class="select" id="selectAutoMode" style="margin-top:6px">
+            <option value="new-art">New art</option>
+            <option value="same-palette">Same art / new palette</option>
+            <option value="same-family">Same family / new seed</option>
+            <option value="favourites">Favourites only</option>
+          </select>
+        </div>
+        <div class="section">
+          <div class="label">ePaper preview <b id="lblEpaper">Off</b></div>
+          <button class="small-btn" id="btnEpaperToggle" style="width:100%">TOGGLE E-PAPER LOOK</button>
+          <div class="note">Approximate look only - not exact Samsung/Philips colour reproduction.</div>
+        </div>
+        <div class="section">
+          <div class="label">Installation seed <b>schedule sync</b></div>
+          <input class="seed-input" id="installSeedInput" maxlength="40" placeholder="defaults to artwork seed" />
+        </div>
+      </details>
+
+      <div class="section">
+        <div class="label">Save <b>local library</b></div>
+        <div class="row">
+          <button class="small-btn" id="btnSaveArtwork">SAVE ARTWORK</button>
+          <button class="small-btn" id="btnMyArt">MY ART</button>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="label">Screens <b>install</b></div>
+        <button class="small-btn hot" id="btnInstall" style="width:100%">SCREENS / INSTALL</button>
+      </div>
+
+      <div class="note">Runs as one wall player or numbered Screen 1–9 URLs. Scheduled installs stay synchronised from the same deterministic seed without a server.</div>
+    </aside>
+  </main>
+
+  <div class="mobile-dock" id="mobileDock">
+    <button class="btn hot" id="mobileNew">ART</button>
+    <button class="btn" id="mobileColour">COLOUR</button>
+    <button class="btn" id="mobileMode">MODE</button>
+    <button class="btn" id="mobileGrid">SCREENS</button>
+  </div>
+</div>
+
+<!-- MY ART library modal -->
+<div class="modal" id="modalLibrary">
+  <div class="card">
+    <div class="cardhead"><b>MY ART</b><button class="btn" data-close="modalLibrary">CLOSE</button></div>
+    <div id="libraryList" class="library-list"></div>
+    <div class="note">Saved locally in this browser. No account, nothing leaves this device.</div>
+  </div>
+</div>
+
+<!-- Save artwork modal -->
+<div class="modal" id="modalSave">
+  <div class="card small">
+    <div class="cardhead"><b>SAVE ARTWORK</b><button class="btn" data-close="modalSave">CLOSE</button></div>
+    <input class="seed-input" id="saveNameInput" placeholder="Name this artwork" maxlength="60" />
+    <button class="btn hot" id="btnConfirmSave" style="width:100%;margin-top:10px">SAVE</button>
+    <div class="note" style="margin-top:12px">Or copy a portable ART CODE to reproduce this exact artwork anywhere:</div>
+    <textarea id="artCodeOut" readonly></textarea>
+    <div class="row" style="margin-top:8px">
+      <button class="btn" id="btnCopyArtCode">COPY ART CODE</button>
+      <button class="btn" id="btnDownloadArtCode">DOWNLOAD .JSON</button>
+    </div>
+    <div class="note" style="margin-top:12px">Import an ART CODE:</div>
+    <textarea id="artCodeIn" placeholder="Paste an ART CODE here"></textarea>
+    <button class="btn" id="btnImportArtCode" style="width:100%;margin-top:8px">LOAD ART CODE</button>
+  </div>
+</div>
+
+<!-- Install / player links modal -->
+<div class="modal" id="modalInstall">
+  <div class="card">
+    <div class="cardhead"><b>INSTALLATION OUTPUTS</b><button class="btn" data-close="modalInstall">CLOSE</button></div>
+    <div class="install-grid">
+      <div class="ibox">
+        <h3>WALL PLAYER</h3>
+        <p>One computer renders the whole display wall fullscreen. Suitable for a single output, video-wall controller or signage box.</p>
+        <button class="btn hot" id="btnOpenWallPlayer">OPEN WALL PLAYER</button>
+      </div>
+      <div class="ibox">
+        <h3>PANEL PLAYER</h3>
+        <p>Each physical screen opens its own numbered URL and renders only its section. Same seed + schedule keeps them coordinated.</p>
+        <button class="btn" id="btnCopyPanelLinks">COPY ALL SCREEN LINKS</button>
+      </div>
+    </div>
+    <textarea id="installUrls" readonly></textarea>
+    <div class="note">In PLAYER mode no controls are shown. Tap the top-left corner five times, or press the backtick key, to reveal a minimal control overlay.</div>
+  </div>
+</div>
+
+<!-- hidden player-mode control overlay -->
+<div class="player-overlay" id="playerOverlay" hidden>
+  <button class="btn hot" id="playerExit">EXIT TO CONTROL</button>
+  <button class="btn" id="playerNewArt">NEW ART</button>
+  <span class="player-info" id="playerInfo"></span>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="engine.js"></script>
+<script src="state.js"></script>
+<script src="audio.js"></script>
+<script src="sync.js"></script>
+<script src="library.js"></script>
+<script src="canvasgrid.js"></script>
+<script src="player.js"></script>
+<script src="presentation.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

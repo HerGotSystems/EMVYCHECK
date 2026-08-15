@@ -1,0 +1,18 @@
+{
+  "id": "midnight-topography",
+  "title": "Midnight Topography",
+  "seed": "EMVY-CG-041",
+  "palette": "Midnight",
+  "source": "living-art-engine-sample",
+  "layout": "2x2",
+  "compositionMode": "family",
+  "panels": [
+    { "index": 1, "label": "R1-C1" }, { "index": 2, "label": "R1-C2" },
+    { "index": 3, "label": "R2-C1" }, { "index": 4, "label": "R2-C2" }
+  ],
+  "masterImage": null,
+  "animationProfile": { "motion": "still", "speedHint": 10 },
+  "musicProfile": { "reactive": false, "primaryBand": "treble" },
+  "author": "EMVY CHECK",
+  "livingArtPreview": { "family": "radial", "note": "Sample only - rendered live by the public Living Art engine, not the private generator. Real Canvas Grid Studio publishes will populate masterImage/panels[].image instead." }
+}
