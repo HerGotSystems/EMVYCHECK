@@ -34,7 +34,7 @@ working should be assumed not working.
   private Canvas Grid Studio generator (see "FUTURE" below).
 - **Presentation mode**: ~75s honest looping demo, including a clearly
   labelled *simulated* remote-control section.
-- **Remote room control (new in V3)**: a phone/laptop "controller" can
+- **Remote room control (V3, hardened)**: a phone/laptop "controller" can
   change seed, palette, family, density, speed, composition, display mode,
   aspect, ePaper, quality, sensitivity, source and auto-art settings on a
   room, and every connected wall/panel player updates over WebSocket.
@@ -42,11 +42,16 @@ working should be assumed not working.
   Worker: room creation, QR + copyable links, panel connect, a NEW ART
   patch reaching a connected panel and changing its rendered pixels in
   under a second, INSTALLATION STATUS correctly showing which screens are
-  connected, DISCONNECT, and reconnection after a page reload.
+  connected, DISCONNECT, and reconnection after a page reload. Every
+  capability link (controller and panel) carries its room/token in the
+  URL fragment, never the query string, so it is never sent to any
+  server on navigation - see `living-art-cloud/PROTOCOL.md`.
 - **Shared LIVE timing**: connected panels derive their animation phase
-  from the room's `liveEpoch` (a server timestamp) instead of a local
-  counter, so independently loaded screens move together instead of each
-  starting at an unrelated phase.
+  from the room's `liveEpoch` (a server timestamp), corrected for this
+  device's own clock offset from the room's clock, instead of a local
+  counter - so independently loaded screens move together even when
+  their wall clocks disagree, instead of each starting at an unrelated
+  phase.
 - **Remote MUSIC telemetry**: the controller's live audio analysis
   (bass/mid/treble/energy/kick/transient - never raw audio) is relayed to
   connected players so a single phone/computer playing EMVY music can
@@ -68,17 +73,46 @@ working should be assumed not working.
 ## REMOTE CLOUD (requires deploying `living-art-cloud/` - not deployed by this change)
 
 - Architecture: one Cloudflare Worker + one Durable Object per room,
-  WebSocket transport, room config persisted in DO storage, revision
-  counter for stale-update rejection, SHA-256-hashed view/control tokens
-  (role is derived from which token matches, never trusted from a client
-  claim). Full protocol in `living-art-cloud/PROTOCOL.md`.
-- Verified locally via `wrangler dev` plus real browser tabs and a
-  scripted 1-controller/9-panel WebSocket test harness covering: room
-  creation, all panels connecting, patch propagation, palette/family
-  changes, PAPER→LIVE, shared timing, audio telemetry relay, panel
-  disconnect/reconnect, controller disconnect/reconnect, malformed
-  messages, wrong tokens, and 1/4/9-screen rooms - see the completion
-  report for the exact results.
+  using **SQLite-backed DO storage** and the **Hibernatable WebSocket
+  API** (so an idle room - PAPER, or LIVE with nobody changing anything -
+  costs nothing between events instead of pinning the object in memory
+  for as long as any display has a connection open, the expected
+  lifetime for a 24/7 installation). Room config persisted in DO storage,
+  a server-side revision counter with **reject-not-merge optimistic
+  concurrency** (a stale patch is never applied or merged - the sender
+  gets the true current state back and resyncs), SHA-256-hashed
+  view/control tokens (role is derived from which token matches, never
+  trusted from a client claim), Origin-header validation on every
+  WebSocket upgrade as defence-in-depth alongside the token, and a
+  strict server-side validator (explicit bounds/enums per field) on every
+  patch rather than a bare top-level-key allowlist. Full protocol and the
+  reasoning behind each of these in `living-art-cloud/PROTOCOL.md` and
+  `living-art-cloud/README.md`.
+- Presence is role-aware: the controller sees full per-connection detail
+  for installation health, a player only learns a headcount and whether a
+  controller is connected - never other players' or the controller's
+  metadata.
+- `POST /api/room` (the one anonymous, unlimited-by-default endpoint) is
+  rate-limited per client IP via the Workers Rate Limiting binding, with
+  a documented fallback if that binding isn't available on a given
+  account/plan (see `living-art-cloud/README.md` "Room creation rate
+  limiting").
+- Re-verified after the full hardening pass via `wrangler dev` plus a
+  rewritten scripted WebSocket test harness (96 assertions, 0 failures)
+  covering: room creation, all 9 panels connecting, patch propagation,
+  palette/family changes, a stale-revision conflict between two
+  controllers (both start at the same revision, one succeeds, the
+  other's stale attempt is rejected and resynced - the panels only ever
+  see the winning change), server-side validation rejecting out-of-range/
+  malformed patch values, an oversized-message rejection, duplicate room
+  `/init` rejection, wrong-token and wrong/missing-Origin rejection,
+  role-aware presence payload shape, PAPER→LIVE, shared timing with
+  server-clock-offset correction, audio telemetry relay, hibernation-safe
+  reconnection (session metadata correctly rebuilt from
+  `getWebSockets()`), controller/panel disconnect+reconnect, malformed
+  messages, wrong-role patch rejection, and 1/4/9-screen rooms. `wrangler
+  deploy --dry-run` confirms the SQLite DO migration, rate-limit binding,
+  and production `ALLOWED_ORIGIN` all resolve cleanly with no deployment.
 - **Not yet deployed anywhere.** `CloudSyncAdapter` in `living-art/sync.js`
   points at a placeholder Worker URL until someone runs
   `wrangler deploy` and updates it (see `living-art-cloud/README.md` for
@@ -87,7 +121,11 @@ working should be assumed not working.
   as it did before this pass.
 - Reconnection uses exponential backoff (0.5s → 30s, jittered); a
   reconnecting client always adopts the server's current revision rather
-  than pushing its own possibly-stale cached state back over it.
+  than pushing its own possibly-stale cached state back over it. A raw
+  (non-JSON) ping/pong keepalive, answered by the Workers runtime's own
+  auto-response without waking the Durable Object, lets the client detect
+  a silently-dead connection (e.g. a device that slept) and reconnect
+  even when the browser never fires a normal `onclose`.
 
 ## SIMULATED
 
@@ -107,9 +145,14 @@ working should be assumed not working.
 
 - No accounts, billing, subscriptions, admin CRM, analytics platform, D1
   database, e-commerce, or SDK wrappers for specific display vendors.
-- No multi-controller conflict UI (two people editing at once both just
-  win in server-arrival order - there is no "someone else is editing"
-  indicator).
+- No multi-controller conflict UI: nothing stops more than one
+  control-token holder from connecting to a room at once, and two
+  controllers changing the same room "at the same time" resolves purely
+  by server-arrival order (whichever patch reaches the room first wins;
+  the other is rejected and resynced, never merged - see
+  `living-art-cloud/PROTOCOL.md` "Multiple controllers"). There is no
+  "someone else is editing" indicator, no live cursors, no collaborative-
+  editing UX.
 - AUTO ART's "favourites only" mode is deterministic per device, but
   favourites live in each device's own local library - true multi-panel
   sync for that one mode needs each panel to share the same saved

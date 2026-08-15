@@ -2,16 +2,41 @@ name = "living-art-cloud"
 main = "src/worker.js"
 compatibility_date = "2024-11-01"
 
-# Restrict this in production to the real site origin(s), e.g.
-#   ALLOWED_ORIGIN = "https://emvycheck.com"
-# "*" is fine for local development and initial testing only.
+# Production default - the only origin allowed to open authenticated room
+# WebSockets or create rooms. Override for local dev ONLY via a separate
+# environment (see README.md "Local development") - never ship a wildcard
+# production origin. Comma-separated if more than one origin is genuinely
+# needed (e.g. a staging domain).
 [vars]
-ALLOWED_ORIGIN = "*"
+ALLOWED_ORIGIN = "https://emvycheck.com"
 
 [[durable_objects.bindings]]
 name = "ROOMS"
 class_name = "LivingArtRoom"
 
+# SQLite-backed storage (current requirement for new/non-legacy Durable
+# Object namespaces - the older key-value backend is no longer available
+# to new classes). `new_sqlite_classes` replaces the legacy `new_classes`
+# for a first migration.
+#
+# Wrangler also offers a newer declarative `[exports]` block as an
+# alternative to `[[migrations]]` (mutually exclusive with it), covering
+# class lifecycle states like renamed/deleted/transferred across later
+# deployments. That's real complexity this project doesn't have yet - one
+# class, first deployment, nothing to migrate away from - so `migrations`
+# stays the simpler, fully-supported choice here. See README.md.
 [[migrations]]
 tag = "v1"
-new_classes = ["LivingArtRoom"]
+new_sqlite_classes = ["LivingArtRoom"]
+
+# Anti-abuse for POST /api/room only (creating a room is the one anonymous,
+# unlimited-by-default action). Normal art-change traffic over an already
+# authenticated WebSocket is never subject to this. See README.md "Room
+# creation rate limiting" for the namespace_id note and the documented
+# fallback if this binding isn't available on a given account/plan.
+[[ratelimits]]
+name = "ROOM_CREATE_LIMITER"
+namespace_id = "1001"
+  [ratelimits.simple]
+  limit = 5
+  period = 60

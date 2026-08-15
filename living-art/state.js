@@ -81,16 +81,26 @@
     return out;
   }
 
+  /* A room-connected player/controller link (see player.js buildRoomUrl /
+     buildRoomControllerUrl) carries its player/panel/room/token markers in
+     the URL fragment, never the query string - fragments are never sent to
+     any server, so a capability token in one never leaks via an access log
+     or a Referer header. A local, non-room player/panel link (buildUrl /
+     buildPanelUrls) is unaffected - it carries no credential, so it stays a
+     plain query string as before. The fragment is checked first so a room
+     link always wins if a page somehow carries both. */
   function load() {
-    const params = new URLSearchParams(location.search);
-    const isPlayer = params.has('player');
+    const search = new URLSearchParams(location.search);
+    const hashParams = new URLSearchParams(location.hash ? location.hash.replace(/^#/, '') : '');
+    const isPlayer = hashParams.has('player') || search.has('player');
+    const playerSource = hashParams.has('player') ? hashParams : search;
     let state = defaultState();
     if (!isPlayer) {
       const stored = readStorage();
       if (stored) state = Object.assign(state, stored);
     }
-    applyParams(state, params);
-    return { state: sanitize(state), isPlayer: isPlayer, playerKind: params.get('player'), panel: Math.max(1, Number(params.get('panel')) || 1) };
+    applyParams(state, search);
+    return { state: sanitize(state), isPlayer: isPlayer, playerKind: playerSource.get('player'), panel: Math.max(1, Number(playerSource.get('panel')) || 1) };
   }
 
   function save(state, isPlayer) {

@@ -123,12 +123,20 @@
     this.reconnectAttempts = 0;
     this.reconnectTimer = 0;
     this.pingTimer = 0;
+    this.lastPongAt = 0;
     this.intentionalClose = true;
     this.statusListeners = [];
     this.updateListeners = [];
     this.audioListeners = [];
     this.presenceListeners = [];
     this.audioThrottleAt = 0;
+    // serverTime (ms, room DO's Date.now()) minus this device's Date.now() at
+    // the moment each message arrived - refined opportunistically from every
+    // hello/patch/state/presence message the room already sends, never from
+    // a dedicated polling loop. Lets currentPhase() (app.js) compute the same
+    // LIVE/MUSIC animation position on every panel regardless of how far off
+    // an individual device's clock is from the room's.
+    this.serverClockOffset = 0;
   }
 
   RemoteCloudSyncAdapter.prototype.isConnected = function () { return this.status === STATUS.CONNECTED; };
@@ -165,6 +173,19 @@
     return this._open();
   };
 
+  /* The bearer token still travels as a WebSocket URL query parameter here.
+     That's deliberate, not an oversight (spec section 8): unlike the *page*
+     URL (see player.js/app.js, which now keep room/token/ctrl only in the
+     URL fragment - never sent to any server, never in browser history,
+     never in a Referer header), this is the WebSocket handshake request
+     itself. It is same-origin, initiated by script rather than navigation,
+     never appears in the address bar or browser history, and browsers do
+     not attach a Referer header to a WebSocket upgrade. The realistic
+     exposure left is the room's own server access log and this device's
+     DevTools Network tab, which is an acceptable, documented trade-off for
+     not inventing a bespoke first-message auth handshake (explicitly out of
+     scope per spec section 8) on top of the token+Origin checks the room
+     already enforces server-side. */
   RemoteCloudSyncAdapter.prototype._open = function () {
     const self = this;
     this._setStatus(this.reconnectAttempts > 0 ? STATUS.RECONNECTING : STATUS.CONNECTING);
@@ -198,6 +219,7 @@
       ws.onopen = function () { /* wait for the server's own hello before declaring CONNECTED */ };
 
       ws.onmessage = function (ev) {
+        if (ev.data === 'pong') { self.lastPongAt = Date.now(); return; } // raw hibernation-safe keepalive reply, not JSON
         let msg;
         try { msg = JSON.parse(ev.data); } catch (e) { return; }
         self._handleMessage(msg);
@@ -238,6 +260,7 @@
 
   RemoteCloudSyncAdapter.prototype._handleMessage = function (msg) {
     if (!msg || typeof msg.type !== 'string') return;
+    if (typeof msg.serverTime === 'number') this.serverClockOffset = msg.serverTime - Date.now();
 
     if (msg.type === 'hello') {
       this.reconnectAttempts = 0;
@@ -257,6 +280,16 @@
       this._emitUpdate({ revision: msg.revision, changes: msg.changes, liveEpoch: msg.liveEpoch, updatedAt: msg.updatedAt, originClientId: msg.originClientId, full: false });
       return;
     }
+    if (msg.type === 'state' && msg.conflict) {
+      // Our own patch was rejected as stale (baseRevision behind the room's
+      // true revision) - adopt the authoritative state exactly like a full
+      // remote update, so the UI reflects reality and the next local change
+      // is built on the correct baseRevision instead of retrying blind.
+      this.revision = msg.revision;
+      this.liveEpoch = msg.liveEpoch;
+      this._emitUpdate({ revision: msg.revision, config: msg.config, liveEpoch: msg.liveEpoch, updatedAt: msg.updatedAt, full: true, conflict: true });
+      return;
+    }
     if (msg.type === 'audio') {
       this.audioListeners.forEach(function (cb) { try { cb(msg); } catch (e) { console.error(e); } });
       return;
@@ -269,29 +302,45 @@
       console.warn('[Living Art] room error:', msg.code, msg.message);
       return;
     }
-    // 'pong' - no action needed beyond the round trip itself
   };
 
   RemoteCloudSyncAdapter.prototype._emitUpdate = function (payload) {
     this.updateListeners.forEach(function (cb) { try { cb(payload); } catch (e) { console.error(e); } });
   };
 
+  /* Raw string "ping", not a JSON message: the room DO answers it via
+     state.setWebSocketAutoResponse (see room.js), which the runtime handles
+     without ever waking a hibernated Durable Object. This still gives the
+     client the liveness check a plain WebSocket doesn't reliably provide on
+     its own - some dead connections (device sleep, a vanished network) never
+     fire onclose/onerror - by force-closing (and thus triggering the normal
+     reconnect/backoff path below) if too many intervals pass with no pong. */
   RemoteCloudSyncAdapter.prototype._startPing = function () {
     const self = this;
     this._stopPing();
+    this.lastPongAt = Date.now();
     this.pingTimer = setInterval(function () {
-      if (self.ws && self.ws.readyState === 1) { try { self.ws.send(JSON.stringify({ type: 'ping', t: Date.now() })); } catch (e) {} }
-    }, 25000);
+      if (!self.ws || self.ws.readyState !== 1) return;
+      try { self.ws.send('ping'); } catch (e) {}
+      if (Date.now() - self.lastPongAt > 55000) { try { self.ws.close(); } catch (e) {} }
+    }, 20000);
   };
   RemoteCloudSyncAdapter.prototype._stopPing = function () { clearInterval(this.pingTimer); };
 
   /* changes: partial config object. resetPhase: true bumps the room's
      shared liveEpoch (a "new artwork" style change), false leaves LIVE
-     motion timing alone (e.g. a density/speed tweak). */
+     motion timing alone (e.g. a density/speed tweak).
+
+     Always names the revision this change was based on (optimistic
+     concurrency - spec section 2). If another controller got there first,
+     the room rejects this outright rather than merging, and replies with a
+     'state' message carrying conflict:true, which _handleMessage adopts as
+     the new authoritative state; this call never silently overwrites a
+     newer server state. */
   RemoteCloudSyncAdapter.prototype.pushState = function (changes, resetPhase) {
     if (!this.isConnected()) return Promise.resolve({ ok: false, reason: 'not-connected' });
     try {
-      this.ws.send(JSON.stringify({ type: 'patch', changes: changes, resetPhase: !!resetPhase }));
+      this.ws.send(JSON.stringify({ type: 'patch', baseRevision: this.revision, changes: changes, resetPhase: !!resetPhase }));
       return Promise.resolve({ ok: true });
     } catch (err) {
       return Promise.resolve({ ok: false, reason: String(err) });

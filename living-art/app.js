@@ -80,6 +80,11 @@
       if (payload.full) applyPatch(StateMod.sanitize(payload.config), { fromRemote: true, resetPhase: true });
       else applyPatch(payload.changes || {}, { fromRemote: true, resetPhase: false });
     } finally { remoteConfigApplying = false; }
+    // Our own change was rejected as stale (another controller moved the
+    // room on first) and we've just adopted the true state above - nothing
+    // to retry automatically, the next control input already carries the
+    // correct revision, this just tells the operator what happened.
+    if (payload.conflict) toast('Another controller updated this room - synced to latest');
   });
   cloudAdapter.onRemoteAudio(function (msg) {
     remoteAudio = { bass: msg.bass, mid: msg.mid, treble: msg.treble, energy: msg.energy, kick: msg.kick, transient: msg.transient, smoothedEnergy: msg.energy };
@@ -239,10 +244,18 @@
      accumulated counter, so every independently-loaded panel computes the
      same phase at the same wall-clock moment and the wall reads as one
      coordinated artwork rather than nine unrelated ones. Offline/local use
-     is completely unchanged - it keeps accumulating `phase` per frame. */
+     is completely unchanged - it keeps accumulating `phase` per frame.
+
+     serverClockOffset corrects for this device's own clock being off from
+     the room DO's clock (spec section 15) - without it, two panels with
+     wall clocks a few seconds apart would compute different elapsed time
+     from the same liveEpoch and drift visibly out of sync. It is refined
+     opportunistically from the serverTime already present on hello/patch/
+     state/presence messages (see sync.js) - no dedicated polling. */
   function currentPhase() {
     if (cloudAdapter.isConnected() && cloudAdapter.liveEpoch != null && (state.displayMode === 'live' || state.displayMode === 'music')) {
-      const elapsedSeconds = Math.max(0, (Date.now() - cloudAdapter.liveEpoch) / 1000);
+      const serverNow = Date.now() + cloudAdapter.serverClockOffset;
+      const elapsedSeconds = Math.max(0, (serverNow - cloudAdapter.liveEpoch) / 1000);
       return elapsedSeconds * state.speed * 0.36;
     }
     return phase;
@@ -703,15 +716,18 @@
   audio.setShuffle(state.shuffle);
   if (!isPlayer) refreshFavouritesCache();
 
-  /* Remote room auto-connect. A player URL carries ?room=&token= (the view
-     token); a shared controller link carries ?room=&ctrl= (the control
-     token); otherwise a controller page falls back to whatever room it
-     was last connected to, remembered locally. None of this blocks first
-     render - the room connects in the background and the art is already
-     on screen (deterministic local rendering) before or regardless of
-     whether the cloud responds. */
+  /* Remote room auto-connect. A player URL carries #room=&token= (the view
+     token); a shared controller link carries #room=&ctrl= (the control
+     token) - both in the URL fragment, never the query string, so the
+     capability token is never sent to the server on navigation (see
+     player.js buildRoomUrl / buildRoomControllerUrl, spec section 7).
+     Otherwise a controller page falls back to whatever room it was last
+     connected to, remembered locally. None of this blocks first render -
+     the room connects in the background and the art is already on screen
+     (deterministic local rendering) before or regardless of whether the
+     cloud responds. */
   function autoConnectRoom() {
-    const params = new URLSearchParams(location.search);
+    const params = new URLSearchParams(location.hash ? location.hash.replace(/^#/, '') : '');
     if (isPlayer && params.has('room') && params.has('token')) {
       connectToRoom({ roomId: params.get('room'), viewToken: params.get('token') }, 'player')
         .then(function (result) { if (!result.connected) console.warn('[Living Art] could not join room as player:', result.reason); });

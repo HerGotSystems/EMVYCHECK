@@ -25,17 +25,29 @@
     return out;
   }
 
-  /* Room-aware player URLs: compact, room-driven (?player=panel&room=..&
-     token=..&panel=N&layout=L) rather than the full local-param dump -
-     the panel gets its real configuration from the room over WebSocket,
-     the URL only needs enough to connect and render something sane before
-     that first message arrives. */
+  /* Room-aware player/controller URLs: compact, room-driven
+     (#player=panel&room=..&token=..&panel=N&layout=L, or #room=..&ctrl=..)
+     rather than the full local-param dump - the panel/controller gets its
+     real configuration from the room over WebSocket, the URL only needs
+     enough to connect and render something sane before that first message
+     arrives.
+
+     Credentials live in the URL FRAGMENT, not the query string (spec
+     section 7): a fragment is never transmitted to any server on
+     navigation - not to this static page's own host, not as a Referer
+     header to any third-party resource the page happens to load - so a
+     capability token here can only ever be read by script running on this
+     page. state.js reads it back out via location.hash. This does mean the
+     token still sits in the browser's own history/bookmarks on the device
+     that opened the link, same as any other bookmarkable URL scheme would;
+     the fragment change specifically closes off the *network-transmitted*
+     leak paths (access logs, Referer), not local-device history. */
   function buildRoomUrl(room, kind, panelIndex) {
     const params = new URLSearchParams({ player: kind, room: room.roomId, token: room.viewToken, layout: room.layout });
     if (kind === 'panel') params.set('panel', panelIndex);
     const url = new URL(location.href);
-    url.search = params.toString();
-    url.hash = '';
+    url.search = '';
+    url.hash = params.toString();
     return url.toString();
   }
   function buildRoomPanelUrls(room) {
@@ -47,8 +59,8 @@
   function buildRoomControllerUrl(room) {
     const params = new URLSearchParams({ room: room.roomId, ctrl: room.controlToken });
     const url = new URL(location.href);
-    url.search = params.toString();
-    url.hash = '';
+    url.search = '';
+    url.hash = params.toString();
     return url.toString();
   }
 
