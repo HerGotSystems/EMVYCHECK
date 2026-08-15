@@ -8,7 +8,7 @@ compatibility_date = "2024-11-01"
 # production origin. Comma-separated if more than one origin is genuinely
 # needed (e.g. a staging domain).
 [vars]
-ALLOWED_ORIGIN = "https://emvycheck.com"
+ALLOWED_ORIGIN = "https://emvycheck.com,https://www.emvycheck.com"
 
 [[durable_objects.bindings]]
 name = "ROOMS"
@@ -36,7 +36,7 @@ new_sqlite_classes = ["LivingArtRoom"]
 # fallback if this binding isn't available on a given account/plan.
 [[ratelimits]]
 name = "ROOM_CREATE_LIMITER"
-namespace_id = "1001"
+namespace_id = "583741"
   [ratelimits.simple]
   limit = 5
   period = 60
