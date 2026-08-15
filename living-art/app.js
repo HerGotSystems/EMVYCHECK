@@ -27,8 +27,66 @@
   }
 
   const audio = new window.LivingArtAudio();
-  const cloudAdapter = new Sync.CloudSyncAdapter(); // intentionally inert - see sync.js
+  const cloudAdapter = new Sync.CloudSyncAdapter(); // inert until connect() is actually called - see sync.js
   const liveChannel = new Sync.LiveChannel('emvy-living-art-sync-v2');
+  const ROOM_STORAGE_KEY = 'emvy-living-art-room-v3';
+
+  let remoteAudio = null;       // last {bass,mid,treble,energy,kick,transient} received over the room, or null
+  let remoteAudioAt = 0;
+  let remoteConfigApplying = false;
+
+  function readRoomStorage() {
+    try { const raw = localStorage.getItem(ROOM_STORAGE_KEY); return raw ? JSON.parse(raw) : null; } catch (e) { return null; }
+  }
+  function writeRoomStorage(room) {
+    try {
+      if (room) localStorage.setItem(ROOM_STORAGE_KEY, JSON.stringify(room));
+      else localStorage.removeItem(ROOM_STORAGE_KEY);
+    } catch (e) { /* storage unavailable - room control still works for this session */ }
+  }
+  function playerSessionId() {
+    try {
+      let id = sessionStorage.getItem('emvy-living-art-player-id');
+      if (!id) { id = 'p' + Math.random().toString(36).slice(2, 10); sessionStorage.setItem('emvy-living-art-player-id', id); }
+      return id;
+    } catch (e) { return 'p' + Math.random().toString(36).slice(2, 10); }
+  }
+
+  let roomRole = null;   // null | 'controller' | 'player'
+  let roomInfo = null;   // {roomId, name, viewToken?, controlToken?}
+  let latestPresence = null;
+
+  function connectToRoom(room, role) {
+    roomRole = role;
+    roomInfo = room;
+    const payload = {
+      roomId: room.roomId,
+      token: role === 'controller' ? room.controlToken : room.viewToken,
+      role: role
+    };
+    if (role === 'player') {
+      payload.panel = playerKind === 'panel' ? panelNumber : 0;
+      payload.layout = state.layout;
+      payload.playerId = playerSessionId();
+    }
+    if (role === 'controller') writeRoomStorage(room);
+    return cloudAdapter.connect(payload);
+  }
+
+  cloudAdapter.onRemoteUpdate(function (payload) {
+    if (payload.originClientId && payload.originClientId === cloudAdapter.clientId) return; // our own echoed patch
+    remoteConfigApplying = true;
+    try {
+      if (payload.full) applyPatch(StateMod.sanitize(payload.config), { fromRemote: true, resetPhase: true });
+      else applyPatch(payload.changes || {}, { fromRemote: true, resetPhase: false });
+    } finally { remoteConfigApplying = false; }
+  });
+  cloudAdapter.onRemoteAudio(function (msg) {
+    remoteAudio = { bass: msg.bass, mid: msg.mid, treble: msg.treble, energy: msg.energy, kick: msg.kick, transient: msg.transient, smoothedEnergy: msg.energy };
+    remoteAudioAt = Date.now();
+  });
+  cloudAdapter.onPresence(function (msg) { latestPresence = msg; renderStatusList(); });
+  cloudAdapter.onStatusChange(function () { updateRemoteStatusUI(); });
 
   let paused = false;
   let presenting = false;
@@ -118,9 +176,24 @@
   }
 
   // --------------------------------------------------------- audio state --
+  const LIVE_AMBIENT_AUDIO = { bass: 0.22, mid: 0.22, treble: 0.16, energy: 0.28, kick: 0, transient: 0, smoothedEnergy: 0.24 };
   function audioForFrame(dtSeconds) {
-    if (state.displayMode === 'music') return audio.tick(dtSeconds);
-    if (state.displayMode === 'live') return { bass: 0.22, mid: 0.22, treble: 0.16, energy: 0.28, kick: 0, transient: 0, smoothedEnergy: 0.24 };
+    // A room player showing MUSIC mode has no real audio of its own - it
+    // visualises whatever the controller is broadcasting. Falls back to
+    // the calm LIVE pattern if telemetry goes quiet, never freezes.
+    if (state.displayMode === 'music' && isPlayer && cloudAdapter.isConnected()) {
+      if (remoteAudio && Date.now() - remoteAudioAt < 1500) return remoteAudio;
+      return LIVE_AMBIENT_AUDIO;
+    }
+    if (state.displayMode === 'music') {
+      const a = audio.tick(dtSeconds);
+      // Let a phone/computer playing EMVY music make a whole remote wall
+      // react together - never the raw audio itself, just these numbers,
+      // and only when this window is actually the controller.
+      if (roomRole === 'controller' && cloudAdapter.isConnected()) cloudAdapter.pushAudio(a);
+      return a;
+    }
+    if (state.displayMode === 'live') return LIVE_AMBIENT_AUDIO;
     return engine.NEUTRAL_AUDIO;
   }
 
@@ -128,6 +201,7 @@
   function drawFrame() {
     const quality = currentQuality();
     const a = audioForFrame(loopRunning ? 0.05 : 0);
+    const framePhase = currentPhase();
     ensureIndependentDefaults();
     const isPanelPlayer = playerKind === 'panel';
     const count = tiles.length;
@@ -147,17 +221,31 @@
       if (state.composition === 'continuous') {
         const fullW = w * cols, fullH = h * rows;
         const tileX = (panelIndex % cols) * w, tileY = Math.floor(panelIndex / cols) * h;
-        const recipe = Object.assign({ phase: phase, density: state.density }, panelRecipe(panelIndex, count));
+        const recipe = Object.assign({ phase: framePhase, density: state.density }, panelRecipe(panelIndex, count));
         ctx.save();
         ctx.beginPath(); ctx.rect(0, 0, w, h); ctx.clip();
         ctx.translate(-tileX, -tileY);
         engine.renderRecipe(ctx, fullW, fullH, recipe, a, quality);
         ctx.restore();
       } else {
-        const recipe = Object.assign({ phase: phase, density: state.density }, panelRecipe(panelIndex, count));
+        const recipe = Object.assign({ phase: framePhase, density: state.density }, panelRecipe(panelIndex, count));
         engine.renderRecipe(ctx, w, h, recipe, a, quality);
       }
     });
+  }
+
+  /* When connected to a remote room, LIVE/MUSIC motion is derived from the
+     room's shared liveEpoch (a server timestamp) instead of a locally
+     accumulated counter, so every independently-loaded panel computes the
+     same phase at the same wall-clock moment and the wall reads as one
+     coordinated artwork rather than nine unrelated ones. Offline/local use
+     is completely unchanged - it keeps accumulating `phase` per frame. */
+  function currentPhase() {
+    if (cloudAdapter.isConnected() && cloudAdapter.liveEpoch != null && (state.displayMode === 'live' || state.displayMode === 'music')) {
+      const elapsedSeconds = Math.max(0, (Date.now() - cloudAdapter.liveEpoch) / 1000);
+      return elapsedSeconds * state.speed * 0.36;
+    }
+    return phase;
   }
 
   function loop(ts) {
@@ -231,6 +319,72 @@
     gridWrap.classList.toggle('epaper', !!state.epaper);
   }
 
+  // -------------------------------------------------------- remote status -
+  function updateRemoteStatusUI() {
+    const section = $('#remoteStatusSection');
+    if (!section) return;
+    if (!roomInfo) { section.hidden = true; return; }
+    section.hidden = false;
+    $('#remoteRoomName').textContent = roomInfo.name || roomInfo.roomId;
+    const dot = $('#remoteStatusDot'), text = $('#remoteStatusText');
+    const status = cloudAdapter.status;
+    dot.className = 'status-dot ' + status.toLowerCase();
+    const labels = { OFFLINE: 'Offline', CONNECTING: 'Connecting…', CONNECTED: 'Connected', RECONNECTING: 'Reconnecting…', ERROR: 'Connection problem' };
+    text.textContent = labels[status] || status;
+  }
+
+  function renderRoomDetails() {
+    const details = $('#roomDetails');
+    if (!details) return;
+    if (!roomInfo || roomRole !== 'controller' || !roomInfo.controlToken) { details.hidden = true; return; }
+    details.hidden = false;
+    $('#roomIdLabel').textContent = roomInfo.roomId;
+    const room = { roomId: roomInfo.roomId, viewToken: roomInfo.viewToken, layout: state.layout };
+    const controllerUrl = Player.buildRoomControllerUrl({ roomId: roomInfo.roomId, controlToken: roomInfo.controlToken });
+    try { window.LivingArtQR.renderToCanvas($('#qrController'), window.LivingArtQR.encode(controllerUrl, 'M'), { scale: 5 }); }
+    catch (err) { console.warn('[Living Art] could not render controller QR code', err); }
+
+    const listHolder = $('#roomPanelList');
+    listHolder.innerHTML = '';
+    Player.buildRoomPanelUrls(room).forEach(function (row) {
+      const el = document.createElement('div');
+      el.className = 'room-panel-row';
+      el.innerHTML = '<span>SCREEN ' + row.index + '</span><button data-copy>COPY</button>';
+      el.querySelector('[data-copy]').onclick = function () {
+        if (navigator.clipboard) navigator.clipboard.writeText(row.url).then(function () { toast('Screen ' + row.index + ' link copied'); });
+      };
+      listHolder.appendChild(el);
+    });
+  }
+
+  function renderStatusList() {
+    const holder = $('#statusList');
+    if (!holder) return;
+    if (!roomInfo) { holder.innerHTML = '<div class="note">Not connected to a remote room.</div>'; return; }
+    $('#statusRoomLine').textContent = 'ROOM: ' + (roomInfo.name || roomInfo.roomId) + ' (' + roomInfo.roomId + ')';
+    if (!latestPresence) { holder.innerHTML = '<div class="note">Waiting for status…</div>'; return; }
+    const expected = state.layout;
+    const present = {};
+    latestPresence.clients.forEach(function (c) { if (c.role === 'player' && c.panel) present[c.panel] = c; });
+    let rows = '';
+    for (let i = 1; i <= expected; i++) {
+      const c = present[i];
+      rows += '<div class="status-row"><span class="' + (c ? 'ok' : 'missing') + '">' + (c ? '✓' : '✕') + '</span>' +
+        '<span>Screen ' + i + '</span>' +
+        '<span class="meta">' + (c ? 'connected ' + timeAgo(c.connectedAt) : 'not connected') + '</span></div>';
+    }
+    rows += '<div class="status-row"><span class="' + (latestPresence.controllerConnected ? 'ok' : 'missing') + '">' +
+      (latestPresence.controllerConnected ? '✓' : '✕') + '</span><span>Controller</span></div>';
+    holder.innerHTML = rows;
+  }
+  function timeAgo(ts) {
+    if (!ts) return '';
+    const s = Math.max(0, Math.round((Date.now() - ts) / 1000));
+    if (s < 60) return s + 's ago';
+    if (s < 3600) return Math.round(s / 60) + 'm ago';
+    return Math.round(s / 3600) + 'h ago';
+  }
+
   // ----------------------------------------------------------- mutations --
   function applyPatch(patch, opts) {
     opts = opts || {};
@@ -245,6 +399,13 @@
       scheduleRender(opts.resetPhase !== false);
     }
     if (!opts.silentSync) liveChannel.broadcast('state', state);
+    // Push to the room only for genuinely local, controller-originated
+    // changes - never for updates that just arrived FROM the room (that
+    // would echo straight back and could loop) and never from a player,
+    // which the server would reject anyway.
+    if (!opts.fromRemote && !remoteConfigApplying && roomRole === 'controller' && cloudAdapter.isConnected()) {
+      cloudAdapter.pushState(patch, opts.resetPhase !== false);
+    }
   }
 
   function randomSeed() { return 'EMVY-' + String(Math.floor(Math.random() * 1e6)).padStart(6, '0'); }
@@ -442,6 +603,43 @@
       else { $('#installUrls').select(); document.execCommand('copy'); toast('Links copied'); }
     };
 
+    // ---- remote room ----
+    $('#btnCreateRoom').onclick = function () {
+      const name = prompt('Name this installation (e.g. "Hotel Lobby")', 'Living Art Room');
+      if (name == null) return;
+      cloudAdapter.createRoom(name).then(function (room) {
+        return connectToRoom(room, 'controller').then(function (result) {
+          if (!result.connected) { toast('Could not reach the cloud room service'); return; }
+          renderRoomDetails();
+          toast('Remote room created');
+          updateRemoteStatusUI();
+        });
+      }).catch(function (err) {
+        console.error('[Living Art] room creation failed', err);
+        toast('Could not create a remote room - check living-art-cloud is deployed and configured');
+      });
+    };
+    $('#btnCopyControllerLink').onclick = function () {
+      if (!roomInfo) return;
+      const url = Player.buildRoomControllerUrl({ roomId: roomInfo.roomId, controlToken: roomInfo.controlToken });
+      if (navigator.clipboard) navigator.clipboard.writeText(url).then(function () { toast('Controller link copied'); });
+    };
+    $('#btnCopyRoomPanelLinks').onclick = function () {
+      if (!roomInfo) return;
+      const rows = Player.buildRoomPanelUrls({ roomId: roomInfo.roomId, viewToken: roomInfo.viewToken, layout: state.layout });
+      const text = rows.map(function (r) { return 'SCREEN ' + r.index + '\n' + r.url; }).join('\n\n');
+      if (navigator.clipboard) navigator.clipboard.writeText(text).then(function () { toast('Screen links copied'); });
+    };
+    $('#btnRemoteDisconnect').onclick = function () {
+      cloudAdapter.disconnect();
+      roomRole = null; roomInfo = null; latestPresence = null;
+      writeRoomStorage(null);
+      updateRemoteStatusUI();
+      $('#roomDetails').hidden = true;
+      toast('Disconnected from remote room');
+    };
+    $('#remoteStatusRow').onclick = function () { renderStatusList(); openModal('modalStatus'); };
+
     // ---- mobile dock ----
     $('#mobileNew').onclick = function () { applyPatch({ seed: randomSeed() }); };
     $('#mobileColour').onclick = function () { applyPatch({ palette: (state.palette + 1) % engine.PALETTES.length }); };
@@ -484,10 +682,19 @@
   // --------------------------------------------------------- recovery -----
   Player.installRecovery({
     onResize: function () { scheduleRender(false); },
-    onWake: function () { lastFrameAt = 0; scheduleRender(false); },
+    onWake: function () {
+      lastFrameAt = 0; scheduleRender(false);
+      // a sleeping/backgrounded device's WebSocket is often already dead by
+      // the time it wakes - nudge a reconnect rather than waiting out the
+      // backoff timer against a connection that silently died hours ago.
+      if (roomInfo && !cloudAdapter.isConnected()) connectToRoom(roomInfo, roomRole);
+    },
     onFullscreenChange: function () { scheduleRender(false); },
-    onOnline: function () { if (state.musicSource === 'emvy' && !audio.state.flat.length) audio.useEmvy(); },
-    onOffline: function () { /* audio element keeps playing whatever is buffered; artwork is unaffected either way */ }
+    onOnline: function () {
+      if (state.musicSource === 'emvy' && !audio.state.flat.length) audio.useEmvy();
+      if (roomInfo && !cloudAdapter.isConnected()) connectToRoom(roomInfo, roomRole);
+    },
+    onOffline: function () { /* audio element keeps playing whatever is buffered; deterministic offline rendering is unaffected either way */ }
   });
 
   // ------------------------------------------------------------- boot -----
@@ -495,6 +702,38 @@
   audio.setSensitivity(state.sensitivity);
   audio.setShuffle(state.shuffle);
   if (!isPlayer) refreshFavouritesCache();
+
+  /* Remote room auto-connect. A player URL carries ?room=&token= (the view
+     token); a shared controller link carries ?room=&ctrl= (the control
+     token); otherwise a controller page falls back to whatever room it
+     was last connected to, remembered locally. None of this blocks first
+     render - the room connects in the background and the art is already
+     on screen (deterministic local rendering) before or regardless of
+     whether the cloud responds. */
+  function autoConnectRoom() {
+    const params = new URLSearchParams(location.search);
+    if (isPlayer && params.has('room') && params.has('token')) {
+      connectToRoom({ roomId: params.get('room'), viewToken: params.get('token') }, 'player')
+        .then(function (result) { if (!result.connected) console.warn('[Living Art] could not join room as player:', result.reason); });
+      return;
+    }
+    if (isPlayer) return; // panel/wall URL with no room credentials - stays purely local/offline
+    if (params.has('room') && params.has('ctrl')) {
+      const room = { roomId: params.get('room'), controlToken: params.get('ctrl'), name: params.get('room') };
+      connectToRoom(room, 'controller').then(function (result) {
+        if (result.connected) { renderRoomDetails(); updateRemoteStatusUI(); toast('Connected to remote room'); }
+        else toast('Could not reach the remote room');
+      });
+      return;
+    }
+    const saved = readRoomStorage();
+    if (saved && saved.roomId && saved.controlToken) {
+      connectToRoom(saved, 'controller').then(function (result) {
+        if (result.connected) { renderRoomDetails(); updateRemoteStatusUI(); }
+        // a failed silent reconnect is not worth interrupting the visitor with a toast
+      });
+    }
+  }
 
   function boot() {
     armAutoArt(); // never fire a scheduled change immediately on load - only on the next real boundary
@@ -512,6 +751,7 @@
       // handle is gone by design (local files never leave the device and
       // are not persisted); the artwork itself still renders normally.
     }
+    autoConnectRoom();
   }
   boot();
 

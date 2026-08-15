@@ -15,7 +15,7 @@
 
   <header class="topbar" id="topbar">
     <div class="brand"><strong>EMVY CHECK</strong><span>LIVING ART</span></div>
-    <span class="pill">V2</span>
+    <span class="pill">V3</span>
     <div class="top-actions">
       <button class="btn hot" id="btnNewArt" title="New artwork">ART</button>
       <button class="btn" id="btnPalette" title="New colour">COLOUR</button>
@@ -179,6 +179,15 @@
         <button class="small-btn hot" id="btnInstall" style="width:100%">SCREENS / INSTALL</button>
       </div>
 
+      <div class="section" id="remoteStatusSection" hidden>
+        <div class="label">Remote wall <b id="remoteRoomName">-</b></div>
+        <div class="remote-status" id="remoteStatusRow">
+          <span class="status-dot" id="remoteStatusDot"></span>
+          <span id="remoteStatusText">Offline</span>
+          <button class="small-btn" id="btnRemoteDisconnect" style="margin-left:auto">DISCONNECT</button>
+        </div>
+      </div>
+
       <div class="note">Runs as one wall player or numbered Screen 1–9 URLs. Scheduled installs stay synchronised from the same deterministic seed without a server.</div>
     </aside>
   </main>
@@ -233,9 +242,41 @@
         <p>Each physical screen opens its own numbered URL and renders only its section. Same seed + schedule keeps them coordinated.</p>
         <button class="btn" id="btnCopyPanelLinks">COPY ALL SCREEN LINKS</button>
       </div>
+      <div class="ibox">
+        <h3>REMOTE ROOM CONTROL</h3>
+        <p>Create a room so a phone can change this installation live. Every connected screen updates in under a second.</p>
+        <button class="btn hot" id="btnCreateRoom">CREATE REMOTE ROOM</button>
+      </div>
     </div>
     <textarea id="installUrls" readonly></textarea>
     <div class="note">In PLAYER mode no controls are shown. Tap the top-left corner five times, or press the backtick key, to reveal a minimal control overlay.</div>
+
+    <div id="roomDetails" class="room-details" hidden>
+      <div class="cardhead" style="margin:14px 0 8px"><b>REMOTE ROOM</b><span id="roomIdLabel" class="room-id-label"></span></div>
+      <div class="room-links-grid">
+        <div class="room-link-box">
+          <h4>CONTROLLER</h4>
+          <p class="note">Keep this link private. Scan with the owner's phone.</p>
+          <canvas id="qrController" class="qr-canvas"></canvas>
+          <button class="small-btn" id="btnCopyControllerLink" style="width:100%">COPY CONTROLLER LINK</button>
+        </div>
+        <div class="room-link-box">
+          <h4>SCREENS</h4>
+          <p class="note">One link per physical display.</p>
+          <div id="roomPanelList" class="room-panel-list"></div>
+          <button class="small-btn" id="btnCopyRoomPanelLinks" style="width:100%">COPY ALL SCREEN LINKS</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Installation status modal -->
+<div class="modal" id="modalStatus">
+  <div class="card small">
+    <div class="cardhead"><b>INSTALLATION STATUS</b><button class="btn" data-close="modalStatus">CLOSE</button></div>
+    <div id="statusRoomLine" class="note"></div>
+    <div id="statusList" class="status-list"></div>
   </div>
 </div>
 
@@ -248,6 +289,7 @@
 
 <div class="toast" id="toast"></div>
 
+<script src="qrcode.js"></script>
 <script src="engine.js"></script>
 <script src="state.js"></script>
 <script src="audio.js"></script>

@@ -72,23 +72,261 @@
     try { localStorage.setItem(this.name, JSON.stringify({ type: type, payload: payload, t: Date.now() })); } catch (e) { /* storage unavailable - same-device sync silently unavailable */ }
   };
 
-  // ---- C. cloud adapter (stub, intentionally not implemented) ---------------
+  // ---- C. cloud adapter: inert by default, real once connect() is called ---
+  // NullCloudSyncAdapter: kept as an explicit, always-inert fallback and for
+  // anything that wants to guarantee no network activity is possible.
   function NullCloudSyncAdapter() {}
   NullCloudSyncAdapter.prototype.isConnected = function () { return false; };
   NullCloudSyncAdapter.prototype.connect = function (roomId) {
-    console.info('[Living Art] Cloud sync requested for room "' + roomId + '" - no cloud controller exists yet. This is a reserved interface for a future Cloudflare Worker/Durable Object/WebSocket backend.');
+    console.info('[Living Art] Cloud sync requested for room "' + roomId + '" - this adapter is intentionally inert.');
     return Promise.resolve({ connected: false, reason: 'not-implemented' });
   };
-  NullCloudSyncAdapter.prototype.pushState = function (/* {roomId, revision, updatedAt, config} */) {
-    return Promise.resolve({ ok: false, reason: 'not-implemented' });
-  };
-  NullCloudSyncAdapter.prototype.onRemoteUpdate = function (/* callback */) { /* never fires - no transport exists */ };
   NullCloudSyncAdapter.prototype.disconnect = function () {};
+  NullCloudSyncAdapter.prototype.pushState = function () { return Promise.resolve({ ok: false, reason: 'not-implemented' }); };
+  NullCloudSyncAdapter.prototype.pushAudio = function () {};
+  NullCloudSyncAdapter.prototype.onRemoteUpdate = function () {};
+  NullCloudSyncAdapter.prototype.onRemoteAudio = function () {};
+  NullCloudSyncAdapter.prototype.onStatusChange = function () {};
+  NullCloudSyncAdapter.prototype.onPresence = function () {};
+
+  const CLOUD_URL_STORAGE_KEY = 'emvy-living-art-cloud-url';
+  /* No production Worker is deployed by this change (see living-art-cloud/README.md).
+     This placeholder is intentionally not a real host - update it after deploying,
+     or override per-browser without editing source via:
+       localStorage.setItem('emvy-living-art-cloud-url', 'wss://your-worker.workers.dev') */
+  const DEFAULT_CLOUD_URL = 'wss://living-art-cloud.example.workers.dev';
+
+  function resolveCloudUrl() {
+    try {
+      const stored = localStorage.getItem(CLOUD_URL_STORAGE_KEY);
+      if (stored) return stored;
+    } catch (e) { /* storage unavailable - fall through to default */ }
+    return DEFAULT_CLOUD_URL;
+  }
+  function wsToHttp(wsUrl) { return wsUrl.replace(/^ws:/, 'http:').replace(/^wss:/, 'https:'); }
+
+  function uid() {
+    if (global.crypto && global.crypto.randomUUID) return global.crypto.randomUUID();
+    return 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+  }
+
+  const STATUS = { OFFLINE: 'OFFLINE', CONNECTING: 'CONNECTING', CONNECTED: 'CONNECTED', RECONNECTING: 'RECONNECTING', ERROR: 'ERROR' };
+  const BACKOFF_STEPS = [500, 1000, 2000, 4000, 8000, 15000, 30000];
+
+  function RemoteCloudSyncAdapter() {
+    this.ws = null;
+    this.status = STATUS.OFFLINE;
+    this.room = null; // {roomId, token, role, panel, layout, playerId}
+    this.revision = -1;
+    this.liveEpoch = null;
+    this.clientId = uid();
+    this.reconnectAttempts = 0;
+    this.reconnectTimer = 0;
+    this.pingTimer = 0;
+    this.intentionalClose = true;
+    this.statusListeners = [];
+    this.updateListeners = [];
+    this.audioListeners = [];
+    this.presenceListeners = [];
+    this.audioThrottleAt = 0;
+  }
+
+  RemoteCloudSyncAdapter.prototype.isConnected = function () { return this.status === STATUS.CONNECTED; };
+  RemoteCloudSyncAdapter.prototype.onStatusChange = function (cb) { this.statusListeners.push(cb); return this; };
+  RemoteCloudSyncAdapter.prototype.onRemoteUpdate = function (cb) { this.updateListeners.push(cb); return this; };
+  RemoteCloudSyncAdapter.prototype.onRemoteAudio = function (cb) { this.audioListeners.push(cb); return this; };
+  RemoteCloudSyncAdapter.prototype.onPresence = function (cb) { this.presenceListeners.push(cb); return this; };
+
+  RemoteCloudSyncAdapter.prototype._setStatus = function (s) {
+    if (this.status === s) return;
+    this.status = s;
+    this.statusListeners.forEach(function (cb) { try { cb(s); } catch (e) { console.error(e); } });
+  };
+
+  /* Create a brand new room. Does not connect - call connect() with the
+     returned roomId + a token afterwards. */
+  RemoteCloudSyncAdapter.prototype.createRoom = function (name) {
+    const base = wsToHttp(resolveCloudUrl());
+    return fetch(base + '/api/room', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: name })
+    }).then(function (r) {
+      if (!r.ok) throw new Error('Could not create room (http ' + r.status + ')');
+      return r.json();
+    });
+  };
+
+  /* room: {roomId, token, role: 'controller'|'player', panel, layout, playerId} */
+  RemoteCloudSyncAdapter.prototype.connect = function (room) {
+    this.room = room;
+    this.intentionalClose = false;
+    this.reconnectAttempts = 0;
+    return this._open();
+  };
+
+  RemoteCloudSyncAdapter.prototype._open = function () {
+    const self = this;
+    this._setStatus(this.reconnectAttempts > 0 ? STATUS.RECONNECTING : STATUS.CONNECTING);
+
+    const base = resolveCloudUrl();
+    const params = new URLSearchParams({ token: this.room.token, clientId: this.clientId });
+    if (this.room.role) params.set('role', this.room.role);
+    if (this.room.panel != null) params.set('panel', this.room.panel);
+    if (this.room.layout != null) params.set('layout', this.room.layout);
+    if (this.room.playerId) params.set('playerId', this.room.playerId);
+    try { params.set('ua', (navigator.userAgent || '').slice(0, 120)); } catch (e) {}
+
+    let ws;
+    try {
+      ws = new WebSocket(base + '/api/room/' + encodeURIComponent(this.room.roomId) + '/ws?' + params.toString());
+    } catch (err) {
+      this._setStatus(STATUS.ERROR);
+      this._scheduleReconnect();
+      return Promise.resolve({ connected: false, reason: String(err) });
+    }
+    this.ws = ws;
+
+    return new Promise(function (resolve) {
+      let settled = false;
+      const timeout = setTimeout(function () {
+        if (settled) return;
+        settled = true;
+        resolve({ connected: false, reason: 'timeout' });
+      }, 6000);
+
+      ws.onopen = function () { /* wait for the server's own hello before declaring CONNECTED */ };
+
+      ws.onmessage = function (ev) {
+        let msg;
+        try { msg = JSON.parse(ev.data); } catch (e) { return; }
+        self._handleMessage(msg);
+        if (msg.type === 'hello' && !settled) {
+          settled = true;
+          clearTimeout(timeout);
+          resolve({ connected: true, revision: msg.revision });
+        }
+      };
+
+      ws.onclose = function () {
+        clearTimeout(timeout);
+        self._stopPing();
+        if (self.ws === ws) self.ws = null;
+        if (self.intentionalClose) { self._setStatus(STATUS.OFFLINE); return; }
+        self._setStatus(STATUS.RECONNECTING);
+        self._scheduleReconnect();
+        if (!settled) { settled = true; resolve({ connected: false, reason: 'closed' }); }
+      };
+
+      ws.onerror = function () {
+        if (!settled) { settled = true; clearTimeout(timeout); resolve({ connected: false, reason: 'error' }); }
+      };
+    });
+  };
+
+  RemoteCloudSyncAdapter.prototype._scheduleReconnect = function () {
+    const self = this;
+    clearTimeout(this.reconnectTimer);
+    const step = Math.min(this.reconnectAttempts, BACKOFF_STEPS.length - 1);
+    const delay = BACKOFF_STEPS[step] + Math.floor(Math.random() * 300); // jitter
+    this.reconnectAttempts++;
+    this.reconnectTimer = setTimeout(function () {
+      if (self.intentionalClose || !self.room) return;
+      self._open();
+    }, delay);
+  };
+
+  RemoteCloudSyncAdapter.prototype._handleMessage = function (msg) {
+    if (!msg || typeof msg.type !== 'string') return;
+
+    if (msg.type === 'hello') {
+      this.reconnectAttempts = 0;
+      this.revision = msg.revision;
+      this.liveEpoch = msg.liveEpoch;
+      this._setStatus(STATUS.CONNECTED);
+      this._startPing();
+      // Adopt the server's current state outright - a client's own possibly
+      // stale local config is never pushed back over a fresher server state.
+      this._emitUpdate({ revision: msg.revision, config: msg.config, liveEpoch: msg.liveEpoch, updatedAt: msg.updatedAt, full: true });
+      return;
+    }
+    if (msg.type === 'patch') {
+      if (typeof msg.revision === 'number' && msg.revision <= this.revision) return; // stale/duplicate, ignore
+      this.revision = msg.revision;
+      this.liveEpoch = msg.liveEpoch;
+      this._emitUpdate({ revision: msg.revision, changes: msg.changes, liveEpoch: msg.liveEpoch, updatedAt: msg.updatedAt, originClientId: msg.originClientId, full: false });
+      return;
+    }
+    if (msg.type === 'audio') {
+      this.audioListeners.forEach(function (cb) { try { cb(msg); } catch (e) { console.error(e); } });
+      return;
+    }
+    if (msg.type === 'presence') {
+      this.presenceListeners.forEach(function (cb) { try { cb(msg); } catch (e) { console.error(e); } });
+      return;
+    }
+    if (msg.type === 'error') {
+      console.warn('[Living Art] room error:', msg.code, msg.message);
+      return;
+    }
+    // 'pong' - no action needed beyond the round trip itself
+  };
+
+  RemoteCloudSyncAdapter.prototype._emitUpdate = function (payload) {
+    this.updateListeners.forEach(function (cb) { try { cb(payload); } catch (e) { console.error(e); } });
+  };
+
+  RemoteCloudSyncAdapter.prototype._startPing = function () {
+    const self = this;
+    this._stopPing();
+    this.pingTimer = setInterval(function () {
+      if (self.ws && self.ws.readyState === 1) { try { self.ws.send(JSON.stringify({ type: 'ping', t: Date.now() })); } catch (e) {} }
+    }, 25000);
+  };
+  RemoteCloudSyncAdapter.prototype._stopPing = function () { clearInterval(this.pingTimer); };
+
+  /* changes: partial config object. resetPhase: true bumps the room's
+     shared liveEpoch (a "new artwork" style change), false leaves LIVE
+     motion timing alone (e.g. a density/speed tweak). */
+  RemoteCloudSyncAdapter.prototype.pushState = function (changes, resetPhase) {
+    if (!this.isConnected()) return Promise.resolve({ ok: false, reason: 'not-connected' });
+    try {
+      this.ws.send(JSON.stringify({ type: 'patch', changes: changes, resetPhase: !!resetPhase }));
+      return Promise.resolve({ ok: true });
+    } catch (err) {
+      return Promise.resolve({ ok: false, reason: String(err) });
+    }
+  };
+
+  /* Throttled to ~15/s regardless of how often the caller invokes this -
+     the server also enforces its own floor as a backstop. */
+  RemoteCloudSyncAdapter.prototype.pushAudio = function (a) {
+    if (!this.isConnected()) return;
+    const now = Date.now();
+    if (now - this.audioThrottleAt < 66) return;
+    this.audioThrottleAt = now;
+    try {
+      this.ws.send(JSON.stringify({ type: 'audio', bass: a.bass, mid: a.mid, treble: a.treble, energy: a.energy, kick: a.kick, transient: a.transient }));
+    } catch (e) { /* connection hiccup - next frame will try again */ }
+  };
+
+  RemoteCloudSyncAdapter.prototype.disconnect = function () {
+    this.intentionalClose = true;
+    this.room = null;
+    clearTimeout(this.reconnectTimer);
+    this._stopPing();
+    if (this.ws) { try { this.ws.close(); } catch (e) {} this.ws = null; }
+    this._setStatus(STATUS.OFFLINE);
+  };
 
   global.LivingArtSync = {
     scheduleToken: scheduleToken,
     scheduledSeed: scheduledSeed,
     LiveChannel: LiveChannel,
-    CloudSyncAdapter: NullCloudSyncAdapter
+    STATUS: STATUS,
+    CloudSyncAdapter: RemoteCloudSyncAdapter,
+    NullCloudSyncAdapter: NullCloudSyncAdapter,
+    resolveCloudUrl: resolveCloudUrl,
+    CLOUD_URL_STORAGE_KEY: CLOUD_URL_STORAGE_KEY
   };
 })(window);

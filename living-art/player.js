@@ -25,6 +25,33 @@
     return out;
   }
 
+  /* Room-aware player URLs: compact, room-driven (?player=panel&room=..&
+     token=..&panel=N&layout=L) rather than the full local-param dump -
+     the panel gets its real configuration from the room over WebSocket,
+     the URL only needs enough to connect and render something sane before
+     that first message arrives. */
+  function buildRoomUrl(room, kind, panelIndex) {
+    const params = new URLSearchParams({ player: kind, room: room.roomId, token: room.viewToken, layout: room.layout });
+    if (kind === 'panel') params.set('panel', panelIndex);
+    const url = new URL(location.href);
+    url.search = params.toString();
+    url.hash = '';
+    return url.toString();
+  }
+  function buildRoomPanelUrls(room) {
+    const cols = room.layout === 1 ? 1 : room.layout === 4 ? 2 : 3;
+    const out = [];
+    for (let i = 1; i <= room.layout; i++) out.push({ index: i, label: fileLabel(i, cols), url: buildRoomUrl(room, 'panel', i) });
+    return out;
+  }
+  function buildRoomControllerUrl(room) {
+    const params = new URLSearchParams({ room: room.roomId, ctrl: room.controlToken });
+    const url = new URL(location.href);
+    url.search = params.toString();
+    url.hash = '';
+    return url.toString();
+  }
+
   /* Hidden control reveal: five taps/clicks inside a small corner hotzone
      within 3 seconds, or the backtick key on a physical keyboard. Nothing
      is visible in player mode until this fires. */
@@ -76,6 +103,9 @@
   global.LivingArtPlayer = {
     buildUrl: buildUrl,
     buildPanelUrls: buildPanelUrls,
+    buildRoomUrl: buildRoomUrl,
+    buildRoomPanelUrls: buildRoomPanelUrls,
+    buildRoomControllerUrl: buildRoomControllerUrl,
     fileLabel: fileLabel,
     installHiddenGesture: installHiddenGesture,
     installRecovery: installRecovery,

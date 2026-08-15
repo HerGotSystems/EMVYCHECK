@@ -1,0 +1,13 @@
+{
+  "name": "living-art-cloud",
+  "private": true,
+  "version": "0.1.0",
+  "description": "EMVY CHECK Living Art - remote room control Worker (Durable Object + WebSocket).",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  }
+}

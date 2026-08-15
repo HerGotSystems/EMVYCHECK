@@ -9,7 +9,13 @@
     { patch: { layout: 9, composition: 'continuous' }, duration: 7000, text: 'GENERATIVE ART FOR CONNECTED DISPLAYS' },
     { patch: { composition: 'continuous' }, duration: 7000, text: null },
     { patch: { composition: 'family' }, duration: 7000, text: 'EVERY GENERATION ORIGINAL' },
-    { patch: { palette: 3 }, duration: 5500, text: null },
+    // Remote-control concept, honestly labelled as a simulation - one
+    // browser cannot show a real phone controlling nine real screens, so
+    // this narrates the interaction rather than claiming it is live.
+    { patch: { composition: 'continuous' }, duration: 5000, text: 'REMOTE INSTALLATION CONTROL — SIMULATED DEMO' },
+    { patch: { seed: 'EMVY-DEMO-' + Math.floor(Math.random() * 9000 + 1000) }, duration: 5500, text: 'PHONE PRESSES "NEW ART" → ALL 9 SCREENS UPDATE' },
+    { patch: { palette: 6 }, duration: 5500, text: 'PHONE PRESSES "NEW COLOUR" → ALL 9 SCREENS UPDATE' },
+    { patch: { palette: 3 }, duration: 5000, text: null },
     { patch: { displayMode: 'paper' }, duration: 5500, text: null },
     { patch: { displayMode: 'live' }, duration: 5500, text: null },
     { patch: { displayMode: 'music', musicSource: 'demo' }, duration: 9000, text: null },
