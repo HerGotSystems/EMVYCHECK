@@ -70,8 +70,21 @@ working should be assumed not working.
   This does not reach other physical devices - that requires the remote
   room.
 
-## REMOTE CLOUD (requires deploying `living-art-cloud/` - not deployed by this change)
+## REMOTE CLOUD: LIVE / DEPLOYED
 
+- **Worker:** `living-art-cloud`
+- **Production backend:** `https://living-art-cloud.veltrusky-michal.workers.dev`
+- **Verified live** (real production room, real Durable Object writes, real
+  WebSocket connections - not just `wrangler dev`): room creation,
+  controller/player connection, 1 remote player, NEW ART, palette,
+  family/style, PAPER, LIVE, shared timing (server-clock-offset-corrected
+  animation phase matching between controller and player), stale-revision
+  rejection, remote audio telemetry, disconnect/reconnect, wrong-token
+  rejection, bad-Origin rejection.
+- This is a separate Cloudflare project from the main `emvycheck.com`
+  site/Worker - see "Architecture separation" below. Deploying or
+  changing `living-art-cloud` never touches `emvycheck.com`, and vice
+  versa.
 - Architecture: one Cloudflare Worker + one Durable Object per room,
   using **SQLite-backed DO storage** and the **Hibernatable WebSocket
   API** (so an idle room - PAPER, or LIVE with nobody changing anything -
@@ -113,12 +126,12 @@ working should be assumed not working.
   messages, wrong-role patch rejection, and 1/4/9-screen rooms. `wrangler
   deploy --dry-run` confirms the SQLite DO migration, rate-limit binding,
   and production `ALLOWED_ORIGIN` all resolve cleanly with no deployment.
-- **Not yet deployed anywhere.** `CloudSyncAdapter` in `living-art/sync.js`
-  points at a placeholder Worker URL until someone runs
-  `wrangler deploy` and updates it (see `living-art-cloud/README.md` for
-  the exact steps). Until that happens, every "remote room" UI action
-  fails gracefully (a toast, nothing breaks) and the product runs exactly
-  as it did before this pass.
+- `CloudSyncAdapter` in `living-art/sync.js` (`DEFAULT_CLOUD_URL`) points
+  at the real deployed Worker above by default; override per-browser for
+  local dev without editing source via
+  `localStorage.setItem('emvy-living-art-cloud-url', 'ws://localhost:8787')`.
+  The V3 frontend itself is not yet deployed to `emvycheck.com` - see
+  "Architecture separation" below for what that would take.
 - Reconnection uses exponential backoff (0.5s → 30s, jittered); a
   reconnecting client always adopts the server's current revision rather
   than pushing its own possibly-stale cached state back over it. A raw
@@ -126,6 +139,21 @@ working should be assumed not working.
   auto-response without waking the Durable Object, lets the client detect
   a silently-dead connection (e.g. a device that slept) and reconnect
   even when the browser never fires a normal `onclose`.
+
+## Architecture separation
+
+Two separate Cloudflare projects, deliberately kept apart:
+
+- **`emvycheck`** → `emvycheck.com` → the frontend/music/Living Art
+  browser application (this repo's `living-art/` and the rest of the
+  public site).
+- **`living-art-cloud`** → `living-art-cloud.veltrusky-michal.workers.dev`
+  → Durable Objects / rooms / WebSockets / remote control only.
+
+The `emvycheck` project's deploy config is never pointed at
+`/living-art-cloud/`, and the cloud backend never replaces or serves the
+main site. The frontend only *talks to* `living-art-cloud` over WSS, the
+same way it would talk to any other API.
 
 ## SIMULATED
 

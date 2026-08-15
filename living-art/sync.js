@@ -90,11 +90,12 @@
   NullCloudSyncAdapter.prototype.onPresence = function () {};
 
   const CLOUD_URL_STORAGE_KEY = 'emvy-living-art-cloud-url';
-  /* No production Worker is deployed by this change (see living-art-cloud/README.md).
-     This placeholder is intentionally not a real host - update it after deploying,
-     or override per-browser without editing source via:
-       localStorage.setItem('emvy-living-art-cloud-url', 'wss://your-worker.workers.dev') */
-  const DEFAULT_CLOUD_URL = 'wss://living-art-cloud.example.workers.dev';
+  /* The living-art-cloud Worker is deployed (see living-art-cloud/README.md
+     and living-art/PRODUCT-STATUS.md "REMOTE CLOUD") - this is the real
+     production room backend, not a placeholder. Override it per-browser
+     without editing source (e.g. for local dev against `wrangler dev`) via:
+       localStorage.setItem('emvy-living-art-cloud-url', 'ws://localhost:8787') */
+  const DEFAULT_CLOUD_URL = 'wss://living-art-cloud.veltrusky-michal.workers.dev';
 
   function resolveCloudUrl() {
     try {
