@@ -214,6 +214,80 @@
     while (state.independent.length < count) state.independent.push(built[state.independent.length]);
   }
 
+  /* Collection-aware patch builders - every way of changing SEED, PALETTE or
+     FAMILY (manual buttons, Seed SET, the player's local NEW ART, and
+     checkAutoArt's scheduler) goes through exactly one of these, so
+     COLLECTION mode can never again silently fall out of sync the way ART/
+     COLOUR/STYLE originally did. ONE ARTWORK/SEED FAMILY are untouched by
+     these (panelRecipe derives them fresh from the master values already).
+
+     makeSeedPatch: a pure reseed - every panel gets a new seed derived from
+     the new master, but keeps its own established palette/family exactly as
+     it was (that's what makes this "same style, new seed" rather than a new
+     artwork). */
+  function makeSeedPatch(seed, opts) {
+    opts = opts || {};
+    const patch = { seed: seed };
+    if (opts.family != null) patch.family = opts.family;
+    if (state.composition === 'independent') {
+      const count = state.layout;
+      const entries = [];
+      for (let i = 0; i < count; i++) {
+        const existing = state.independent[i];
+        entries.push({
+          seed: seed + '|IND' + i,
+          palette: existing && existing.palette != null ? existing.palette : (state.palette + i) % engine.PALETTES.length,
+          family: opts.family != null ? opts.family : (existing && existing.family != null ? existing.family : (state.family + i) % engine.FAMILIES.length)
+        });
+      }
+      patch.independent = entries;
+    }
+    return patch;
+  }
+
+  /* makePalettePatch: preserves every panel's seed/structure and recolours
+     each one by the same delta the master palette is moving by, so a manual
+     +1 press and an AUTO ART hash-picked absolute palette both "just work". */
+  function makePalettePatch(palette) {
+    const patch = { palette: palette };
+    if (state.composition === 'independent' && state.independent.length) {
+      const len = engine.PALETTES.length;
+      const delta = ((palette - state.palette) % len + len) % len;
+      patch.independent = state.independent.map(function (e) {
+        return Object.assign({}, e, { palette: ((Number(e.palette) || 0) + delta) % len });
+      });
+    }
+    return patch;
+  }
+
+  /* makeFamilyPatch: every panel adopts the same new abstract family (scene
+     content ignores family entirely - sceneId is read live off state, never
+     cached per panel). */
+  function makeFamilyPatch(family) {
+    const patch = { family: family };
+    if (state.composition === 'independent' && state.independent.length) {
+      patch.independent = state.independent.map(function (e) { return Object.assign({}, e, { family: family }); });
+    }
+    return patch;
+  }
+
+  /* makeNewArtPatch: a genuinely new artwork - new master seed, and every
+     panel's seed/palette/family rebuilt coherently from the (possibly also
+     new) master palette/family via buildIndependentEntries, exactly like a
+     fresh collection would be populated. */
+  function makeNewArtPatch(seed, opts) {
+    opts = opts || {};
+    const patch = { seed: seed };
+    if (opts.family != null) patch.family = opts.family;
+    if (opts.palette != null) patch.palette = opts.palette;
+    if (state.composition === 'independent') {
+      const basePalette = opts.palette != null ? opts.palette : state.palette;
+      const baseFamily = opts.family != null ? opts.family : state.family;
+      patch.independent = buildIndependentEntries(seed, state.layout, basePalette, { family: baseFamily });
+    }
+    return patch;
+  }
+
   /* Single dispatch point used everywhere a recipe gets rendered - keeps
      drawFrame() itself agnostic to which content system produced the
      recipe it was handed. */
@@ -524,16 +598,22 @@
     }
     if (mode === 'same-palette') {
       const palette = engine.hashString(installSeed + '|' + token + '|pal') % engine.PALETTES.length;
-      applyPatch({ palette: palette });
+      applyPatch(makePalettePatch(palette));
       return;
     }
     if (mode === 'same-family') {
-      applyPatch({ seed: installSeed + '|' + token });
+      // Despite the legacy mode name this is "same selected style, new
+      // seed" - makeSeedPatch preserves every panel's palette/family and
+      // never touches sceneId, so the selected scene/style stays put too.
+      applyPatch(makeSeedPatch(installSeed + '|' + token));
       return;
     }
     // new-art
     const seed = installSeed + '|' + token;
-    applyPatch({ seed: seed, family: engine.hashString(seed) % engine.FAMILIES.length, palette: engine.hashString(seed + '|pal') % engine.PALETTES.length });
+    applyPatch(makeNewArtPatch(seed, {
+      family: engine.hashString(seed) % engine.FAMILIES.length,
+      palette: engine.hashString(seed + '|pal') % engine.PALETTES.length
+    }));
   }
   setInterval(checkAutoArt, 1000);
 
@@ -579,27 +659,15 @@
      must also rewrite every cached entry, or the master value changes
      while every panel keeps showing its old cached one. */
   function doNewArt() {
-    const seed = randomSeed();
-    if (state.composition === 'independent') {
-      // ART = a new artwork within the current style/scene - regenerate
-      // every panel's seed from the new master seed, but keep the same
-      // per-panel palette/family pattern (palette is COLOUR's job, not ART's).
-      const entries = buildIndependentEntries(seed, state.layout, state.palette, { family: state.family });
-      applyPatch({ seed: seed, independent: entries });
-    } else {
-      applyPatch({ seed: seed });
-    }
+    // ART = a new artwork within the current style/scene - makeNewArtPatch
+    // regenerates every panel's seed from the new master seed, keeping the
+    // same per-panel palette/family pattern (palette is COLOUR's job, not ART's).
+    applyPatch(makeNewArtPatch(randomSeed()));
     toast('New artwork');
   }
   function doNewColour() {
     const palette = (state.palette + 1) % engine.PALETTES.length;
-    if (state.composition === 'independent' && state.independent.length) {
-      // Recolour every panel in place - same seeds, same structure, new tone.
-      const entries = state.independent.map(function (e) { return Object.assign({}, e, { palette: ((Number(e.palette) || 0) + 1) % engine.PALETTES.length }); });
-      applyPatch({ palette: palette, independent: entries });
-    } else {
-      applyPatch({ palette: palette });
-    }
+    applyPatch(makePalettePatch(palette));
     toast('New colour');
   }
   function doNewStyle() {
@@ -613,12 +681,7 @@
       return;
     }
     const family = (state.family + 1) % engine.FAMILIES.length;
-    if (state.composition === 'independent' && state.independent.length) {
-      const entries = state.independent.map(function (e) { return Object.assign({}, e, { family: family }); });
-      applyPatch({ family: family, independent: entries });
-    } else {
-      applyPatch({ family: family });
-    }
+    applyPatch(makeFamilyPatch(family));
     toast(engine.FAMILIES[family].name);
   }
 
@@ -626,9 +689,9 @@
     $('#btnNewArt').onclick = doNewArt;
     $('#btnPalette').onclick = doNewColour;
     $('#btnStyle').onclick = doNewStyle;
-    $('#btnFamilyPrev').onclick = function () { applyPatch({ family: (state.family - 1 + engine.FAMILIES.length) % engine.FAMILIES.length }); };
-    $('#btnFamilyNext').onclick = function () { applyPatch({ family: (state.family + 1) % engine.FAMILIES.length }); };
-    $('#btnSeedApply').onclick = function () { applyPatch({ seed: ($('#seedInput').value.trim() || 'EMVY-0001').toUpperCase() }); };
+    $('#btnFamilyPrev').onclick = function () { applyPatch(makeFamilyPatch((state.family - 1 + engine.FAMILIES.length) % engine.FAMILIES.length)); };
+    $('#btnFamilyNext').onclick = function () { applyPatch(makeFamilyPatch((state.family + 1) % engine.FAMILIES.length)); };
+    $('#btnSeedApply').onclick = function () { applyPatch(makeSeedPatch(($('#seedInput').value.trim() || 'EMVY-0001').toUpperCase())); };
     $('#installSeedInput').onchange = function (e) { applyPatch({ installSeed: e.target.value.trim() }, { resetPhase: false }); };
 
     $$('#segLayout [data-layout]').forEach(function (b) { b.onclick = function () { applyPatch({ layout: Number(b.dataset.layout) }); }; });
@@ -789,7 +852,14 @@
       $('#playerInfo').textContent = state.seed + ' · ' + (isSceneContent() ? Scenes.sceneById(state.sceneId).name : engine.FAMILIES[state.family].name) + (playerKind === 'panel' ? ' · Screen ' + panelNumber : '');
     });
     $('#playerExit').onclick = function () { location.href = 'index.html' + location.search.replace(/([?&])player=[^&]*&?/, '$1').replace(/&$/, ''); };
-    $('#playerNewArt').onclick = function () { applyPatch({ seed: randomSeed() }); };
+    // "NEW ART" here means the same thing it means on the controller (a
+    // fresh master seed, panels rebuilt coherently if this player happens
+    // to be showing a COLLECTION) - not a bare reseed. applyPatch's own
+    // roomRole==='controller' guard (this player's role is 'player', never
+    // 'controller') already keeps this purely local: it never reaches the
+    // room, so a view-token player can change what it's showing on its own
+    // screen without ever gaining controller authority over the room.
+    $('#playerNewArt').onclick = function () { applyPatch(makeNewArtPatch(randomSeed())); };
     // player windows still receive live control updates when run on the
     // same device/browser as the control page (see sync.js layer B).
     liveChannel.on('state', function (incoming) { state = StateMod.sanitize(incoming); rebuildGrid(); });
