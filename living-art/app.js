@@ -324,7 +324,9 @@
     const [cols, rows] = layoutDims(state.layout);
     $('#lblLayout').textContent = cols + ' × ' + rows;
     $('#lblComposition').textContent = state.composition === 'continuous' ? 'One artwork' : state.composition === 'family' ? 'Seed family' : 'Independent collection';
-    $('#lblMode').textContent = state.displayMode.charAt(0).toUpperCase() + state.displayMode.slice(1);
+    // Customer-facing label only - the internal displayMode value stays
+    // 'paper' (protocol/state/ePaper toggle are unrelated and unchanged).
+    $('#lblMode').textContent = state.displayMode === 'paper' ? 'Paint' : state.displayMode.charAt(0).toUpperCase() + state.displayMode.slice(1);
     $('#lblAspect').textContent = state.aspect === 'wide' ? '16:9' : state.aspect === 'classic' ? '4:3' : 'Square';
     $('#lblFamily').textContent = isSceneContent() ? Scenes.sceneById(state.sceneId).name : engine.FAMILIES[state.family % engine.FAMILIES.length].name;
     $('#lblDensity').textContent = state.density;
