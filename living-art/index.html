@@ -16,7 +16,7 @@
 
   <header class="topbar" id="topbar">
     <div class="brand"><strong>EMVY CHECK</strong><span>LIVING ART</span></div>
-    <span class="pill">V3</span>
+    <span class="pill">V4</span>
     <div class="top-actions">
       <button class="btn hot" id="btnNewArt" title="New artwork">ART</button>
       <button class="btn" id="btnPalette" title="New colour">COLOUR</button>
@@ -74,11 +74,17 @@
         </div>
       </div>
 
-      <div class="section">
-        <div class="label">Style <b id="lblFamily">Contours</b></div>
-        <div class="row">
+      <div class="section" id="styleSection">
+        <div class="label"><span id="lblStyleHeading">Style</span> <b id="lblFamily">Contours</b></div>
+        <div class="row" id="familyNavRow">
           <button class="small-btn" id="btnFamilyPrev">←</button>
           <button class="small-btn" id="btnFamilyNext">NEXT →</button>
+        </div>
+        <div class="segment two" id="scenePicker" hidden>
+          <button class="small-btn" data-scene="river-mill">RIVER MILL</button>
+          <button class="small-btn" data-scene="open-arms">OPEN ARMS</button>
+          <button class="small-btn" data-scene="birds-flight">BIRDS FLIGHT</button>
+          <button class="small-btn" data-scene="coaster-ride">COASTER RIDE</button>
         </div>
       </div>
 
@@ -125,6 +131,10 @@
         <div class="segment two">
           <button class="small-btn on" data-source="generative">GENERATIVE LIVE</button>
           <button class="small-btn" data-source="canvasgrid">CANVAS GRID</button>
+        </div>
+        <div id="contentTypeRow" class="segment two" style="margin-top:6px">
+          <button class="small-btn on" data-content="abstract">ABSTRACT</button>
+          <button class="small-btn" data-content="scene">SCENE</button>
         </div>
         <div id="canvasGridPicker" class="cg-picker" hidden></div>
       </div>
@@ -292,6 +302,7 @@
 
 <script src="qrcode.js"></script>
 <script src="engine.js"></script>
+<script src="scenes.js"></script>
 <script src="state.js"></script>
 <script src="audio.js"></script>
 <script src="sync.js"></script>

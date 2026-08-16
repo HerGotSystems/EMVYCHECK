@@ -94,10 +94,13 @@ ping/pong, which are the raw strings `"ping"` / `"pong"` (see
 | `presence` | whenever membership changes, or on request - **shape depends on the recipient's own role** | see "Presence privacy" below |
 | `error` | malformed/forbidden/oversized request | `code, message` |
 
-`config` always matches the Living Art V2 state shape (`seed, family,
+`config` always matches the Living Art state shape (`seed, family,
 palette, density, speed, layout, composition, displayMode, aspect,
-epaper, quality, sensitivity, sourceType, canvasGridId, autoArt,
-installSeed, independent`) - nothing new is invented here.
+epaper, quality, sensitivity, sourceType, canvasGridId, contentType,
+sceneId, autoArt, installSeed, independent`) - nothing new is invented
+here. `contentType`/`sceneId` (V4) select the scene-family content system
+alongside the original abstract `family` field - see
+`living-art/PRODUCT-STATUS.md` for what each is.
 
 `liveEpoch` is a server timestamp (ms) marking when the current
 composition's shared animation phase was last reset to zero. Every

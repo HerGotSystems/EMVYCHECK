@@ -40,6 +40,8 @@ const DEFAULT_CONFIG = {
   volume: 0.8,
   sourceType: 'generative',
   canvasGridId: null,
+  contentType: 'abstract',
+  sceneId: 'river-mill',
   autoArt: { interval: 'manual', mode: 'new-art' }
 };
 
@@ -59,6 +61,8 @@ const ENUMS = {
   musicSource: ['none', 'emvy', 'local', 'demo'],
   sensitivity: ['calm', 'normal', 'hard'],
   sourceType: ['generative', 'canvasgrid'],
+  contentType: ['abstract', 'scene'],
+  sceneId: ['river-mill', 'open-arms', 'birds-flight', 'coaster-ride'],
   autoInterval: ['manual', 'minute', 'hour', 'day', 'week'],
   autoMode: ['new-art', 'same-palette', 'same-family', 'favourites']
 };
@@ -114,6 +118,8 @@ function sanitizeChanges(raw, current) {
   if ('volume' in raw) out.volume = clampNum(raw.volume, 0, 1, current.volume);
   if ('sourceType' in raw) out.sourceType = oneOf(raw.sourceType, 'sourceType', current.sourceType);
   if ('canvasGridId' in raw) out.canvasGridId = raw.canvasGridId === null ? null : boundedString(raw.canvasGridId, MAX_ID_LENGTH, null);
+  if ('contentType' in raw) out.contentType = oneOf(raw.contentType, 'contentType', current.contentType);
+  if ('sceneId' in raw) out.sceneId = oneOf(raw.sceneId, 'sceneId', current.sceneId);
   if ('autoArt' in raw) out.autoArt = sanitizeAutoArt(raw.autoArt, current.autoArt);
   if ('independent' in raw) out.independent = sanitizeIndependent(raw.independent);
   return out;

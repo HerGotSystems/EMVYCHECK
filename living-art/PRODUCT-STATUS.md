@@ -1,6 +1,6 @@
 # Living Art — product status
 
-Last updated with the V3 remote-control pass. This reflects what is
+Last updated with the V4 scene-families pass. This reflects what is
 actually true right now, not what is planned. Anything not listed as
 working should be assumed not working.
 
@@ -15,10 +15,72 @@ working should be assumed not working.
 - **Web Audio analysis**: bass/mid/treble bucketed from one AnalyserNode,
   energy/kick/transient/smoothedEnergy derived with attack/release
   smoothing, CALM/NORMAL/HARD sensitivity curves.
-- **16 procedural families**, each mapping bass/kick/mid/treble to a
-  distinct visual parameter (verified: continuous-mode reassembly is
-  pixel-identical across panels; deterministic - same seed/settings
-  reproduce the same base composition).
+- **16 procedural families** (ABSTRACT content type), each mapping
+  bass/kick/mid/treble to a distinct visual parameter (verified:
+  continuous-mode reassembly is pixel-identical across panels;
+  deterministic - same seed/settings reproduce the same base
+  composition). This is one of two content types now - see "SCENE
+  FAMILIES (V4)" below for the other.
+- **Scene families (V4)** - a second, representational content type
+  (`contentType: 'scene'`) alongside the abstract families above, chosen
+  from the same SOURCE → GENERATIVE LIVE panel via a new CONTENT
+  (ABSTRACT/SCENE) toggle. Exactly **four** scenes exist today - this is
+  the complete list, not a sample of a larger set:
+  - **River Mill** - flowing river, cottage, turning mill wheel.
+  - **Open Arms** - a stylised, silhouette-driven iconic figure with open
+    arms; deliberately not photorealistic.
+  - **Birds Flight** - a flock drifting across a sky/landscape strip.
+  - **Coaster Ride** - a graphic roller-coaster track with travelling cars.
+
+  Each scene behaves genuinely differently across PAINT/LIVE/MUSIC rather
+  than being one static image with a generic pulse filter on top:
+  - **PAINT** (phase 0, no audio): a proper still composition, verified
+    non-blank and pixel-identical across repeated renders of the same
+    seed/scene/settings (same determinism guarantee as the abstract
+    families - see "Verified" below for how this was actually checked).
+  - **LIVE** (phase advancing, ambient audio only): slow scene-appropriate
+    drift - the river flows and the mill wheel turns, the figure's aura
+    and light rays drift, the flock migrates and wings flap gently, the
+    coaster cars travel the loop and lights twinkle. Verified to produce
+    different pixel output than the PAINT frame and to keep changing as
+    phase advances (not a freeze-frame).
+  - **MUSIC**: each scene has its own bass/mid/treble/kick mapping (see
+    the table below) rather than reusing the abstract families' generic
+    audio mapping - verified to produce different output than LIVE at the
+    same phase once audio moves off zero.
+
+  | Scene | bass | mid | treble | kick |
+  |---|---|---|---|---|
+  | River Mill | current strength / water mass | mill wheel rotation speed | shimmer & splash highlight detail | splash bursts at the wheel |
+  | Open Arms | halo scale / grounded radiance | aura & light-ray drift speed | spark / halo mote detail | radiance pulse burst |
+  | Birds Flight | flock directional drift | wing-flap speed / turbulence | feather glint detail | sudden lift / formation scatter |
+  | Coaster Ride | car momentum / track rumble | light-chase travel speed | sparks & track light detail | drop / launch burst |
+
+  (This table is `musicProfile` on each entry in `living-art/scenes.js`'s
+  `SCENES` array, kept as explicit, inspectable metadata rather than only
+  living implicitly inside each draw function.)
+
+  Works across **1 / 2×2 / 3×3** layouts and both **ONE ARTWORK**
+  (the scene spans the whole wall coherently, cropped per panel exactly
+  like continuous-mode abstract families already did) and **SEED FAMILY**
+  (each panel gets its own seeded variation of the same scene world).
+  INDEPENDENT COLLECTION falls back to one shared scene across all panels
+  with per-panel seed variation rather than a per-slot scene picker - see
+  "Intentionally simplified" below.
+
+  **Verified**: all four scenes render non-blank across PAINT/LIVE/MUSIC
+  and layouts 1/4/9; a same-seed/same-settings PAINT render is pixel-
+  identical across repeated calls (this required a real fix - see
+  "Intentionally simplified" below); LIVE output differs from PAINT and
+  keeps changing with phase; MUSIC output differs from LIVE once audio is
+  nonzero; a different seed produces a different base composition; SAVE
+  ARTWORK / MY ART / ART CODE export-import round-trip `contentType`/
+  `sceneId` correctly; an unknown/garbage `contentType` or `sceneId`
+  (including a script-tag-shaped string) is rejected back to a safe
+  default by `state.js`'s `sanitize()`, both client-side and in
+  `living-art-cloud/src/room.js`'s `sanitizeChanges()` for remote patches;
+  no console errors observed switching between every scene/mode/layout/
+  composition combination tested.
 - **1 / 2×2 / 3×3 layouts**, ONE ARTWORK / SEED FAMILY / INDEPENDENT
   COLLECTION composition.
 - **PAPER**: genuinely static - draws once, cancels its own animation
@@ -36,8 +98,9 @@ working should be assumed not working.
   labelled *simulated* remote-control section.
 - **Remote room control (V3, hardened)**: a phone/laptop "controller" can
   change seed, palette, family, density, speed, composition, display mode,
-  aspect, ePaper, quality, sensitivity, source and auto-art settings on a
-  room, and every connected wall/panel player updates over WebSocket.
+  aspect, ePaper, quality, sensitivity, source, contentType, sceneId and
+  auto-art settings on a room, and every connected wall/panel player
+  updates over WebSocket.
   Verified end to end through real browser tabs against a locally running
   Worker: room creation, QR + copyable links, panel connect, a NEW ART
   patch reaching a connected panel and changing its rendered pixels in
@@ -130,8 +193,9 @@ working should be assumed not working.
   at the real deployed Worker above by default; override per-browser for
   local dev without editing source via
   `localStorage.setItem('emvy-living-art-cloud-url', 'ws://localhost:8787')`.
-  The V3 frontend itself is not yet deployed to `emvycheck.com` - see
-  "Architecture separation" below for what that would take.
+  The V3 frontend is live at `emvycheck.com/living-art/`. This V4 pass
+  (scene families) has **not** been merged/deployed there yet - it exists
+  only on the `living-art-scene-families-v4` branch until that happens.
 - Reconnection uses exponential backoff (0.5s → 30s, jittered); a
   reconnecting client always adopts the server's current revision rather
   than pushing its own possibly-stale cached state back over it. A raw
@@ -171,6 +235,29 @@ same way it would talk to any other API.
 
 ## FUTURE / NOT BUILT (intentionally, per scope)
 
+- **Scene families (V4) - intentionally simplified for this pass:**
+  - No per-slot scene picker for INDEPENDENT COLLECTION - every panel
+    shares the wall's one selected scene (still with its own seed
+    variation), rather than letting each of up to 9 panels run a
+    different scene. ONE ARTWORK and SEED FAMILY (the two modes the spec
+    actually asked for) are unaffected.
+  - AUTO ART's scheduled changes rotate seed/palette the same way they
+    already did for abstract families; a scene's seed change still
+    produces a visibly different composition (scenes are seed-driven,
+    same as abstract families), but AUTO ART does not additionally rotate
+    *which* scene is selected.
+  - No scene editor, no timeline editor, no per-scene asset upload - every
+    scene is hand-built procedural canvas drawing, same engineering model
+    as the abstract families, not a new content pipeline.
+  - Getting PAINT-mode determinism right required one real fix during this
+    pass: every scene's own background gradients are intentionally
+    semi-transparent in places, and without an explicit fully-opaque base
+    fill first, repeated renders onto the same reused `<canvas>` (exactly
+    how LIVE/MUSIC redraws every frame) blended with leftover pixels
+    instead of cleanly repainting - caught by directly testing
+    `Scenes.renderScene()` output for pixel-identical repeats, fixed by
+    adding the same opaque-first-fill `engine.js`'s abstract families
+    already relied on via `bg()`.
 - No accounts, billing, subscriptions, admin CRM, analytics platform, D1
   database, e-commerce, or SDK wrappers for specific display vendors.
 - No multi-controller conflict UI: nothing stops more than one

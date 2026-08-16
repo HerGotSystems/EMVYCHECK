@@ -3,6 +3,7 @@
   'use strict';
 
   const engine = window.LivingArtEngine;
+  const Scenes = window.LivingArtScenes;
   const StateMod = window.LivingArtState;
   const Sync = window.LivingArtSync;
   const Library = window.LivingArtLibrary;
@@ -150,21 +151,36 @@
   function currentQuality() { return engine.resolveQuality(state.quality); }
 
   // ----------------------------------------------------- recipe resolution -
+  /* Scene content (state.contentType === 'scene') is a second recipe shape
+     - {seed, sceneId, palette} instead of {seed, family, palette} - routed
+     to Scenes.renderScene instead of engine.renderRecipe in drawFrame().
+     Everything downstream (composition modes, continuous-wall cropping,
+     library/ART CODE, remote sync) treats it exactly like an abstract
+     recipe since only the shape differs, not the pipeline. */
+  function isSceneContent() { return state.sourceType === 'generative' && state.contentType === 'scene'; }
+
   function baseRecipe() {
     if (state.sourceType === 'canvasgrid' && state.canvasGridId && cgActiveDef) {
       return CanvasGrid.previewRecipe(cgActiveDef, engine);
     }
+    if (isSceneContent()) return { seed: state.seed, sceneId: state.sceneId, palette: state.palette };
     return { seed: state.seed, family: state.family, palette: state.palette };
   }
 
   function panelRecipe(index, count) {
     const base = baseRecipe();
+    const scene = isSceneContent();
     if (state.composition === 'independent') {
       const entry = state.independent[index];
+      // Independent scene panels share the wall's one scene (no per-slot
+      // scene picker yet - spec section 8 only asks for ONE ARTWORK/SEED
+      // FAMILY) but still get a distinct seed per panel via `entry`/index.
+      if (scene) return { seed: (entry && entry.seed) ? entry.seed : base.seed + '|IND' + index, sceneId: base.sceneId, palette: (entry && entry.palette != null) ? entry.palette : base.palette };
       if (entry && entry.seed) return { seed: entry.seed, family: entry.family || 0, palette: entry.palette || 0 };
       return { seed: base.seed + '|IND' + index, family: (base.family + index) % engine.FAMILIES.length, palette: (base.palette + index) % engine.PALETTES.length };
     }
     if (state.composition === 'family') {
+      if (scene) return { seed: base.seed + '|P' + index, sceneId: base.sceneId, palette: base.palette };
       return { seed: base.seed + '|P' + index, family: base.family, palette: base.palette };
     }
     return base; // continuous - all panels share one recipe, resolved as a crop
@@ -176,8 +192,16 @@
     while (state.independent.length < count) {
       const i = state.independent.length;
       const base = baseRecipe();
-      state.independent.push({ seed: base.seed + '|IND' + i, family: (base.family + i) % engine.FAMILIES.length, palette: (base.palette + i) % engine.PALETTES.length });
+      state.independent.push({ seed: base.seed + '|IND' + i, family: (Number(base.family || 0) + i) % engine.FAMILIES.length, palette: (base.palette + i) % engine.PALETTES.length });
     }
+  }
+
+  /* Single dispatch point used everywhere a recipe gets rendered - keeps
+     drawFrame() itself agnostic to which content system produced the
+     recipe it was handed. */
+  function renderContent(ctx, w, h, recipe, audio, quality) {
+    if (recipe.sceneId) Scenes.renderScene(ctx, w, h, recipe, audio, quality);
+    else engine.renderRecipe(ctx, w, h, recipe, audio, quality);
   }
 
   // --------------------------------------------------------- audio state --
@@ -230,11 +254,11 @@
         ctx.save();
         ctx.beginPath(); ctx.rect(0, 0, w, h); ctx.clip();
         ctx.translate(-tileX, -tileY);
-        engine.renderRecipe(ctx, fullW, fullH, recipe, a, quality);
+        renderContent(ctx, fullW, fullH, recipe, a, quality);
         ctx.restore();
       } else {
         const recipe = Object.assign({ phase: framePhase, density: state.density }, panelRecipe(panelIndex, count));
-        engine.renderRecipe(ctx, w, h, recipe, a, quality);
+        renderContent(ctx, w, h, recipe, a, quality);
       }
     });
   }
@@ -302,7 +326,7 @@
     $('#lblComposition').textContent = state.composition === 'continuous' ? 'One artwork' : state.composition === 'family' ? 'Seed family' : 'Independent collection';
     $('#lblMode').textContent = state.displayMode.charAt(0).toUpperCase() + state.displayMode.slice(1);
     $('#lblAspect').textContent = state.aspect === 'wide' ? '16:9' : state.aspect === 'classic' ? '4:3' : 'Square';
-    $('#lblFamily').textContent = engine.FAMILIES[state.family % engine.FAMILIES.length].name;
+    $('#lblFamily').textContent = isSceneContent() ? Scenes.sceneById(state.sceneId).name : engine.FAMILIES[state.family % engine.FAMILIES.length].name;
     $('#lblDensity').textContent = state.density;
     $('#lblSpeed').textContent = state.speed;
     $('#lblQuality').textContent = state.quality.charAt(0).toUpperCase() + state.quality.slice(1);
@@ -324,6 +348,12 @@
     setSeg('.sidebar', 'quality', state.quality);
     setSeg('.sidebar', 'source', state.sourceType);
     $('#canvasGridPicker').hidden = state.sourceType !== 'canvasgrid';
+    $('#contentTypeRow').hidden = state.sourceType !== 'generative';
+    setSeg('#contentTypeRow', 'content', state.contentType);
+    $('#lblStyleHeading').textContent = isSceneContent() ? 'Scene' : 'Style';
+    $('#familyNavRow').hidden = isSceneContent();
+    $('#scenePicker').hidden = !isSceneContent();
+    setSeg('#scenePicker', 'scene', state.sceneId);
     $('#musicSection').style.opacity = state.displayMode === 'music' ? '1' : '.55';
     $('#playerBar').style.display = (state.musicSource === 'emvy' || state.musicSource === 'local') ? 'grid' : 'none';
     $('#lblMusicTrack').textContent = audio.state.currentTitle || 'not playing';
@@ -524,7 +554,16 @@
   if (!isPlayer) {
     $('#btnNewArt').onclick = function () { applyPatch({ seed: randomSeed() }); toast('New artwork'); };
     $('#btnPalette').onclick = function () { applyPatch({ palette: (state.palette + 1) % engine.PALETTES.length }); toast('New colour'); };
-    $('#btnStyle').onclick = function () { applyPatch({ family: (state.family + 1) % engine.FAMILIES.length }); toast(engine.FAMILIES[state.family].name); };
+    $('#btnStyle').onclick = function () {
+      if (isSceneContent()) {
+        const next = (Scenes.sceneIndexById(state.sceneId) + 1 + Scenes.SCENES.length) % Scenes.SCENES.length;
+        applyPatch({ sceneId: Scenes.SCENES[next].id });
+        toast(Scenes.SCENES[next].name);
+        return;
+      }
+      applyPatch({ family: (state.family + 1) % engine.FAMILIES.length });
+      toast(engine.FAMILIES[state.family].name);
+    };
     $('#btnFamilyPrev').onclick = function () { applyPatch({ family: (state.family - 1 + engine.FAMILIES.length) % engine.FAMILIES.length }); };
     $('#btnFamilyNext').onclick = function () { applyPatch({ family: (state.family + 1) % engine.FAMILIES.length }); };
     $('#btnSeedApply').onclick = function () { applyPatch({ seed: ($('#seedInput').value.trim() || 'EMVY-0001').toUpperCase() }); };
@@ -536,6 +575,8 @@
     $$('#segAspect [data-aspect]').forEach(function (b) { b.onclick = function () { applyPatch({ aspect: b.dataset.aspect }); }; });
     $$('.sidebar [data-quality]').forEach(function (b) { b.onclick = function () { applyPatch({ quality: b.dataset.quality }, { resetPhase: false }); }; });
     $$('.sidebar [data-source]').forEach(function (b) { b.onclick = function () { applyPatch({ sourceType: b.dataset.source }); if (b.dataset.source === 'canvasgrid') buildCanvasGridPicker(); }; });
+    $$('#contentTypeRow [data-content]').forEach(function (b) { b.onclick = function () { applyPatch({ contentType: b.dataset.content }); }; });
+    $$('#scenePicker [data-scene]').forEach(function (b) { b.onclick = function () { applyPatch({ sceneId: b.dataset.scene }); }; });
     $$('.sidebar [data-sensitivity]').forEach(function (b) { b.onclick = function () { audio.setSensitivity(b.dataset.sensitivity); applyPatch({ sensitivity: b.dataset.sensitivity }, { resetPhase: false }); }; });
 
     $('#rangeDensity').oninput = function (e) { applyPatch({ density: Number(e.target.value) }, { resetPhase: false }); };
@@ -579,7 +620,7 @@
       openModal('modalSave');
     };
     $('#btnConfirmSave').onclick = function () {
-      const name = $('#saveNameInput').value.trim() || (engine.FAMILIES[state.family].name + ' ' + state.seed);
+      const name = $('#saveNameInput').value.trim() || ((isSceneContent() ? Scenes.sceneById(state.sceneId).name : engine.FAMILIES[state.family].name) + ' ' + state.seed);
       Library.save(name, state).then(function () { toast('Saved "' + name + '"'); refreshFavouritesCache(); closeModal('modalSave'); });
     };
     $('#btnCopyArtCode').onclick = function () {
@@ -683,7 +724,7 @@
     Player.installHiddenGesture(function () {
       const overlay = $('#playerOverlay');
       overlay.hidden = !overlay.hidden;
-      $('#playerInfo').textContent = state.seed + ' · ' + engine.FAMILIES[state.family].name + (playerKind === 'panel' ? ' · Screen ' + panelNumber : '');
+      $('#playerInfo').textContent = state.seed + ' · ' + (isSceneContent() ? Scenes.sceneById(state.sceneId).name : engine.FAMILIES[state.family].name) + (playerKind === 'panel' ? ' · Screen ' + panelNumber : '');
     });
     $('#playerExit').onclick = function () { location.href = 'index.html' + location.search.replace(/([?&])player=[^&]*&?/, '$1').replace(/&$/, ''); };
     $('#playerNewArt').onclick = function () { applyPatch({ seed: randomSeed() }); };

@@ -5,7 +5,10 @@
   'use strict';
 
   const STEPS = [
-    { patch: { layout: 1, composition: 'continuous', displayMode: 'live', palette: 0 }, duration: 7000, text: 'EMVY CHECK LIVING ART' },
+    // Explicit, fully self-contained reset (contentType included) - this is
+    // the loop's re-entry point, so it can't rely on whatever the scene
+    // tour below left behind.
+    { patch: { contentType: 'abstract', layout: 1, composition: 'continuous', displayMode: 'live', palette: 0 }, duration: 7000, text: 'EMVY CHECK LIVING ART' },
     { patch: { layout: 9, composition: 'continuous' }, duration: 7000, text: 'GENERATIVE ART FOR CONNECTED DISPLAYS' },
     { patch: { composition: 'continuous' }, duration: 7000, text: null },
     { patch: { composition: 'family' }, duration: 7000, text: 'EVERY GENERATION ORIGINAL' },
@@ -19,7 +22,24 @@
     { patch: { displayMode: 'paper' }, duration: 5500, text: null },
     { patch: { displayMode: 'live' }, duration: 5500, text: null },
     { patch: { displayMode: 'music', musicSource: 'demo' }, duration: 9000, text: null },
-    { patch: { layout: 1, composition: 'continuous', displayMode: 'live', musicSource: 'none' }, duration: 7000, text: null }
+    // Scene families tour (V4) - abstract families are one content layer;
+    // this shows the second, representational one, and that each scene
+    // genuinely behaves differently across PAINT/LIVE/MUSIC rather than
+    // just being a reskinned visualizer.
+    { patch: { layout: 1, composition: 'continuous', displayMode: 'live', musicSource: 'none' }, duration: 4000, text: 'SCENE FAMILIES' },
+    { patch: { contentType: 'scene', sceneId: 'river-mill', displayMode: 'paper', musicSource: 'none' }, duration: 4500, text: 'RIVER MILL · PAINT' },
+    { patch: { displayMode: 'live' }, duration: 6000, text: 'RIVER MILL · LIVE' },
+    { patch: { displayMode: 'music', musicSource: 'demo' }, duration: 7000, text: 'RIVER MILL · MUSIC' },
+    { patch: { sceneId: 'birds-flight', displayMode: 'paper', musicSource: 'none' }, duration: 4500, text: 'BIRDS FLIGHT · PAINT' },
+    { patch: { displayMode: 'live' }, duration: 6000, text: 'BIRDS FLIGHT · LIVE' },
+    { patch: { displayMode: 'music', musicSource: 'demo' }, duration: 7000, text: 'BIRDS FLIGHT · MUSIC' },
+    { patch: { sceneId: 'open-arms', displayMode: 'paper', musicSource: 'none' }, duration: 4500, text: 'OPEN ARMS · PAINT' },
+    { patch: { displayMode: 'live' }, duration: 6000, text: 'OPEN ARMS · LIVE' },
+    { patch: { displayMode: 'music', musicSource: 'demo' }, duration: 7000, text: 'OPEN ARMS · MUSIC' },
+    { patch: { sceneId: 'coaster-ride', displayMode: 'paper', musicSource: 'none' }, duration: 4500, text: 'COASTER RIDE · PAINT' },
+    { patch: { displayMode: 'live' }, duration: 6000, text: 'COASTER RIDE · LIVE' },
+    { patch: { displayMode: 'music', musicSource: 'demo' }, duration: 8000, text: 'COASTER RIDE · MUSIC' },
+    { patch: { contentType: 'abstract', layout: 1, composition: 'continuous', displayMode: 'live', musicSource: 'none' }, duration: 7000, text: null }
   ];
 
   function Presentation() {

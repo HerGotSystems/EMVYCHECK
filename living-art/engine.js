@@ -523,7 +523,7 @@
 
   global.LivingArtEngine = {
     FAMILIES, PALETTES, QUALITY_PROFILES,
-    hashString, rngFromSeed, clamp, mix, rgba, hexToRgb,
+    hashString, rngFromSeed, clamp, mix, rgba, hexToRgb, pick,
     familyIndexById, resolveQuality, renderRecipe, ensureCanvasSize,
     NEUTRAL_AUDIO
   };

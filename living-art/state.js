@@ -25,11 +25,13 @@
       volume: 0.8,
       sourceType: 'generative',
       canvasGridId: null,
+      contentType: 'abstract',
+      sceneId: 'river-mill',
       autoArt: { interval: 'manual', mode: 'new-art' }
     };
   }
 
-  const STRING_KEYS = { seed: 'seed', installSeed: 'iseed', composition: 'comp', aspect: 'aspect', displayMode: 'mode', quality: 'q', musicSource: 'music', sensitivity: 'sens', sourceType: 'source', canvasGridId: 'cg' };
+  const STRING_KEYS = { seed: 'seed', installSeed: 'iseed', composition: 'comp', aspect: 'aspect', displayMode: 'mode', quality: 'q', musicSource: 'music', sensitivity: 'sens', sourceType: 'source', canvasGridId: 'cg', contentType: 'content', sceneId: 'scene' };
   const NUMBER_KEYS = { family: 'fam', palette: 'pal', density: 'den', speed: 'spd', layout: 'layout', volume: 'vol' };
   const BOOL_KEYS = { epaper: 'epaper', shuffle: 'shuffle' };
 
@@ -61,6 +63,17 @@
     return state;
   }
 
+  // Scene ids come from scenes.js (loaded before this file - see index.html)
+  // when available; falls back to this hardcoded list so a load-order
+  // mistake or script failure can never leave sceneId unbounded.
+  const KNOWN_SCENE_IDS = ['river-mill', 'open-arms', 'birds-flight', 'coaster-ride'];
+  function isKnownScene(id) {
+    if (global.LivingArtScenes && typeof global.LivingArtScenes.sceneIndexById === 'function') {
+      return global.LivingArtScenes.sceneIndexById(id) >= 0;
+    }
+    return KNOWN_SCENE_IDS.indexOf(id) >= 0;
+  }
+
   function sanitize(state) {
     const d = defaultState();
     const out = Object.assign({}, d, state || {});
@@ -72,6 +85,8 @@
     out.musicSource = ['none', 'emvy', 'local', 'demo'].indexOf(out.musicSource) >= 0 ? out.musicSource : 'none';
     out.sensitivity = ['calm', 'normal', 'hard'].indexOf(out.sensitivity) >= 0 ? out.sensitivity : 'normal';
     out.sourceType = ['generative', 'canvasgrid'].indexOf(out.sourceType) >= 0 ? out.sourceType : 'generative';
+    out.contentType = ['abstract', 'scene'].indexOf(out.contentType) >= 0 ? out.contentType : 'abstract';
+    out.sceneId = isKnownScene(out.sceneId) ? out.sceneId : 'river-mill';
     out.density = Math.max(20, Math.min(100, Number(out.density) || 58));
     out.speed = Math.max(5, Math.min(100, Number(out.speed) || 28));
     out.volume = Math.max(0, Math.min(1, Number(out.volume) || 0.8));
