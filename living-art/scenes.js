@@ -1,4 +1,4 @@
-/* EMVY CHECK Living Art V5 — scene families, art-direction pass.
+/* EMVY CHECK Living Art V6 — scene families, composition + richness pass.
    A second, representational content layer alongside the existing abstract
    procedural FAMILIES in engine.js. Same deterministic-seed pipeline, same
    PAINT/LIVE/MUSIC contract: at phase=0 with NEUTRAL_AUDIO every scene must
@@ -7,28 +7,24 @@
    designed events rather than generic pulsing (MUSIC) - see each scene's
    `musicProfile` below for the mapping.
 
-   V5 art-direction model (per scene, not identically implemented but used
-   as the layer order throughout): BACKGROUND, DISTANT ENVIRONMENT,
-   MIDGROUND, MAIN SUBJECT, FOREGROUND, ATMOSPHERE, LIGHT, MUSIC EVENTS.
-   Palette colours are never used raw - see shade()/blend() below - so a
-   scene reads as colour-coherent rather than "five primitives, five palette
-   slots".
+   V6 adds real COMPOSITION ARCHETYPES per scene (picked once, deterministically,
+   from the seed) - a different seed doesn't just move details around inside
+   the same template, it can change which side the subject sits on, how the
+   ground is shaped, how big the subject is, and what kind of terrain/formation
+   surrounds it. See each scene's *_ARCHETYPES table.
 
    Determinism rule every scene function must follow: the seeded RNG `r()`
    is consumed in a FIXED order/count that never depends on the runtime
    audio values - only the position/size/alpha *computed* from a draw may
    depend on audio, never how many times r() gets called before it. Seed-
-   driven branching (time of day, weather, formation type...) is the
-   opposite - that's expected and is exactly how a seed produces a visibly
-   different world; it's fine for different SEEDS to consume different
-   r() counts. An audio-gated flourish (a kick splash, a treble sparkle
-   burst) is safe when it either (a) always rolls its r() value first and
-   only branches on audio+roll together (never audio alone), or (b) is the
-   LAST thing a scene draws, since nothing downstream then depends on the
-   RNG sequence it consumes. This is what keeps "same seed + same scene +
-   same settings reproduce the same base composition" true for PAINT while
-   still letting MUSIC react smoothly rather than glitching between frames
-   when a threshold is crossed. */
+   driven branching (archetype, time of day, weather, formation type...) is
+   the opposite - that's expected and is exactly how a seed produces a
+   visibly different world; it's fine for different SEEDS to consume
+   different r() counts. An audio-gated flourish (a kick splash, a treble
+   sparkle burst) is safe when it either (a) always rolls its r() value
+   first and only branches on audio+roll together (never audio alone), or
+   (b) is the LAST thing a scene draws, since nothing downstream then
+   depends on the RNG sequence it consumes. */
 (function (global) {
   'use strict';
 
@@ -44,7 +40,8 @@
   // Every colour used in a scene is derived from the 5-slot palette through
   // these, rather than a raw pal[n] - so "lighter version of the accent",
   // "this object in shadow", "this distant hill hazed toward the sky" all
-  // stay visually related instead of five arbitrarily different hues.
+  // stay visually related instead of five arbitrarily different hues, and a
+  // palette swap visibly and coherently recolours the whole world.
   function mixRgb(hexA, hexB, t) {
     const a = hexToRgb(hexA), b = hexToRgb(hexB);
     return [mix(a[0], b[0], t), mix(a[1], b[1], t), mix(a[2], b[2], t)];
@@ -64,6 +61,7 @@
   function depthTint(hex, hazeHex, depth, baseAlpha) {
     return blend(hex, hazeHex, depth * 0.7, baseAlpha * (1 - depth * 0.35));
   }
+  function pick(r, arr) { return arr[Math.floor(r() * arr.length) % arr.length]; }
 
   // Cheap deterministic drifting-particle layer shared by several scenes
   // (mist motes, fireflies, falling leaves, luminous fog, sparks). Bounded
@@ -81,17 +79,65 @@
     ctx.globalAlpha = 1;
   }
 
+  // An irregular closed blob (canopy, cloud, bush, rock) - deterministic
+  // jitter per vertex instead of a perfect ellipse, which is what makes
+  // hand-drawn/painterly shapes read as organic rather than diagrammatic.
+  function organicBlob(ctx, r, cx, cy, rx, ry, points, irregularity) {
+    ctx.beginPath();
+    for (let i = 0; i <= points; i++) {
+      const ang = (i / points) * Math.PI * 2;
+      const jitter = 1 + (r() - 0.5) * 2 * irregularity;
+      const x = cx + Math.cos(ang) * rx * jitter, y = cy + Math.sin(ang) * ry * jitter;
+      i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+    }
+    ctx.closePath();
+  }
+
+  // An irregular ridge line from x=0..w ending back down at baseY on both
+  // ends - used for hills/mountains/canopy edges. `jagged` biases toward
+  // occasional sharp peaks instead of uniformly soft bumps.
+  function ridgePath(ctx, r, w, baseY, segs, ampMin, ampMax, jagged) {
+    ctx.moveTo(0, baseY);
+    for (let i = 0; i <= segs; i++) {
+      const x = (i / segs) * w;
+      let amp = ampMin + r() * (ampMax - ampMin);
+      if (jagged && r() > 0.72) amp *= 1.5 + r() * 0.6;
+      const lean = (r() - 0.5) * (w / segs) * 0.6; // slight horizontal irregularity, not just vertical
+      ctx.lineTo(x + lean, baseY - amp);
+    }
+    ctx.lineTo(w, baseY);
+  }
+
+  // A soft, low-alpha directional colour wash - a real landscape-painting
+  // technique (glazing) for tying a whole scene together under one light
+  // colour without flattening the detail underneath.
+  function colourWash(ctx, w, h, hex, alpha, x0, y0, x1, y1) {
+    const g = ctx.createLinearGradient(x0, y0, x1, y1);
+    g.addColorStop(0, rgbaOf(hexToRgb(hex), alpha));
+    g.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+  }
+
   // ============================================================ A. RIVER MILL
+  const RIVER_ARCHETYPES = [
+    { id: 'mill-left-sweep', millSide: -1, riverBend: 0.16, riverWidth: 1, millScale: 1, terrain: 'hills' },
+    { id: 'mill-right-diagonal', millSide: 1, riverBend: -0.3, riverWidth: 0.9, millScale: 1, terrain: 'hills' },
+    { id: 'close-large-mill', millSide: -1, riverBend: 0.1, riverWidth: 1.05, millScale: 1.55, terrain: 'hills' },
+    { id: 'distant-small-mill', millSide: 1, riverBend: 0.05, riverWidth: 1, millScale: 0.6, terrain: 'mountains' },
+    { id: 'mountain-valley', millSide: -1, riverBend: 0.22, riverWidth: 0.8, millScale: 0.85, terrain: 'mountains' },
+    { id: 'wooded-river', millSide: 1, riverBend: 0.14, riverWidth: 0.85, millScale: 1, terrain: 'forest' },
+    { id: 'broad-lake', millSide: -1, riverBend: 0.04, riverWidth: 1.6, millScale: 0.85, terrain: 'hills' },
+    { id: 'steep-bank', millSide: 1, riverBend: 0.26, riverWidth: 0.72, millScale: 1.1, terrain: 'cliff' }
+  ];
+
   function drawRiverMill(ctx, w, h, r, pal, t, a, density, q) {
-    // ---- seed rolls (fixed count/order, unconditional - drives the world) --
+    const arch = pick(r, RIVER_ARCHETYPES);
     const timeOfDay = Math.floor(r() * 4);   // 0 dawn, 1 day, 2 dusk, 3 night
     const weather = Math.floor(r() * 4);     // 0 clear, 1 mist, 2 leaves, 3 fireflies
     const lightSide = r() < 0.5 ? -1 : 1;
-    const houseSide = r() < 0.5 ? -1 : 1;    // keeps the mill off dead-centre, away from a wall gap
-    const wheelScale = 0.85 + r() * 0.35;
-    const horizon = h * (0.42 + r() * 0.06);
+    const wheelStyleTaller = r() < 0.4;      // occasional windmill-tall silhouette instead of squat cottage
+    const horizon = h * (0.4 + r() * 0.08) * (arch.terrain === 'mountains' ? 0.92 : 1);
     const riverTop = h * (0.58 + r() * 0.05);
-    const riverBend = (r() - 0.5) * 0.25;
     const skyLow = timeOfDay === 0 ? pal[4] : timeOfDay === 2 ? pal[3] : timeOfDay === 3 ? pal[0] : pal[1];
 
     // ---- 1. BACKGROUND: sky, time-of-day lit ----
@@ -119,20 +165,45 @@
       ctx.globalAlpha = 1;
     }
 
-    // ---- 2. DISTANT ENVIRONMENT: layered hazed hill bands + tiny trees ----
-    const hillBands = 3;
-    for (let b = 0; b < hillBands; b++) {
-      const depth = 1 - b / (hillBands - 1);
-      const bandTop = horizon - (hillBands - b) * h * 0.026;
-      ctx.fillStyle = depthTint(pal[1], skyLow, depth, 0.85);
-      ctx.beginPath(); ctx.moveTo(0, horizon + 2);
-      const pts = 7;
-      for (let i = 0; i <= pts; i++) {
-        const x = (i / pts) * w;
-        const y = bandTop - (8 + r() * 30) * (0.5 + 0.5 * Math.sin(i * 1.7 + b * 2.3));
+    // ---- 2. DISTANT ENVIRONMENT: terrain type from the archetype ----
+    if (arch.terrain === 'mountains') {
+      const bands = 2;
+      for (let b = 0; b < bands; b++) {
+        const depth = 1 - b / (bands - 1 || 1);
+        ctx.fillStyle = depthTint(pal[1], skyLow, depth, 0.85);
+        ctx.beginPath();
+        ridgePath(ctx, r, w, horizon - (bands - b) * h * 0.01, 8, h * 0.03, h * 0.16 - b * h * 0.05, true);
+        ctx.lineTo(w, horizon + 2); ctx.lineTo(0, horizon + 2); ctx.closePath(); ctx.fill();
+      }
+    } else if (arch.terrain === 'cliff') {
+      const cliffX = arch.millSide > 0 ? 0 : w * 0.62;
+      const cliffW = w * 0.38;
+      ctx.fillStyle = depthTint(pal[1], skyLow, 0.35, 0.92);
+      ctx.beginPath();
+      ctx.moveTo(cliffX, horizon + 2);
+      const steps = 6;
+      for (let i = 0; i <= steps; i++) {
+        const x = cliffX + (i / steps) * cliffW;
+        const y = horizon - h * (0.02 + r() * 0.05) - (i / steps) * h * 0.05;
         ctx.lineTo(x, y);
       }
-      ctx.lineTo(w, horizon + 2); ctx.closePath(); ctx.fill();
+      ctx.lineTo(cliffX + cliffW, horizon + 2); ctx.closePath(); ctx.fill();
+    } else if (arch.terrain === 'forest') {
+      const bandY = horizon - h * 0.01;
+      ctx.fillStyle = depthTint(pal[2], skyLow, 0.3, 0.85);
+      ctx.beginPath();
+      ridgePath(ctx, r, w, bandY, 22, h * 0.015, h * 0.05, true);
+      ctx.lineTo(w, horizon + 2); ctx.lineTo(0, horizon + 2); ctx.closePath(); ctx.fill();
+    } else { // hills - soft rolling bands
+      const hillBands = 3;
+      for (let b = 0; b < hillBands; b++) {
+        const depth = 1 - b / (hillBands - 1);
+        const bandTop = horizon - (hillBands - b) * h * 0.026;
+        ctx.fillStyle = depthTint(pal[1], skyLow, depth, 0.85);
+        ctx.beginPath();
+        ridgePath(ctx, r, w, bandTop, 8, h * 0.014, h * 0.05, false);
+        ctx.lineTo(w, horizon + 2); ctx.lineTo(0, horizon + 2); ctx.closePath(); ctx.fill();
+      }
     }
     const distTrees = Math.floor(7 + density * 0.05);
     ctx.fillStyle = depthTint(pal[2], skyLow, 0.6, 0.7);
@@ -141,48 +212,48 @@
       ctx.beginPath(); ctx.arc(tx, ty, 2 + r() * 3, 0, Math.PI * 2); ctx.fill();
     }
 
-    // ---- 3. MIDGROUND: bank grass strip + reeds/bushes ----
+    // ---- 3. MIDGROUND: bank grass strip + irregular bushes ----
     ctx.fillStyle = depthTint(pal[2], skyLow, 0.25, 0.9);
     ctx.fillRect(0, horizon - 2, w, riverTop - horizon + 6);
     const bushN = Math.floor(6 + density * 0.05);
     for (let i = 0; i < bushN; i++) {
       const bx = r() * w, by = horizon + r() * (riverTop - horizon) * 0.6;
-      ctx.fillStyle = shade(pal[2], -0.1 + r() * 0.3, 0.75);
-      ctx.beginPath(); ctx.ellipse(bx, by, 7 + r() * 9, 5 + r() * 5, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = shade(pal[2], -0.1 + r() * 0.3, 0.72);
+      organicBlob(ctx, r, bx, by, 7 + r() * 9, 5 + r() * 5, 7, 0.3);
+      ctx.fill();
     }
 
     // ---- 4. MAIN SUBJECT: river with perspective + mill + wheel ----
     // Water reflects the sky it sits under (a real-landscape convention)
-    // rather than a fixed palette slot - this is what actually reads as
-    // "water" regardless of which slot happens to be warm vs cool for a
-    // given palette, and keeps it visually tied to the chosen time of day.
+    // rather than a fixed palette slot, so it stays coherent under any
+    // palette/time-of-day.
     const riverBottom = h;
     const flow = t * (0.6 + a.bass * 0.8);
+    const bendSign = arch.millSide;
     const water = ctx.createLinearGradient(0, riverTop, 0, riverBottom);
     water.addColorStop(0, blend(skyLow, pal[0], 0.35, 0.92));
     water.addColorStop(0.45, shade(pal[0], -0.15, 0.94));
     water.addColorStop(1, shade(pal[0], -0.45, 0.97));
     ctx.fillStyle = water;
     ctx.beginPath(); ctx.moveTo(0, riverTop);
-    const bankPts = 12;
+    const bankPts = 14;
     for (let i = 0; i <= bankPts; i++) {
       const u = i / bankPts;
       const x = u * w;
-      const bendY = Math.sin(u * Math.PI) * h * riverBend;
+      const bendY = Math.sin(u * Math.PI) * h * arch.riverBend * bendSign;
       const y = riverTop + bendY + Math.sin(i * 0.9 + flow * 0.6) * 5 * (1 + a.bass * 0.5);
       ctx.lineTo(x, y);
     }
     ctx.lineTo(w, riverBottom); ctx.lineTo(0, riverBottom); ctx.closePath(); ctx.fill();
 
-    // sun/moon reflection - the single strongest "this is water" cue, built
-    // from short broken strokes (like real shimmer) rather than one filled
-    // wedge, which reads as a spotlight instead of a reflection
+    // sun/moon reflection - built from short broken strokes (like real
+    // shimmer) rather than a filled wedge, which reads as a spotlight
     ctx.globalCompositeOperation = 'screen';
     const reflRows = 14;
     for (let i = 0; i < reflRows; i++) {
       const v = i / reflRows;
       const ry = riverTop + 6 + v * (riverBottom - riverTop - 10);
-      const spread = w * (0.008 + v * 0.05);
+      const spread = w * (0.008 + v * 0.05) * arch.riverWidth;
       const segX = sunX + (r() - 0.5) * spread * 2;
       const segLen = 4 + v * 16 + r() * 6;
       ctx.strokeStyle = shade(pal[4], 0.5, (0.5 - v * 0.25) * (0.5 + a.treble * 0.2));
@@ -192,58 +263,47 @@
     ctx.globalCompositeOperation = 'source-over';
 
     // darker deep-water pooling + a few stones near the near bank
-    ctx.fillStyle = shade(pal[0], -0.4, 0.25);
-    ctx.beginPath(); ctx.ellipse(w * 0.5, riverTop + (riverBottom - riverTop) * 0.6, w * 0.32, (riverBottom - riverTop) * 0.22, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = shade(pal[0], -0.4, 0.22);
+    ctx.beginPath(); ctx.ellipse(w * 0.5, riverTop + (riverBottom - riverTop) * 0.6, w * 0.32 * arch.riverWidth, (riverBottom - riverTop) * 0.22, 0, 0, Math.PI * 2); ctx.fill();
     const stoneN = Math.floor(3 + density * 0.02);
     for (let i = 0; i < stoneN; i++) {
       const sx = r() * w, sy = riverTop + r() * (riverBottom - riverTop) * 0.35;
       ctx.fillStyle = shade(pal[1], -0.2 + r() * 0.3, 0.6);
       ctx.beginPath(); ctx.ellipse(sx, sy, 3 + r() * 4, 1.6 + r() * 2, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = shade(pal[4], 0.4, 0.15); // tiny highlight catching the light
+      ctx.beginPath(); ctx.ellipse(sx - 1, sy - 1, 1, 0.6, 0, 0, Math.PI * 2); ctx.fill();
     }
 
-    // shimmer highlights scrolling downstream, aligned toward the light side
-    ctx.globalCompositeOperation = 'screen';
-    const shimmerN = Math.floor((10 + density * 0.14) * q * (1 + a.treble * 0.6));
-    for (let i = 0; i < shimmerN; i++) {
-      const ry = riverTop + 10 + (i / shimmerN) * (riverBottom - riverTop - 20);
-      const xoff = ((flow * 42 + i * 53) % (w + 80)) - 40 + lightSide * w * 0.1;
-      ctx.strokeStyle = shade(pal[4], 0.4, 0.12 + 0.22 * a.treble + 0.08 * Math.sin(i + flow));
-      ctx.lineWidth = 1 + (i % 3) * 0.6;
-      ctx.beginPath(); ctx.moveTo(xoff, ry); ctx.lineTo(xoff + 60 + a.bass * 30, ry + Math.sin(i) * 2); ctx.stroke();
-    }
-    ctx.globalCompositeOperation = 'source-over';
-
-    // mill building - varied proportions, roof, chimney, windows, eaves
-    const houseW = w * (0.15 + r() * 0.03), houseH = h * (0.1 + r() * 0.02);
-    const houseX = w * 0.5 + houseSide * w * (0.2 + r() * 0.1) - houseW / 2;
+    // mill building - archetype-driven scale/side, varied silhouette
+    const millScale = arch.millScale;
+    const houseW = w * (0.13 + r() * 0.03) * millScale, houseH = h * (0.09 + r() * 0.02) * millScale * (wheelStyleTaller ? 1.5 : 1);
+    const houseX = w * 0.5 + arch.millSide * w * (0.16 + r() * 0.1) - houseW / 2;
     const houseY = riverTop - houseH - h * 0.03;
+    // wall in two tones for a simple sense of light direction
     ctx.fillStyle = shade(pal[1], -0.05, 0.92);
     ctx.fillRect(houseX, houseY, houseW, houseH);
-    ctx.fillStyle = shade(pal[1], -0.25, 0.5); // shadow side
-    ctx.fillRect(houseX + houseW * (houseSide > 0 ? 0.7 : 0), houseY, houseW * 0.3, houseH);
-    // roof with eave overhang
+    ctx.fillStyle = shade(pal[1], -0.28, 0.5);
+    ctx.fillRect(houseX + houseW * (lightSide > 0 ? 0 : 0.7), houseY, houseW * 0.3, houseH);
+    // roof with eave overhang - steeper on the taller windmill variant
     ctx.beginPath();
     ctx.moveTo(houseX - houseW * 0.12, houseY);
-    ctx.lineTo(houseX + houseW * 0.5, houseY - houseH * 0.65);
+    ctx.lineTo(houseX + houseW * 0.5, houseY - houseH * (wheelStyleTaller ? 0.9 : 0.6));
     ctx.lineTo(houseX + houseW * 1.12, houseY);
     ctx.closePath(); ctx.fillStyle = shade(pal[3], -0.1, 0.95); ctx.fill();
-    // chimney
     ctx.fillStyle = shade(pal[1], -0.3, 0.9);
-    ctx.fillRect(houseX + houseW * 0.72, houseY - houseH * 0.55, houseW * 0.09, houseH * 0.4);
-    // windows, glowing warmly at dusk/night
+    ctx.fillRect(houseX + houseW * 0.72, houseY - houseH * 0.5, houseW * 0.09, houseH * 0.38);
     const winLit = timeOfDay >= 2;
     ctx.fillStyle = winLit ? shade(pal[4], 0.5, 0.85 + a.kick * 0.15) : shade(pal[0], -0.35, 0.8);
-    ctx.fillRect(houseX + houseW * 0.18, houseY + houseH * 0.32, houseW * 0.18, houseH * 0.36);
-    ctx.fillRect(houseX + houseW * 0.62, houseY + houseH * 0.32, houseW * 0.18, houseH * 0.36);
-    // door
+    ctx.fillRect(houseX + houseW * 0.18, houseY + houseH * 0.32, houseW * 0.18, houseH * 0.3);
+    ctx.fillRect(houseX + houseW * 0.62, houseY + houseH * 0.32, houseW * 0.18, houseH * 0.3);
     ctx.fillStyle = shade(pal[3], -0.25, 0.9);
-    ctx.fillRect(houseX + houseW * 0.42, houseY + houseH * 0.5, houseW * 0.16, houseH * 0.5);
+    ctx.fillRect(houseX + houseW * 0.42, houseY + houseH * 0.55, houseW * 0.16, houseH * 0.45);
 
     // mill wheel - attached to a flume channel, real paddles with thickness
-    const wheelR = Math.min(w, h) * 0.06 * wheelScale * (1 + a.bass * 0.1);
-    const wheelX = houseX + (houseSide > 0 ? -wheelR * 1.1 : houseW + wheelR * 1.1);
+    const wheelR = Math.min(w, h) * 0.06 * millScale;
+    const wheelX = houseX + (arch.millSide > 0 ? -wheelR * 1.1 : houseW + wheelR * 1.1);
     const wheelY = riverTop + wheelR * 0.35;
-    ctx.fillStyle = shade(pal[1], -0.15, 0.6); // channel/flume recess
+    ctx.fillStyle = shade(pal[1], -0.15, 0.6);
     ctx.fillRect(wheelX - wheelR * 1.3, riverTop - 2, wheelR * 2.6, h * 0.06);
     const spin = t * (0.6 + a.mid * 1.4);
     ctx.save(); ctx.translate(wheelX, wheelY); ctx.rotate(spin);
@@ -270,8 +330,24 @@
     ctx.fillRect(houseX, houseY, houseW, houseH * 0.6);
     ctx.restore();
 
-    // ---- 5. FOREGROUND: reeds/grass tufts framing the bottom of frame only -
-    // kept low and sparse so they frame the water rather than covering it
+    // trees with canopy variation (organic blob clusters, not perfect circles)
+    const treeCount = Math.floor((5 + density * 0.06) * q);
+    for (let i = 0; i < treeCount; i++) {
+      const tx = r() * w * 0.55, ty = riverTop - r() * h * 0.05;
+      const sway = Math.sin(t * 0.4 + i) * 3 * (1 + a.mid * 0.3);
+      const trunkH = 10 + r() * 16;
+      ctx.fillStyle = shade(pal[2], -0.15, 0.7);
+      ctx.fillRect(tx - 1.5, ty, 3, trunkH);
+      const canopyLobes = 2 + Math.floor(r() * 2);
+      for (let lobe = 0; lobe < canopyLobes; lobe++) {
+        const lx = tx + (r() - 0.5) * 10 + sway, ly = ty - trunkH * 0.3 - (r() - 0.5) * 6;
+        ctx.fillStyle = shade(pal[2], -0.05 + r() * 0.25, 0.85);
+        organicBlob(ctx, r, lx, ly, 8 + r() * 7, 6 + r() * 6, 7, 0.35);
+        ctx.fill();
+      }
+    }
+
+    // ---- 5. FOREGROUND: reeds/grass tufts + a rock, framing the bottom ----
     const reedN = Math.floor(6 + density * 0.05);
     for (let i = 0; i < reedN; i++) {
       const rx = r() * w, ry = riverBottom - r() * h * 0.03;
@@ -281,8 +357,16 @@
       ctx.lineWidth = 1.3 + r() * 1;
       ctx.beginPath(); ctx.moveTo(rx, ry); ctx.quadraticCurveTo(rx + sway * 0.5, ry - rh * 0.6, rx + sway, ry - rh); ctx.stroke();
     }
+    if (r() > 0.4) {
+      const fgRockX = r() * w, fgRockY = riverBottom - r() * h * 0.025;
+      ctx.fillStyle = shade(pal[1], -0.35, 0.85);
+      organicBlob(ctx, r, fgRockX, fgRockY, 10 + r() * 10, 5 + r() * 4, 6, 0.25);
+      ctx.fill();
+      ctx.fillStyle = shade(pal[4], 0.3, 0.12); // rim light catching the rock edge
+      ctx.beginPath(); ctx.ellipse(fgRockX - 4, fgRockY - 3, 4, 1.5, 0, 0, Math.PI * 2); ctx.fill();
+    }
 
-    // ---- 6. ATMOSPHERE: seed-chosen weather layer ----
+    // ---- 6. ATMOSPHERE: seed-chosen weather layer + overall colour wash ----
     if (weather === 1) {
       ctx.fillStyle = blend(pal[1], skyLow, 0.5, 0.10);
       for (let i = 0; i < 4; i++) ctx.fillRect(0, riverTop - h * 0.05 + i * h * 0.025, w, h * 0.03);
@@ -291,6 +375,9 @@
     } else if (weather === 3 && timeOfDay >= 2) {
       driftParticles(ctx, r, w, h, Math.floor(8 + density * 0.06), shade(pal[4], 0.5, 1), t * 0.6, 0.01, -0.02, 1, 2.2, 0.6);
     }
+    // a single directional colour wash ties the whole composition to the
+    // chosen light source instead of every layer reading independently lit
+    colourWash(ctx, w, h, pal[4], timeOfDay === 3 ? 0.05 : 0.09, sunX, 0, w * 0.5, h);
 
     // ---- 8. MUSIC EVENTS: splash bursts at the wheel base on kick (last) --
     if (a.kick > 0.05) {
@@ -307,14 +394,21 @@
   }
 
   // ========================================================= B. OPEN ARMS ==
+  const ARMS_ARCHETYPES = [
+    { id: 'monumental-close', scale: 1.18, groundVisible: 0.1, armLift: 0.02 },
+    { id: 'distant-landscape', scale: 0.72, groundVisible: 0.4, armLift: 0 },
+    { id: 'wide-embrace', scale: 1, groundVisible: 0.2, armLift: -0.06 },
+    { id: 'raised-arms', scale: 1.05, groundVisible: 0.15, armLift: 0.12 },
+    { id: 'humble-close', scale: 0.95, groundVisible: 0.22, armLift: -0.1 }
+  ];
   function drawOpenArms(ctx, w, h, r, pal, t, a, density, q) {
-    // ---- seed rolls ----
+    const arch = pick(r, ARMS_ARCHETYPES);
     const envType = Math.floor(r() * 4); // 0 cloudscape, 1 mountains, 2 cathedral, 3 darkness+light
-    const figureScale = 0.92 + r() * 0.18;
+    const radiant = r() < 0.55; // dark/moody vs bright/radiant composition
     const lightDir = r() < 0.5 ? -1 : 1;
     const robeVariant = r();
 
-    const cx = w * 0.5, cy = h * 0.58; // kept centred deliberately so the face sits inside a panel, not on a wall gap
+    const cx = w * 0.5, cy = h * (0.58 - arch.groundVisible * 0.06); // kept centred deliberately so the face sits inside a panel, not on a wall gap
 
     // ---- 1. BACKGROUND + 2. DISTANT ENVIRONMENT ----
     const skyGrad = ctx.createLinearGradient(0, 0, 0, h);
@@ -323,19 +417,20 @@
     skyGrad.addColorStop(1, blend(pal[3], pal[0], 0.35, 1));
     ctx.fillStyle = skyGrad; ctx.fillRect(0, 0, w, h);
 
-    if (envType === 0) { // cloudscape - soft layered banks below the horizon line
+    if (envType === 0) { // cloudscape - organic soft banks below the horizon
       for (let b = 0; b < 4; b++) {
         const by = h * (0.55 + b * 0.1);
         ctx.fillStyle = depthTint(pal[1], pal[0], b / 4, 0.35);
         for (let i = 0; i < 3; i++) {
           const cxx = r() * w, cr = w * (0.12 + r() * 0.12);
-          ctx.beginPath(); ctx.ellipse(cxx, by + Math.sin(t * 0.1 + b) * 4, cr, cr * 0.35, 0, 0, Math.PI * 2); ctx.fill();
+          organicBlob(ctx, r, cxx, by + Math.sin(t * 0.1 + b) * 4, cr, cr * 0.35, 8, 0.25);
+          ctx.fill();
         }
       }
     } else if (envType === 1) { // distant mountain silhouette
       ctx.fillStyle = depthTint(pal[1], pal[0], 0.5, 0.6);
-      ctx.beginPath(); ctx.moveTo(0, h * 0.78);
-      for (let i = 0; i <= 8; i++) ctx.lineTo((i / 8) * w, h * 0.78 - (10 + r() * 60));
+      ctx.beginPath();
+      ridgePath(ctx, r, w, h * 0.78, 8, h * 0.02, h * 0.09, true);
       ctx.lineTo(w, h * 0.78); ctx.closePath(); ctx.fill();
     } else if (envType === 2) { // abstract cathedral-like space: tall pillars of light/shadow
       for (let i = 0; i < 5; i++) {
@@ -346,17 +441,25 @@
     }
     // envType 3 (darkness+light) uses no extra distant layer - the light itself carries the scene
 
+    // ground, visible for the "distant figure in landscape" archetype
+    if (arch.groundVisible > 0.15) {
+      const groundY = h * (1 - arch.groundVisible * 0.5);
+      ctx.fillStyle = depthTint(pal[2], pal[0], 0.3, 0.55);
+      ctx.beginPath(); ridgePath(ctx, r, w, groundY, 6, h * 0.006, h * 0.02, false); ctx.lineTo(w, h); ctx.lineTo(0, h); ctx.closePath(); ctx.fill();
+    }
+
     // ---- 7. LIGHT: rays, halo, rim light, luminous fog (signature element) --
+    const radianceMul = radiant ? 1.25 : 0.6;
     ctx.save(); ctx.translate(cx, cy - h * 0.14);
     const rays = Math.floor((14 + density * 0.08) * q);
     const rayRot = t * (0.025 + a.mid * 0.05);
     ctx.globalCompositeOperation = 'screen';
     for (let i = 0; i < rays; i++) {
       const ang = (i / rays) * Math.PI * 2 + rayRot;
-      const len = Math.max(w, h) * (0.34 + r() * 0.24) * (1 + a.kick * 0.3);
+      const len = Math.max(w, h) * (0.34 + r() * 0.24) * (1 + a.kick * 0.3) * radianceMul;
       const beamW = 2 + r() * 5;
       const g = ctx.createLinearGradient(0, 0, Math.cos(ang) * len, Math.sin(ang) * len);
-      g.addColorStop(0, shade(pal[4], 0.5, 0.14 + 0.1 * r() + a.treble * 0.06));
+      g.addColorStop(0, shade(pal[4], 0.5, (0.14 + 0.1 * r() + a.treble * 0.06) * radianceMul));
       g.addColorStop(1, 'rgba(0,0,0,0)');
       ctx.strokeStyle = g;
       ctx.lineWidth = beamW;
@@ -365,10 +468,10 @@
     ctx.restore();
     ctx.globalCompositeOperation = 'source-over';
 
-    const haloR = Math.min(w, h) * (0.1 + a.bass * 0.02) * figureScale * (1 + Math.sin(t * 0.6) * 0.04);
+    const haloR = Math.min(w, h) * (0.1 + a.bass * 0.02) * arch.scale * radianceMul * (1 + Math.sin(t * 0.6) * 0.04);
     const halo = ctx.createRadialGradient(cx, cy - h * 0.24, 0, cx, cy - h * 0.24, haloR * 2.6);
-    halo.addColorStop(0, shade(pal[4], 0.55, 0.65 + a.kick * 0.35));
-    halo.addColorStop(0.4, shade(pal[3], 0.3, 0.18));
+    halo.addColorStop(0, shade(pal[4], 0.55, (0.65 + a.kick * 0.35) * radianceMul));
+    halo.addColorStop(0.4, shade(pal[3], 0.3, 0.18 * radianceMul));
     halo.addColorStop(1, 'rgba(0,0,0,0)');
     ctx.fillStyle = halo; ctx.fillRect(0, 0, w, h);
 
@@ -379,26 +482,23 @@
     ctx.fillStyle = fog; ctx.fillRect(0, h * 0.7, w, h * 0.3);
 
     // ---- 4. MAIN SUBJECT: the figure - improved proportions, robe folds, hands
-    const scale = Math.min(w, h) * figureScale * (1 + a.kick * 0.025);
+    const scale = Math.min(w, h) * arch.scale * (1 + a.kick * 0.025);
     const headR = scale * 0.055;
     const headY = cy - h * 0.26;
     const neckY = headY + headR * 1.3;
     const shoulderY = neckY + headR * 0.6;
     const hipY = mix(shoulderY, cy + h * 0.3, 0.55);
     const hemY = cy + h * 0.24;
-    // meaningfully wider than the robe hem so the gesture reads as open arms
-    // rather than the robe's own wavy edge
     const armSpread = scale * (0.4 + a.kick * 0.035);
     const sway = Math.sin(t * 0.32) * scale * 0.01 * (1 + a.mid * 0.6);
 
     // rim light side (behind the silhouette, slightly offset toward lightDir)
-    ctx.fillStyle = shade(pal[4], 0.4, 0.22);
+    ctx.fillStyle = shade(pal[4], 0.4, 0.22 * radianceMul);
     ctx.beginPath(); ctx.arc(cx + lightDir * headR * 0.15, headY, headR * 1.08, 0, Math.PI * 2); ctx.fill();
 
-    const bodyFill = shade(pal[2], -0.05, 0.95);
+    const bodyFill = radiant ? shade(pal[2], -0.05, 0.95) : shade(pal[2], -0.25, 0.96);
     ctx.fillStyle = bodyFill;
     ctx.beginPath(); ctx.arc(cx, headY, headR, 0, Math.PI * 2); ctx.fill();
-    // neck + shoulders taper into robe
     ctx.beginPath();
     ctx.moveTo(cx - scale * 0.055, neckY);
     ctx.quadraticCurveTo(cx - scale * 0.11, shoulderY, cx - scale * 0.16, shoulderY + headR * 0.5);
@@ -418,15 +518,16 @@
       const fx0 = cx + i * scale * 0.045, fx1 = fx0 + i * scale * 0.02 + sway * 0.6;
       ctx.beginPath(); ctx.moveTo(fx0, shoulderY + headR * 0.7); ctx.quadraticCurveTo(fx0, mix(shoulderY, hemY, 0.6), fx1, hemY); ctx.stroke();
     }
+    // hem shadow shape for grounding
+    ctx.fillStyle = shade(pal[0], -0.4, 0.2);
+    ctx.beginPath(); ctx.ellipse(cx, hemY + 2, scale * 0.2, scale * 0.02, 0, 0, Math.PI * 2); ctx.fill();
 
-    // arms, open gesture: shoulder -> rises outward -> settles level with the
-    // shoulder line at full spread, the classic welcoming/open silhouette -
-    // drawn as a filled tapered wedge (not a thin stroke) so it reads at a
-    // glance, with a simple rounded hand shape at each end.
+    // arms, open gesture: shoulder -> rises outward -> settles roughly level
+    // with the shoulder line, angle nudged by the archetype's armLift
     [-1, 1].forEach(function (side) {
       const sx = cx + side * scale * 0.1, sTop = shoulderY, sBot = shoulderY + headR * 0.9;
-      const ex = cx + side * armSpread, ey = shoulderY - headR * 0.15;
-      const cxp = cx + side * armSpread * 0.6, cypTop = shoulderY - headR * 1.6 + sway, cypBot = shoulderY - headR * 0.5 + sway;
+      const ex = cx + side * armSpread, ey = shoulderY - headR * 0.15 - scale * arch.armLift;
+      const cxp = cx + side * armSpread * 0.6, cypTop = shoulderY - headR * 1.6 + sway - scale * arch.armLift * 0.6, cypBot = shoulderY - headR * 0.5 + sway;
       ctx.fillStyle = bodyFill;
       ctx.beginPath();
       ctx.moveTo(sx, sTop);
@@ -438,7 +539,8 @@
     });
 
     // ---- 5/6. FOREGROUND + ATMOSPHERE: ground haze + rising motes ----
-    driftParticles(ctx, r, w, h * 0.85, Math.floor(8 + density * 0.05), shade(pal[4], 0.5, 1), t, 0.005, -0.03, 0.8, 2, 0.35 + a.bass * 0.1);
+    driftParticles(ctx, r, w, h * 0.85, Math.floor(8 + density * 0.05), shade(pal[4], 0.5, 1), t, 0.005, -0.03, 0.8, 2, (0.35 + a.bass * 0.1) * radianceMul);
+    colourWash(ctx, w, h, pal[4], 0.05 * radianceMul, cx, 0, cx, h);
 
     // ---- 8. MUSIC EVENTS: spark/halo detail from treble - last, terminal --
     ctx.globalCompositeOperation = 'screen';
@@ -452,28 +554,14 @@
   }
 
   // ======================================================== C. BIRDS FLIGHT
-  const FORMATIONS = ['v', 'cloud', 'stream', 'spiral'];
-  // Crisp two-segment "gull" glyph (straight lines meeting at a peak) reads
-  // as a distinct bird mark at small sizes far better than a smooth curve,
-  // which blurs into neighbouring strokes and starts reading as texture.
-  function birdMark(ctx, x, y, size, flap, color, alpha, lineWidth) {
-    ctx.globalAlpha = alpha;
-    ctx.strokeStyle = color;
-    ctx.lineWidth = lineWidth;
-    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-    ctx.beginPath();
-    ctx.moveTo(x - size, y + flap * size * 0.45);
-    ctx.lineTo(x, y - size * 0.62 - Math.abs(flap) * size * 0.35);
-    ctx.lineTo(x + size, y + flap * size * 0.45);
-    ctx.stroke();
-  }
-
+  const FORMATIONS = ['v', 'cloud', 'stream', 'spiral', 'arc', 'split'];
   function drawBirdsFlight(ctx, w, h, r, pal, t, a, density, q) {
     // ---- seed rolls ----
     const timeOfDay = Math.floor(r() * 3); // 0 dawn/dusk warm, 1 day, 2 overcast/blue
-    const formation = FORMATIONS[Math.floor(r() * FORMATIONS.length)];
+    const formation = pick(r, FORMATIONS);
     const formAngle = (r() - 0.5) * 0.7; // subtle overall formation tilt - NOT applied per-bird
     const hasLandscape = r() < 0.5;
+    const foregroundEmphasis = r() < 0.4; // some seeds foreground-bird-heavy, others flock-only
     const flockCount = Math.floor((30 + density * 0.55) * q);
 
     // ---- 1. BACKGROUND: sky + light source ----
@@ -493,70 +581,99 @@
     for (let i = 0; i < 5; i++) {
       const cxp = r() * w, cyp = h * (0.08 + r() * 0.3), cr = w * (0.05 + r() * 0.09);
       ctx.fillStyle = depthTint(pal[1], skyLow, 0.5 + r() * 0.3, 0.22);
-      ctx.beginPath(); ctx.ellipse(cxp, cyp, cr, cr * 0.4, 0, 0, Math.PI * 2); ctx.fill();
+      organicBlob(ctx, r, cxp, cyp, cr, cr * 0.4, 7, 0.25);
+      ctx.fill();
     }
     if (hasLandscape) {
       ctx.fillStyle = depthTint(pal[1], skyLow, 0.6, 0.7);
-      ctx.beginPath(); ctx.moveTo(0, h * 0.88);
-      for (let i = 0; i <= 6; i++) ctx.lineTo((i / 6) * w, h * 0.88 - (6 + r() * 26));
-      ctx.lineTo(w, h * 0.88); ctx.lineTo(w, h); ctx.lineTo(0, h); ctx.closePath(); ctx.fill();
+      ctx.beginPath();
+      ridgePath(ctx, r, w, h * 0.88, 6, h * 0.008, h * 0.035, false);
+      ctx.lineTo(w, h); ctx.lineTo(0, h); ctx.closePath(); ctx.fill();
     }
 
     // ---- 4. MAIN SUBJECT: the flock, three depth bands, formation-shaped ---
-    // Formation shape is resolved as an offset around a fixed anchor, then
-    // rotated ONCE by the seed's formAngle - never per-bird - so the flock
-    // reads as one coherent shape drifting across the sky instead of many
-    // independently-rotated marks smearing into a texture.
     const cosF = Math.cos(formAngle), sinF = Math.sin(formAngle);
     const anchorX = 0.5, anchorY = 0.32;
     const drift = t * (0.018 + a.bass * 0.045);
-    const liftEvent = a.kick; // formation lift/split/reform impulse
+    const liftEvent = a.kick;
 
+    // Each formation returns a deliberately EXAGGERATED, structurally
+    // distinct (x,y) offset (roughly -1..1 in both axes) - a wide flat V,
+    // a thin horizontal line, a tight round spiral, a shallow wide bow, two
+    // separated clusters with a real gap, or a loose scatter. They must
+    // look different from across a room, not just differ in a formula.
     function formationOffset(u) {
       if (formation === 'v') {
         const side = u < 0.5 ? -1 : 1;
         const k = Math.abs(u - 0.5) * 2;
-        return [side * k, k * 0.55];
+        return [side * k * 1.05, k * 0.85]; // wide, deep wedge
       }
-      if (formation === 'stream') {
-        return [(u - 0.5) * 2, Math.sin(u * Math.PI * 2.4) * 0.3];
-      }
+      if (formation === 'stream') return [(u - 0.5) * 2.3, Math.sin(u * Math.PI * 3) * 0.12]; // long, flat, thin band
       if (formation === 'spiral') {
-        const ang = u * Math.PI * 5;
-        const rr = 0.1 + u * 0.85;
-        return [Math.cos(ang) * rr, Math.sin(ang) * rr * 0.55];
+        const ang = u * Math.PI * 6.5, rr = 0.12 + u * 0.55;
+        return [Math.cos(ang) * rr * 0.6, Math.sin(ang) * rr]; // tight, round, taller than wide
       }
-      return [(u - 0.5) * 1.9, Math.sin(u * 9) * 0.5]; // cloud - loose scatter
+      if (formation === 'arc') {
+        const ang = (u - 0.5) * Math.PI * 1.4;
+        return [Math.sin(ang) * 1.15, (1 - Math.cos(ang)) * -1.1]; // pronounced shallow bow
+      }
+      if (formation === 'split') {
+        const side = u < 0.5 ? -1 : 1;
+        const k = (u < 0.5 ? u * 2 : (u - 0.5) * 2);
+        return [side * (0.55 + k * 0.5), (k - 0.5) * 0.45]; // two clusters with a real gap between them
+      }
+      return [(u - 0.5) * 2.1, (u * 7 % 1 - 0.5) * 1.3]; // cloud - big loose scatter filling most of the frame
     }
 
+    // One shared spatial extent for every depth band - near/mid/far birds
+    // all sample the SAME formation shape at the SAME scale (only their
+    // size/alpha/tint differ), rather than three independently-rescaled
+    // copies stacked on top of each other, which is what made every
+    // formation collapse into a similar "pile" regardless of which one
+    // was picked.
+    const FLOCK_SPREAD = 0.36;
     const BANDS = [
-      { depth: 0.88, frac: 0.42, spread: 0.44, sizeMin: 2, sizeMax: 4 },   // distant, tiny
-      { depth: 0.46, frac: 0.4, spread: 0.34, sizeMin: 6, sizeMax: 10 },  // mid flock, carries the formation shape
-      { depth: 0.06, frac: 0.18, spread: 0.22, sizeMin: 13, sizeMax: 20 } // occasional foreground, large + detailed
+      { depth: 0.88, frac: foregroundEmphasis ? 0.3 : 0.42, sizeMin: 2, sizeMax: 4 },
+      { depth: 0.46, frac: 0.4, sizeMin: 6, sizeMax: 10 },
+      { depth: 0.06, frac: foregroundEmphasis ? 0.3 : 0.18, sizeMin: 14, sizeMax: 24 }
     ];
     BANDS.forEach(function (band) {
       const n = Math.max(3, Math.round(flockCount * band.frac));
       for (let i = 0; i < n; i++) {
-        const u = r();
-        const jx = (r() - 0.5) * 0.05, jy = (r() - 0.5) * 0.05;
+        // Stratified sampling along the formation curve (one slot per bird,
+        // jittered within it) instead of pure r() - random sampling alone
+        // tends to clump in some stretches of the curve and leave gaps in
+        // others, which blurs exactly the silhouette the formation is
+        // supposed to draw. Evenly-spaced-then-jittered birds trace the
+        // shape cleanly while still looking organic, not gridded.
+        const u = clamp((i + r()) / n, 0, 1);
+        const jx = (r() - 0.5) * 0.06, jy = (r() - 0.5) * 0.06;
         const off = formationOffset(u);
-        const ox = (off[0] + jx) * band.spread, oy = (off[1] + jy) * band.spread * 0.6;
+        const ox = (off[0] + jx) * FLOCK_SPREAD, oy = (off[1] + jy) * FLOCK_SPREAD * 0.7;
         const rx = ox * cosF - oy * sinF, ry = ox * sinF + oy * cosF;
         const scatter = liftEvent * (1 - band.depth) * (i % 2 ? 1 : -1) * 0.5;
+        // A small per-band parallax nudge (not a rescale) keeps far birds
+        // slightly higher/tighter than near ones without hiding the shape.
+        const parallax = (1 - band.depth) * 0.05;
 
-        const rawX = anchorX + rx * (1 - band.depth * 0.15) + drift;
+        const rawX = anchorX + rx * (1 - band.depth * 0.1) + drift;
         const px = (((rawX % 1.3) + 1.3) % 1.3);
         const x = px * w - w * 0.15;
-        const y = clamp(anchorY + band.depth * 0.32 + ry, 0.04, 0.8) * h - scatter * 22;
+        const y = clamp(anchorY + parallax + ry, 0.03, 0.86) * h - scatter * 22;
 
-        const glintRoll = r(); // always consumed - keeps every later bird audio-independent
+        const glintRoll = r();
         const size = (band.sizeMin + glintRoll * (band.sizeMax - band.sizeMin)) * q;
         const flap = Math.sin(t * (3 + a.mid * 4) + i * 1.9 + band.depth * 5) * (0.4 + a.mid * 0.5 + Math.abs(liftEvent) * 0.3);
         const alpha = (0.35 + (1 - band.depth) * 0.55) + a.treble * 0.06;
         const color = depthTint(pal[2], skyLow, band.depth * 0.45, 1);
         const lw = (0.8 + size * 0.09) * (0.8 + band.depth * 0.2);
 
-        birdMark(ctx, x, y, size, flap, color, alpha, lw);
+        ctx.globalAlpha = alpha; ctx.strokeStyle = color; ctx.lineWidth = lw; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+        ctx.beginPath();
+        ctx.moveTo(x - size, y + flap * size * 0.45);
+        ctx.lineTo(x, y - size * 0.62 - Math.abs(flap) * size * 0.35);
+        ctx.lineTo(x + size, y + flap * size * 0.45);
+        ctx.stroke();
 
         if (band.depth < 0.2 && a.treble > 0.3 && glintRoll > 0.55) {
           ctx.fillStyle = shade(pal[4], 0.5, 0.35 * a.treble);
@@ -565,14 +682,17 @@
       }
     });
     ctx.globalAlpha = 1;
+    colourWash(ctx, w, h, skyLow, 0.06, lx, 0, w * 0.5, h);
   }
 
   // ======================================================= D. COASTER RIDE ==
   const COASTER_ENVIRONMENTS = ['night-park', 'sunset', 'industrial', 'neon'];
+  const COASTER_PROFILES = ['big-drop', 'rolling', 'loop-focus', 'launch'];
   function drawCoasterRide(ctx, w, h, r, pal, t, a, density, q) {
     // ---- seed rolls ----
-    const env = COASTER_ENVIRONMENTS[Math.floor(r() * COASTER_ENVIRONMENTS.length)];
-    const hasLoop = r() < 0.55;
+    const env = pick(r, COASTER_ENVIRONMENTS);
+    const profile = pick(r, COASTER_PROFILES);
+    const closeUp = r() < 0.45; // close foreground track vs distant skyline ride
     const hasTunnel = r() < 0.35;
     const segs = 6 + Math.floor(density / 22);
 
@@ -594,11 +714,12 @@
       ctx.globalAlpha = 1;
     }
 
-    // ---- 2. DISTANT ENVIRONMENT: skyline of a distant structure/other rides -
+    // ---- 2. DISTANT ENVIRONMENT: skyline, closer/bigger for closeUp scenes -
+    const skylineScale = closeUp ? 0.55 : 1;
     const skylineN = env === 'industrial' ? 6 : 4;
     for (let i = 0; i < skylineN; i++) {
       const bx = (i / skylineN) * w + r() * (w / skylineN) * 0.3;
-      const bh = h * (0.1 + r() * (env === 'industrial' ? 0.28 : 0.16));
+      const bh = h * (0.1 + r() * (env === 'industrial' ? 0.28 : 0.16)) * skylineScale;
       ctx.fillStyle = depthTint(pal[1], skyLow, 0.6, 0.55);
       ctx.fillRect(bx, h * 0.86 - bh, w / skylineN * 0.5, bh);
       if (env === 'neon' || env === 'night-park') {
@@ -609,18 +730,22 @@
     ctx.fillStyle = depthTint(pal[1], skyLow, 0.4, 0.4);
     ctx.fillRect(0, h * 0.86, w, h * 0.14);
 
-    // ---- track geometry: hills/drops/curves, optional loop + tunnel -------
-    const baseY = h * 0.55;
+    // ---- track geometry: profile drives the topology ----
+    const baseY = h * (closeUp ? 0.6 : 0.55);
     const pts = [[w * 0.04, h * 0.5]];
     let px = w * 0.04;
     for (let i = 0; i < segs; i++) {
       px += (w * 0.92) / segs;
-      const amp = i === 0 ? 0.12 : 0.14 + r() * 0.22; // first hill = the "lift hill", tallest
-      pts.push([px, baseY - amp * h * (i === 0 ? 1.6 : 1)]);
+      let amp;
+      if (profile === 'big-drop') amp = i === 0 ? 0.34 : 0.1 + r() * 0.12;
+      else if (profile === 'rolling') amp = 0.16 + r() * 0.1;
+      else if (profile === 'loop-focus') amp = i === 1 ? 0.3 : 0.12 + r() * 0.16;
+      else amp = i < 2 ? 0.05 + r() * 0.04 : 0.14 + r() * 0.24; // launch - flat start then rises
+      pts.push([px, baseY - amp * h * (closeUp ? 1.15 : 1)]);
     }
-    const loopAt = hasLoop ? 2 + Math.floor(r() * (segs - 3)) : -1;
+    const loopAt = (profile === 'loop-focus') ? 1 : (r() < 0.4 ? 2 + Math.floor(r() * (segs - 3)) : -1);
     const loopCenter = loopAt >= 0 ? pts[loopAt].slice() : null;
-    const loopR = Math.min(w, h) * 0.075;
+    const loopR = Math.min(w, h) * (profile === 'loop-focus' ? 0.095 : 0.075);
     if (loopCenter) loopCenter[1] = Math.min(loopCenter[1], baseY - loopR * 2.2);
     const tunnelAt = hasTunnel ? Math.floor(r() * pts.length) : -1;
 
@@ -639,7 +764,7 @@
 
     // ---- support structure (drawn behind the rail so it reads as depth) ---
     ctx.strokeStyle = depthTint(pal[1], skyLow, 0.3, 0.65);
-    ctx.lineWidth = 3;
+    ctx.lineWidth = closeUp ? 4 : 3;
     for (let i = 0; i < pts.length; i++) {
       const [sx, sy] = pts[i];
       ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(sx, h * 0.86); ctx.stroke();
@@ -652,7 +777,7 @@
     // ---- rail: two parallel rails with thickness + cross-ties -------------
     const rumble = a.bass * 2.4;
     const railSteps = Math.floor(110 * q);
-    const half = 3.2;
+    const half = closeUp ? 4.4 : 3.2;
     function railPass(offsetSign) {
       ctx.beginPath();
       for (let i = 0; i <= railSteps; i++) {
@@ -668,7 +793,7 @@
       ctx.stroke();
     }
     ctx.strokeStyle = shade(pal[2], 0.15, 0.95);
-    ctx.lineWidth = 2 + a.bass * 1;
+    ctx.lineWidth = (closeUp ? 2.6 : 2) + a.bass * 1;
     railPass(1);
     ctx.strokeStyle = shade(pal[2], -0.2, 0.95);
     railPass(-1);
@@ -682,7 +807,6 @@
       ctx.beginPath(); ctx.moveTo(p[0] - nx * half, p[1] - ny * half); ctx.lineTo(p[0] + nx * half, p[1] + ny * half); ctx.stroke();
     }
 
-    // tunnel mouth if rolled - a dark arch the track passes through
     if (tunnelAt >= 0 && tunnelAt < pts.length) {
       const [tx, ty] = pts[tunnelAt];
       ctx.fillStyle = shade(pal[0], -0.5, 0.9);
@@ -702,7 +826,7 @@
     ctx.globalCompositeOperation = 'source-over';
 
     // ---- cars: connected train with riders, oriented to track direction ---
-    const speed = 0.045 + a.bass * 0.11 + a.kick * 0.22;
+    const speed = (profile === 'launch' ? 0.06 : 0.045) + a.bass * 0.11 + a.kick * 0.22;
     const carCount = 4;
     const carGap = 0.018;
     for (let c = 0; c < carCount; c++) {
@@ -714,13 +838,14 @@
       ctx.fillRect(-7, -4, 14, 8);
       ctx.fillStyle = shade(pal[1], -0.3, 0.9);
       for (let s = -1; s <= 1; s += 2) { ctx.beginPath(); ctx.arc(s * 4, 5, 1.8, 0, Math.PI * 2); ctx.fill(); }
-      if (q > 0.6) { // riders - cheap little dots, skipped at low quality
+      if (q > 0.6) {
         ctx.fillStyle = shade(pal[2], 0.1, 0.9);
         ctx.beginPath(); ctx.arc(-3, -6, 1.6, 0, Math.PI * 2); ctx.fill();
         ctx.beginPath(); ctx.arc(3, -6, 1.6, 0, Math.PI * 2); ctx.fill();
       }
       ctx.restore();
     }
+    colourWash(ctx, w, h, pal[4], 0.05, w * 0.5, 0, w * 0.5, h);
 
     // ---- MUSIC EVENT: launch flash at the lift-hill base on kick - last ---
     if (a.kick > 0.15) {

@@ -119,6 +119,15 @@ textarea { width: 100%; min-height: 110px; margin-top: 8px; background: #080808;
 .toast.on { opacity: 1; transform: translate(-50%,0); }
 
 .player-overlay { position: fixed; left: 14px; bottom: 14px; z-index: 50; display: flex; align-items: center; gap: 8px; background: rgba(10,10,10,.9); border: 1px solid var(--line); border-radius: 12px; padding: 9px; backdrop-filter: blur(10px); }
+/* .player-overlay's own `display: flex` above has equal CSS specificity to
+   the browser's default `[hidden] { display: none }` rule, and author
+   rules win that tie regardless of source order - so the `hidden` attribute
+   on #playerOverlay was silently ineffective and it showed on every page,
+   controller included. This scoped override (not a global [hidden] rule,
+   so nothing else on the page is affected) restores the correct behaviour:
+   hidden by default everywhere, shown only when app.js clears `hidden` via
+   the secret reveal gesture on an actual player/panel page. */
+.player-overlay[hidden] { display: none !important; }
 .player-info { font-size: 9.5px; color: #999; font-family: ui-monospace, monospace; padding: 0 6px; }
 
 /* PLAYER mode: art only, no chrome */

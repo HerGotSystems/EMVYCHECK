@@ -186,14 +186,32 @@
     return base; // continuous - all panels share one recipe, resolved as a crop
   }
 
+  /* Deterministically derives one independent-collection entry per panel
+     from a master seed/palette - the single source of truth both initial
+     population (ensureIndependentDefaults) and a real ART/COLOUR/STYLE
+     press (below) build entries from, so there is exactly one place that
+     decides what a "fresh" collection looks like. Same master seed always
+     reproduces the same entries. */
+  function buildIndependentEntries(masterSeed, count, basePalette, opts) {
+    opts = opts || {};
+    const entries = [];
+    for (let i = 0; i < count; i++) {
+      entries.push({
+        seed: masterSeed + '|IND' + i,
+        palette: (basePalette + i) % engine.PALETTES.length,
+        family: (Number(opts.family || 0) + i) % engine.FAMILIES.length
+      });
+    }
+    return entries;
+  }
+
   function ensureIndependentDefaults() {
     if (state.composition !== 'independent') return;
     const count = state.layout;
-    while (state.independent.length < count) {
-      const i = state.independent.length;
-      const base = baseRecipe();
-      state.independent.push({ seed: base.seed + '|IND' + i, family: (Number(base.family || 0) + i) % engine.FAMILIES.length, palette: (base.palette + i) % engine.PALETTES.length });
-    }
+    if (state.independent.length >= count) return;
+    const base = baseRecipe();
+    const built = buildIndependentEntries(base.seed, count, base.palette, { family: base.family });
+    while (state.independent.length < count) state.independent.push(built[state.independent.length]);
   }
 
   /* Single dispatch point used everywhere a recipe gets rendered - keeps
@@ -410,7 +428,7 @@
     if (!latestPresence) { holder.innerHTML = '<div class="note">Waiting for status…</div>'; return; }
     const expected = state.layout;
     const present = {};
-    latestPresence.clients.forEach(function (c) { if (c.role === 'player' && c.panel) present[c.panel] = c; });
+    (latestPresence.clients || []).forEach(function (c) { if (c.role === 'player' && c.panel) present[c.panel] = c; });
     let rows = '';
     for (let i = 1; i <= expected; i++) {
       const c = present[i];
@@ -553,19 +571,61 @@
   $$('[data-close]').forEach(function (b) { b.onclick = function () { closeModal(b.dataset.close); }; });
 
   // ------------------------------------------------------------ controls --
+  /* ART/COLOUR/STYLE must mean the same thing in every composition mode
+     (spec: "global control semantics"). The subtlety is COLLECTION: each
+     panel's recipe is a *cached* entry in state.independent, not derived
+     fresh from state.seed/palette/family every render (that's what makes
+     SEED FAMILY/ONE ARTWORK "just work" here) - so these three actions
+     must also rewrite every cached entry, or the master value changes
+     while every panel keeps showing its old cached one. */
+  function doNewArt() {
+    const seed = randomSeed();
+    if (state.composition === 'independent') {
+      // ART = a new artwork within the current style/scene - regenerate
+      // every panel's seed from the new master seed, but keep the same
+      // per-panel palette/family pattern (palette is COLOUR's job, not ART's).
+      const entries = buildIndependentEntries(seed, state.layout, state.palette, { family: state.family });
+      applyPatch({ seed: seed, independent: entries });
+    } else {
+      applyPatch({ seed: seed });
+    }
+    toast('New artwork');
+  }
+  function doNewColour() {
+    const palette = (state.palette + 1) % engine.PALETTES.length;
+    if (state.composition === 'independent' && state.independent.length) {
+      // Recolour every panel in place - same seeds, same structure, new tone.
+      const entries = state.independent.map(function (e) { return Object.assign({}, e, { palette: ((Number(e.palette) || 0) + 1) % engine.PALETTES.length }); });
+      applyPatch({ palette: palette, independent: entries });
+    } else {
+      applyPatch({ palette: palette });
+    }
+    toast('New colour');
+  }
+  function doNewStyle() {
+    if (isSceneContent()) {
+      // sceneId is read directly off state by panelRecipe (never cached per
+      // entry - there is no per-slot scene picker), so every independent
+      // panel already picks this up with no extra work.
+      const next = (Scenes.sceneIndexById(state.sceneId) + 1 + Scenes.SCENES.length) % Scenes.SCENES.length;
+      applyPatch({ sceneId: Scenes.SCENES[next].id });
+      toast(Scenes.SCENES[next].name);
+      return;
+    }
+    const family = (state.family + 1) % engine.FAMILIES.length;
+    if (state.composition === 'independent' && state.independent.length) {
+      const entries = state.independent.map(function (e) { return Object.assign({}, e, { family: family }); });
+      applyPatch({ family: family, independent: entries });
+    } else {
+      applyPatch({ family: family });
+    }
+    toast(engine.FAMILIES[family].name);
+  }
+
   if (!isPlayer) {
-    $('#btnNewArt').onclick = function () { applyPatch({ seed: randomSeed() }); toast('New artwork'); };
-    $('#btnPalette').onclick = function () { applyPatch({ palette: (state.palette + 1) % engine.PALETTES.length }); toast('New colour'); };
-    $('#btnStyle').onclick = function () {
-      if (isSceneContent()) {
-        const next = (Scenes.sceneIndexById(state.sceneId) + 1 + Scenes.SCENES.length) % Scenes.SCENES.length;
-        applyPatch({ sceneId: Scenes.SCENES[next].id });
-        toast(Scenes.SCENES[next].name);
-        return;
-      }
-      applyPatch({ family: (state.family + 1) % engine.FAMILIES.length });
-      toast(engine.FAMILIES[state.family].name);
-    };
+    $('#btnNewArt').onclick = doNewArt;
+    $('#btnPalette').onclick = doNewColour;
+    $('#btnStyle').onclick = doNewStyle;
     $('#btnFamilyPrev').onclick = function () { applyPatch({ family: (state.family - 1 + engine.FAMILIES.length) % engine.FAMILIES.length }); };
     $('#btnFamilyNext').onclick = function () { applyPatch({ family: (state.family + 1) % engine.FAMILIES.length }); };
     $('#btnSeedApply').onclick = function () { applyPatch({ seed: ($('#seedInput').value.trim() || 'EMVY-0001').toUpperCase() }); };
@@ -697,8 +757,8 @@
     $('#remoteStatusRow').onclick = function () { renderStatusList(); openModal('modalStatus'); };
 
     // ---- mobile dock ----
-    $('#mobileNew').onclick = function () { applyPatch({ seed: randomSeed() }); };
-    $('#mobileColour').onclick = function () { applyPatch({ palette: (state.palette + 1) % engine.PALETTES.length }); };
+    $('#mobileNew').onclick = doNewArt;
+    $('#mobileColour').onclick = doNewColour;
     $('#mobileMode').onclick = function () { const order = ['paper', 'live', 'music']; setDisplayMode(order[(order.indexOf(state.displayMode) + 1) % order.length]); };
     $('#mobileGrid').onclick = function () { const order = [1, 4, 9]; applyPatch({ layout: order[(order.indexOf(state.layout) + 1) % order.length] }); };
   }
