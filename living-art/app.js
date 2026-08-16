@@ -175,7 +175,11 @@
       // Independent scene panels share the wall's one scene (no per-slot
       // scene picker yet - spec section 8 only asks for ONE ARTWORK/SEED
       // FAMILY) but still get a distinct seed per panel via `entry`/index.
-      if (scene) return { seed: (entry && entry.seed) ? entry.seed : base.seed + '|IND' + index, sceneId: base.sceneId, palette: (entry && entry.palette != null) ? entry.palette : base.palette };
+      // moodBias spreads each panel's time-of-day across the day cycle
+      // instead of leaving it to that panel's own independent roll (V7 -
+      // "curated exhibition", not nine unrelated dice rolls; see scenes.js
+      // worldTime/biasedRoll).
+      if (scene) return { seed: (entry && entry.seed) ? entry.seed : base.seed + '|IND' + index, sceneId: base.sceneId, palette: (entry && entry.palette != null) ? entry.palette : base.palette, moodBias: (entry && entry.moodBias != null) ? entry.moodBias : index / count };
       if (entry && entry.seed) return { seed: entry.seed, family: entry.family || 0, palette: entry.palette || 0 };
       return { seed: base.seed + '|IND' + index, family: (base.family + index) % engine.FAMILIES.length, palette: (base.palette + index) % engine.PALETTES.length };
     }
@@ -199,7 +203,8 @@
       entries.push({
         seed: masterSeed + '|IND' + i,
         palette: (basePalette + i) % engine.PALETTES.length,
-        family: (Number(opts.family || 0) + i) % engine.FAMILIES.length
+        family: (Number(opts.family || 0) + i) % engine.FAMILIES.length,
+        moodBias: i / count
       });
     }
     return entries;
