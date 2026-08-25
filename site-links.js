@@ -19,9 +19,9 @@
 
     const art = document.createElement('a');
     art.className = 'top-btn';
-    art.href = '/art/';
+    art.href = '/#art';
     art.textContent = 'Art';
-    art.title = 'EMVY CHECK ART showcase';
+    art.title = 'EMVY CHECK ART';
     art.dataset.emvySiteLink = 'true';
 
     menu.insertBefore(home, order || null);
