@@ -1,14 +1,19 @@
-const CACHE = 'emvy-v3-art-grid-links';
+const CACHE = 'emvy-v4-offer-hub-music-route';
 const HARDENING_SCRIPT = '<script src="/car-audio-hardening.js?v=20260709"></script>';
-const SITE_LINKS_SCRIPT = '<script src="/site-links.js?v=20260805"></script>';
+const SITE_LINKS_SCRIPT = '<script src="/site-links.js?v=20260825"></script>';
 const SHELL = [
   '/',
+  '/music/',
   '/manifest.webmanifest',
   '/car-audio-hardening.js',
   '/site-links.js'
 ];
 
-function injectSiteScripts(html) {
+function isMusicPath(pathname) {
+  return pathname === '/music' || pathname === '/music/' || pathname === '/music/index.html';
+}
+
+function injectMusicScripts(html) {
   if (!html) return html;
   if (html.indexOf('car-audio-hardening.js') === -1) {
     html = html.replace('</body>', HARDENING_SCRIPT + '\n</body>');
@@ -19,17 +24,23 @@ function injectSiteScripts(html) {
   return html;
 }
 
-function htmlWithSiteScripts(res) {
+function htmlResponse(res, pathname) {
+  if (!isMusicPath(pathname)) return Promise.resolve(res);
   return res.text().then(function(html) {
-    return new Response(injectSiteScripts(html), {
+    var headers = new Headers(res.headers);
+    headers.set('Content-Type', 'text/html; charset=utf-8');
+    headers.set('Cache-Control', 'no-store');
+    return new Response(injectMusicScripts(html), {
       status: res.status,
       statusText: res.statusText,
-      headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' }
+      headers: headers
     });
   });
 }
 
-// Install: cache the shell
+// Install: keep both the new brand homepage and the relocated music player
+// available as their own shells. The v4 cache name intentionally invalidates
+// the old assumption that '/' was the music player.
 self.addEventListener('install', function(e) {
   e.waitUntil(
     caches.open(CACHE).then(function(c) { return c.addAll(SHELL); })
@@ -37,7 +48,8 @@ self.addEventListener('install', function(e) {
   self.skipWaiting();
 });
 
-// Activate: clear old caches
+// Activate: clear old caches so a previous cached music homepage cannot mask
+// the new EMVY CHECK offer hub after the site pivot.
 self.addEventListener('activate', function(e) {
   e.waitUntil(
     caches.keys().then(function(keys) {
@@ -51,11 +63,13 @@ self.addEventListener('activate', function(e) {
 });
 
 // Fetch strategy:
-// - HTML navigation: network first, inject homepage helpers, fall back to cached root
+// - HTML navigation: network first; music-only helper injection only on /music/*
+// - Offline navigation fallback: /music/* -> cached /music/, everything else -> cached /
 // - playlist.json: network first, fall back to cache
 // - Audio / images (media.emvycheck.com): network only
 // - Everything else: network first, fall back to cache
 self.addEventListener('fetch', function(e) {
+  var requestUrl = new URL(e.request.url);
   var url = e.request.url;
 
   if (url.includes('media.emvycheck.com')) {
@@ -81,12 +95,13 @@ self.addEventListener('fetch', function(e) {
         .then(function(res) {
           var clone = res.clone();
           caches.open(CACHE).then(function(c) { c.put(e.request, clone); });
-          return htmlWithSiteScripts(res);
+          return htmlResponse(res, requestUrl.pathname);
         })
         .catch(function() {
-          return caches.match('/').then(function(cached) {
+          var fallbackPath = isMusicPath(requestUrl.pathname) ? '/music/' : '/';
+          return caches.match(fallbackPath).then(function(cached) {
             if (!cached) return cached;
-            return htmlWithSiteScripts(cached);
+            return htmlResponse(cached, fallbackPath);
           });
         })
     );
