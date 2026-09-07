@@ -1,6 +1,15 @@
 # Cloudflare Pages _headers
 # Place this file in your repo root — Cloudflare serves it automatically.
 # Injects PHUL license notice into every HTTP response header.
+#
+# 09/09 LAUNCH HARDENING v0.1: added ordinary browser-hardening headers
+# below the existing license block. These are conservative, well-tested
+# defaults (no broad resource CSP — the site has inline CSS/JS and
+# external media/forms that a strict CSP could break days before
+# launch; only framing is restricted here). Cloudflare Pages applies
+# this file automatically on deploy; it cannot be exercised by a plain
+# local static server, so the actual response headers should be spot-
+# checked once (e.g. curl -I) after the next deploy.
 
 /*
   X-License: Personal-Human-Use-License-v1.0
@@ -11,3 +20,9 @@
   X-Content-Rights: Copyright-EMVY-CHECK-Michal-Veltrusky-All-Rights-Reserved
   X-Personal-Use: Permitted-for-individual-humans-only
   X-Contact: emvycheck@gmail.com
+  Strict-Transport-Security: max-age=31536000; includeSubDomains
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  X-Frame-Options: SAMEORIGIN
+  Permissions-Policy: camera=(), microphone=(), geolocation=()
+  Content-Security-Policy: frame-ancestors 'self'

@@ -1697,6 +1697,18 @@ fetch('https://media.emvycheck.com/playlist.json')
     setTimeout(function() { document.getElementById('splash').style.display = 'none'; }, 700);
   });
 </script>
+<!-- 09/09 LAUNCH HARDENING v0.1: service-worker.js already injects these
+     two scripts into /music/ responses on repeat visits, but a service
+     worker never controls a page's very first load - a stranger landing
+     directly on /music/ (a shared link, bookmark, search result) for
+     their first visit to the whole site saw no way back to the main
+     site (no Home/Art nav) and no car-audio hardening. Both scripts are
+     already idempotent/self-guarded against running twice
+     (window.__emvyCarAudioHardening / the data-emvy-site-link check), so
+     loading them here too is safe even once the service worker later
+     takes over and injects them again. -->
+<script src="/car-audio-hardening.js?v=20260709"></script>
+<script src="/site-links.js?v=20260825"></script>
 </body>
 </html>
  
