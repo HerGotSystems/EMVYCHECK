@@ -1,5 +1,9 @@
 # ORDER CONFIRMATION — INTERNAL OPERATIONAL TEMPLATE v0.1
 
+**⚠️ BLANK TEMPLATE ONLY — NEVER FILL THIS COPY WITH REAL CUSTOMER DATA.
+Copy it into private customer-record storage outside this public
+repository before use.**
+
 **Status: INTERNAL. Not a public page. Not automated. Copy this into an email/document per order.**
 
 Based strictly on `docs/FIRST-CUSTOMER-SALE-KIT-v0.1.md` (canvas-grid-public repo) Sections 5 and 9, and the current manual order model:
@@ -72,7 +76,7 @@ and I'd like to proceed."
 
 ## After confirmation
 
-- File the customer's confirmation reply (email/message/signature) — this is the approval/date evidence for the order. Keep it with the order folder (Sale Kit §10 folder convention).
+- File the customer's confirmation reply (email/message/signature) — this is the approval/date evidence for the order. Keep it in the private order folder outside this repository (Sale Kit §10 folder convention).
 - Proceed to preview work only after this confirmation is received.
 - On delivery, use `INVOICE-AND-DELIVERY-CHECKLIST-v0.1.md`.
 

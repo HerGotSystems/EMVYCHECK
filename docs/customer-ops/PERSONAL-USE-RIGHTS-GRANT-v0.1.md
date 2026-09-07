@@ -1,5 +1,9 @@
 # PERSONAL USE RIGHTS GRANT — INTERNAL OPERATIONAL TEMPLATE v0.1
 
+**⚠️ BLANK TEMPLATE ONLY — NEVER FILL THIS COPY WITH REAL CUSTOMER DATA.
+Copy it into private customer-record storage outside this public
+repository before use.**
+
 **Status: INTERNAL. Not a public page. Not automated. Not final legal text —
 plain-English wording for a hand-written, one-page grant per order.**
 
@@ -80,8 +84,8 @@ terms of this personal use grant."
 - If the customer later wants commercial use of the same artwork, that
   needs a separate `COMMERCIAL-USE-RIGHTS-GRANT-v0.1.md`, not an edit to
   this one.
-- Keep the customer's confirmation (reply/signature) with the order
-  record — this is the approval evidence.
+- Keep the customer's confirmation (reply/signature) in the private
+  order folder outside this repository — this is the approval evidence.
 - This wording has not been reviewed by a lawyer. Treat it as a
   reasonable, honest plain-English grant for early manual commissions,
   not as guaranteed-enforceable legal drafting. Flag to Mike if a

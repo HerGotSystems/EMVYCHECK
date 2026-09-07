@@ -1,5 +1,9 @@
 # COMMERCIAL USE RIGHTS GRANT — INTERNAL OPERATIONAL TEMPLATE v0.1
 
+**⚠️ BLANK TEMPLATE ONLY — NEVER FILL THIS COPY WITH REAL CUSTOMER DATA.
+Copy it into private customer-record storage outside this public
+repository before use.**
+
 **Status: INTERNAL. Not a public page. Not automated. Not final legal text —
 plain-English wording for a hand-written, one-page grant per order.**
 
@@ -93,8 +97,8 @@ terms of this commercial use grant, limited to the scope stated."
   large/unusual commercial arrangements need Mike's explicit decision
   and pricing before this grant is issued (see
   `docs/EMVY-BUSINESS-FRONT-DOOR-v0.1.md`'s "NEEDS MIKE DECISION" list).
-- Keep the customer's confirmation (reply/signature) with the order
-  record.
+- Keep the customer's confirmation (reply/signature) in the private
+  order folder outside this repository.
 - This wording has not been reviewed by a lawyer. Treat it as a
   reasonable, honest plain-English grant for early manual commissions,
   not as guaranteed-enforceable legal drafting, especially for

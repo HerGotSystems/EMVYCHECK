@@ -1,5 +1,9 @@
 # INVOICE AND DELIVERY CHECKLIST — INTERNAL OPERATIONAL TEMPLATE v0.1
 
+**⚠️ BLANK TEMPLATE ONLY — NEVER FILL THIS COPY WITH REAL CUSTOMER DATA.
+Copy it into private customer-record storage outside this public
+repository before use.**
+
 **Status: INTERNAL. Not a public page. Not automated.**
 
 Based strictly on `docs/FIRST-CUSTOMER-SALE-KIT-v0.1.md` (canvas-grid-public
@@ -29,6 +33,9 @@ first real invoice goes out:
 
 ## Order reference convention (from Sale Kit §10)
 
+This folder structure lives in the private order folder outside this
+repository — never create it inside `HerGotSystems/EMVYCHECK`:
+
 ```
 EC-2026-001_Customer_Project/
   01_INTAKE/
@@ -52,7 +59,7 @@ order.
 - [ ] Payment method matches what was actually agreed with the customer
 - [ ] Invoice date and due date (normally: due before final file
       delivery, per the order confirmation)
-- [ ] Invoice saved into `04_ORDER-INVOICE/` for this order
+- [ ] Invoice saved into `04_ORDER-INVOICE/` in the private order folder outside this repository
 - [ ] Payment received and recorded (reference/confirmation kept) before
       final files are released
 
@@ -69,11 +76,12 @@ Deliver together, not separately:
 - [ ] A short delivery message (see Sale Kit §7 for tone/wording) telling
       the customer what's attached and to keep the rights document with
       their records
-- [ ] Everything filed under this order's folder
+- [ ] Everything filed in the private order folder outside this repository
       (`03_FINAL/`, `04_ORDER-INVOICE/`, `05_RIGHTS/`)
 - [ ] Customer's order-confirmation approval (from
-      `ORDER-CONFIRMATION-TEMPLATE-v0.1.md`) is retained in the order
-      record as evidence of what was agreed and when
+      `ORDER-CONFIRMATION-TEMPLATE-v0.1.md`) is retained in the private
+      order folder outside this repository as evidence of what was
+      agreed and when
 
 ## After delivery
 
