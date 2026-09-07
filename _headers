@@ -1,15 +1,31 @@
-# Cloudflare Pages _headers
-# Place this file in your repo root — Cloudflare serves it automatically.
-# Injects PHUL license notice into every HTTP response header.
+# NOTE: this file is a Cloudflare Pages / Netlify convention. `emvycheck.com`
+# is hosted on GitHub Pages (with Cloudflare only proxying DNS/CDN in front
+# of it), and GitHub Pages does NOT read or execute a `_headers` file —
+# confirmed live via `curl -I https://emvycheck.com/`, which showed none of
+# the headers below (see docs/CC-09-09-LAUNCH-CLOSEOUT-v0.1.md's findings).
+#
+# Production enforcement of these headers is done at Cloudflare instead,
+# via ONE Response Header Transform Rule scoped to emvycheck.com (Rules >
+# Transform Rules > Modify Response Header in the Cloudflare dashboard).
+# This file is kept as the documented source of the intended header
+# policy — the values below are what the Cloudflare rule should match —
+# but do not assume this file itself has any effect on what a visitor's
+# browser actually receives. If GitHub Pages is ever replaced by a host
+# that does read `_headers` (e.g. Cloudflare Pages), this file would take
+# over automatically and the Cloudflare Transform Rule should be reviewed
+# for redundancy at that point.
 #
 # 09/09 LAUNCH HARDENING v0.1: added ordinary browser-hardening headers
-# below the existing license block. These are conservative, well-tested
-# defaults (no broad resource CSP — the site has inline CSS/JS and
-# external media/forms that a strict CSP could break days before
-# launch; only framing is restricted here). Cloudflare Pages applies
-# this file automatically on deploy; it cannot be exercised by a plain
-# local static server, so the actual response headers should be spot-
-# checked once (e.g. curl -I) after the next deploy.
+# below the original PHUL license block. No broad resource CSP — the site
+# has inline CSS/JS and external media/forms that a strict CSP could break;
+# only framing is restricted here.
+#
+# HSTS note: max-age is set WITHOUT includeSubDomains. cloud.emvycheck.com
+# and staging.emvycheck.com are referenced in living-art-cloud/README.md
+# but do not currently resolve in DNS; media.emvycheck.com and
+# www.emvycheck.com do resolve and were confirmed HTTPS-safe. Since not
+# every subdomain that might ever exist could be conclusively verified,
+# the safer value (no includeSubDomains) was used for launch.
 
 /*
   X-License: Personal-Human-Use-License-v1.0
@@ -20,7 +36,7 @@
   X-Content-Rights: Copyright-EMVY-CHECK-Michal-Veltrusky-All-Rights-Reserved
   X-Personal-Use: Permitted-for-individual-humans-only
   X-Contact: emvycheck@gmail.com
-  Strict-Transport-Security: max-age=31536000; includeSubDomains
+  Strict-Transport-Security: max-age=31536000
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
   X-Frame-Options: SAMEORIGIN
