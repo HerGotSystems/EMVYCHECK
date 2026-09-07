@@ -1,0 +1,15 @@
+# Safety net only — real customer records must never be created inside
+# this repository at all (see docs/LAUNCH-DAY-RUNBOOK-v0.1.md and
+# docs/customer-ops/README.md: they live in private storage, outside
+# HerGotSystems/EMVYCHECK). These patterns exist in case an order
+# working directory is ever accidentally created inside a local
+# checkout of this repo, so it can never be accidentally committed.
+# This is a fallback, not the intended workflow.
+
+# Order folders, per the docs/customer-ops naming convention
+# (e.g. EC-2026-001_Customer_Project/)
+EC-20[0-9][0-9]-*/
+
+# Obvious local-only customer-data directory names
+/customer-records/
+/private/

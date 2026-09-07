@@ -10,6 +10,30 @@ their full content, only sequences them. See
 
 ---
 
+## ⚠️ This repository is PUBLIC — real customer records never go in it
+
+`HerGotSystems/EMVYCHECK` is a public repository. `docs/customer-ops/`
+holds **blank, reusable templates only** — nothing in this repo is ever
+filled in with a real customer's details or committed back.
+
+Every real order's actual records — customer names, email addresses,
+postal addresses, enquiry content, confirmations, quotes with a real
+customer's details filled in, invoices, payment records, bank/payment
+details, rights grants once filled in with customer data, and delivered
+customer files — live in **private customer-record storage selected by
+Mike, outside this repository**. That storage has not been chosen yet
+as of this runbook; a private local folder (not inside this repo, and
+not synced anywhere public) is acceptable for the first order if
+nothing else is set up yet.
+
+When a step below says to "open a template," that means: copy its
+content out of this repo into that private storage, fill it in there,
+and send it from there. Never edit a template file in `docs/customer-ops/`
+with a real customer's details, and never commit a filled-in copy —
+blank or back to the repo only.
+
+---
+
 ## The flow
 
 ```
@@ -56,16 +80,18 @@ prices while EMVY CHECK takes on its first commissions. This is a
 design fee on the homepage `#art` section; don't mix the two up when
 quoting.
 
-**Next order number**: check `docs/customer-ops/` order folders (see
-folder structure below) for the highest existing `EC-2026-0NN`, and
-increment. The very first real order is `EC-2026-001`.
+**Next order number**: check the **private customer-record store**
+(never this repo — see folder structure below) for the highest existing
+`EC-2026-0NN`, and increment. The very first real order is
+`EC-2026-001`.
 
 ### 4. CUSTOMER CONFIRMATION
 
 Get the confirmation line back (reply, signature, or an unambiguous
 written "yes") **before** starting paid work. This reply is retained as
 evidence of what was agreed (see "Evidence to retain" below) — save it
-into the order folder now, don't wait until delivery.
+into the private order folder now (outside this repository), don't wait
+until delivery.
 
 ### 5. PREVIEWS
 
@@ -113,16 +139,22 @@ scope later, needs its own new grant — never edit an issued one.
 
 ### 11. RECORD RETAINED
 
-File everything (see folder structure) and keep it — invoices and order
-records may be needed for accounting/tax purposes, independent of
-whether the customer ever writes again.
+File everything (see folder structure) in **private storage** and keep
+it there — invoices and order records may be needed for accounting/tax
+purposes, independent of whether the customer ever writes again. None
+of this is ever committed to this repository.
 
 ---
 
-## Order folder structure (Sale Kit §10)
+## Order folder structure (Sale Kit §10) — lives in private storage, NOT this repo
+
+This structure is created inside Mike's private customer-record
+storage, outside `HerGotSystems/EMVYCHECK` entirely. It is shown here
+only as the reference layout — nothing below should ever be created as
+an actual folder in this repository:
 
 ```
-EC-2026-001_Customer_Project/
+EC-2026-001_Customer_Project/        ← private storage, not this repo
   01_INTAKE/
   02_PREVIEWS/
   03_FINAL/
@@ -132,7 +164,7 @@ EC-2026-001_Customer_Project/
 
 `EC-2026-001` = EMVY CHECK, year, sequential order number.
 
-## Evidence to retain, per order
+## Evidence to retain, per order — in private storage, never in this repo
 
 - The enquiry itself
 - The agreed scope (the sent Order Confirmation)

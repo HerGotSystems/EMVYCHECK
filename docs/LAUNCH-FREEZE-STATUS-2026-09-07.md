@@ -13,6 +13,7 @@ Target: 09/09/2026 public business launch. Repo: `HerGotSystems/EMVYCHECK`.
 - Official socials (Instagram/Facebook/TikTok/YouTube/email) on homepage footer + contact page.
 - Canonical URLs, Open Graph, Twitter card, favicon references on all main public pages. `robots.txt` + `sitemap.xml` present and consistent.
 - `docs/customer-ops/` (order confirmation, personal-use grant, commercial-use grant, invoice/delivery checklist) + `docs/customer-ops/README.md` index + `docs/LAUNCH-DAY-RUNBOOK-v0.1.md`. Fictional dry-run (`TEST CUSTOMER — DO NOT SEND`, small-business commercial order) completed end-to-end with no contradictory wording and no missing fields other than the already-flagged Mike-only placeholders below.
+- Privacy correction: the runbook and customer-ops index now explicitly state that real customer records (names, contact details, enquiries, confirmations, invoices, payment records, filled-in rights grants, delivered files) live in private storage outside this public repository — never in `docs/customer-ops/` or anywhere else in `HerGotSystems/EMVYCHECK`. The order-number lookup now points at the private store, not this repo.
 - Consistency check: contact email, pricing, manual-order flow, personal/commercial rights, delivery expectations, and Recipe-vs-production-export wording all agree across the site and customer-ops docs. One real inconsistency found and fixed: `music/index.html`'s `<meta name="contact">` said `contact@emvycheck.com`; corrected to `emvycheck@gmail.com` to match everywhere else.
 - `/music/` and `/art/` working; the earlier first-visit navigation bug (missing Home/Art links before the service worker takes control) stays fixed and reconfirmed live.
 
@@ -23,6 +24,7 @@ Target: 09/09/2026 public business launch. Repo: `HerGotSystems/EMVYCHECK`.
 - **Seller address**, only if actually required for the chosen invoice process.
 - **VAT/tax number**, only if one actually applies.
 - Facebook link is still the temporary share URL (`facebook.com/share/1QEQminc2y/`) pending a permanent page URL.
+- **Private customer-record storage** has not been chosen yet — the runbook now says so explicitly rather than implying this public repo. A private local folder is an acceptable stand-in for the first order, but a real choice (and, later, backup) is still needed from Mike.
 
 No public checkout is required to unblock the first sale — invoicing plus a manual payment method is sufficient once the above is supplied.
 
