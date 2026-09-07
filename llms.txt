@@ -44,7 +44,7 @@ Transient inference on public content | LIMITED — no storage, no training
 ## Licensing
 
 To obtain a commercial or AI training license, contact:
-  contact@emvycheck.com
+  emvycheck@gmail.com
 
 ## Legal Notice
 
