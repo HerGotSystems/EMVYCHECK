@@ -200,9 +200,14 @@ These are placeholders in `INVOICE-AND-DELIVERY-CHECKLIST-v0.1.md` —
 nothing below has been invented, and none of it blocks quoting,
 previewing, or agreeing an order, only the invoice/payment step:
 
-- Chosen payment method/account (bank transfer details, or whichever
-  method is actually in use)
-- Seller legal name as it should appear on an invoice
+- Chosen payment method/account per order (Revolut, PayPal, bank
+  transfer, or another agreed business payment method) — these are
+  private payment credentials and must never be committed to this
+  repository; the specific method is agreed with each customer and
+  supplied to them privately on the invoice/payment request
+- Seller legal name as it should appear on an invoice (the intended
+  form is Mike's legal name trading as EMVY CHECK; the exact name is
+  still Mike-only and must not be guessed)
 - Seller address, only if actually required for the chosen invoice
   process
 - VAT/tax number, only if one actually applies

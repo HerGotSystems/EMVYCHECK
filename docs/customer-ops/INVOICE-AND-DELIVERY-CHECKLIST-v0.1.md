@@ -18,16 +18,20 @@ These are **placeholders**. Nothing below is a real, verified business
 detail — fill each in with the actual current information before the
 first real invoice goes out:
 
-- `[SELLER LEGAL NAME]` — how EMVY CHECK / Michal Veltruský should be
-  named on an invoice
+- `[SELLER LEGAL NAME]` — Mike's legal name trading as EMVY CHECK (the
+  exact form, e.g. "[legal name] trading as EMVY CHECK", to be confirmed
+  by Mike and never guessed)
 - `[SELLER ADDRESS]` — only if one is actually required/used; do not
   invent one
 - `[SELLER VAT/TAX NUMBER]` — only if actually registered; leave blank
   and note "not VAT-registered" if that is currently true, rather than
   guessing
-- `[PAYMENT METHOD / ACCOUNT DETAILS]` — the current agreed way customers
-  actually pay (bank transfer details, or whichever method is really in
-  use)
+- `[PAYMENT METHOD / ACCOUNT DETAILS]` — the specific method and account
+  details agreed with this customer (Revolut, PayPal, bank transfer, or
+  another agreed business payment method). These are private payment
+  credentials: fill them in only in the private copy of this checklist,
+  never in this repository, and supply them to the customer directly on
+  the invoice/payment request
 - `[INVOICE NUMBERING CONVENTION]` — if different from the order
   reference convention below
 

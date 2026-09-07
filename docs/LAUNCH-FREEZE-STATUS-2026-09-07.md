@@ -16,11 +16,12 @@ Target: 09/09/2026 public business launch. Repo: `HerGotSystems/EMVYCHECK`.
 - Privacy correction: the runbook and customer-ops index now explicitly state that real customer records (names, contact details, enquiries, confirmations, invoices, payment records, filled-in rights grants, delivered files) live in private storage outside this public repository — never in `docs/customer-ops/` or anywhere else in `HerGotSystems/EMVYCHECK`. The order-number lookup now points at the private store, not this repo.
 - Consistency check: contact email, pricing, manual-order flow, personal/commercial rights, delivery expectations, and Recipe-vs-production-export wording all agree across the site and customer-ops docs. One real inconsistency found and fixed: `music/index.html`'s `<meta name="contact">` said `contact@emvycheck.com`; corrected to `emvycheck@gmail.com` to match everywhere else.
 - `/music/` and `/art/` working; the earlier first-visit navigation bug (missing Home/Art links before the service worker takes control) stays fixed and reconfirmed live.
+- **Real homepage art showcase (PR #3, merged as `cdeefd2`)**: the synthetic CSS gradient hero is gone. The homepage hero is now a real Canvas Grid artwork (`showcase/showcase-01-hero.jpg`), `og:image`/`twitter:image` point at a real 1200×630 derivative of it (`showcase/showcase-hero-social.jpg`, `twitter:card` upgraded to `summary_large_image`), and the homepage showcase gallery is populated with real artwork for GRID9, Calm, Wild EMVY, and a three-state Variation Family — `showcase.js` cleanly skips the still-open Multi-panel slot (empty `image` field renders nothing, never a broken box). Reconfirmed live on current `main` with a stranger-flow QA pass: no broken images, no console errors, no synthetic art remaining, correct behaviour at desktop/tablet/mobile widths.
 
 ## NEEDS MIKE
 
-- **Payment method/account** for the first real invoice (bank transfer details or whichever method is actually in use).
-- **Seller legal name** as it should appear on an invoice.
+- **Payment method/account** for the first real invoice. Mike has now confirmed the *type* of method (Revolut, PayPal, bank transfer, or another agreed business payment method) but the actual account/payment details are private and are supplied to each customer directly on the invoice — never committed to this repository.
+- **Seller legal name** as it should appear on an invoice. Mike has confirmed the intended *form* — his legal name trading as EMVY CHECK — but the exact name itself is still Mike-only and has not been entered anywhere in this repo.
 - **Seller address**, only if actually required for the chosen invoice process.
 - **VAT/tax number**, only if one actually applies.
 - Facebook link is still the temporary share URL (`facebook.com/share/1QEQminc2y/`) pending a permanent page URL.
@@ -28,10 +29,10 @@ Target: 09/09/2026 public business launch. Repo: `HerGotSystems/EMVYCHECK`.
 
 No public checkout is required to unblock the first sale — invoicing plus a manual payment method is sufficient once the above is supplied.
 
-## ARTWORK PASS STILL OPEN
+## ARTWORK PASS — ONE OPTIONAL ITEM STILL OPEN (NOT A BLOCKER)
 
-- Homepage showcase: 6-image batch not yet supplied. `showcase/` folder + `showcase.js` are ready to receive them without further code changes (empty state shows an honest note, never a broken box).
-- `og:image`: deliberately not added — will come from the real showcase batch.
+- Multi-panel/installation showcase example: the only candidate supplied for this role was a raw app/browser screenshot with UI chrome and a debug caption baked into the image, not a clean presentation derivative, so the slot was deliberately left empty rather than publishing it. `showcase/README.txt` documents exactly what's needed (a clean 5×5/8×8+ derivative, no browser/app UI, no debug captions). Add it and fill in the matching `showcase.js` slot whenever a clean one exists — this does not block the 09/09 launch.
+- Housekeeping note (non-blocking): `showcase/` currently also holds the original, unrenamed raw uploads (`01-hero-frost-bloom.jpg`, `02-grid9-desert-threads.jpg`, etc.) and `README-MAPPING.txt` alongside the in-use `showcase-*.jpg` files. They're harmless (unreferenced by any page) but duplicate the same images under two names; safe to tidy up in a later housekeeping pass.
 - `£1,000/m²` bespoke-space statement: untouched per instruction; still carries the standing "requires Mike's review" note from `docs/EMVY-BUSINESS-FRONT-DOOR-v0.1.md`.
 
 ## POST-LAUNCH / NOT A BLOCKER

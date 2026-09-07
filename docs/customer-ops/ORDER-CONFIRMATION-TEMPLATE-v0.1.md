@@ -25,7 +25,7 @@ Use this after the intake questionnaire (Sale Kit §4) and before starting previ
 - `[ROUNDS OF ADJUSTMENT]` — state the number agreed
 - `[DELIVERY FILE TYPES]` — e.g. PNG / panel files, as applicable
 - `[TARGET DELIVERY TIME]` — e.g. "X days after preview approval and payment"
-- `[PAYMENT METHOD]` — **Mike to confirm current method** (bank transfer / other agreed business payment method); do not invent one
+- `[PAYMENT METHOD]` — the specific method agreed with this customer (e.g. Revolut, PayPal, bank transfer, or another agreed business payment method). Never put account numbers, PayPal/Revolut identifiers, or other payment credentials in this repository — those details are agreed with the customer and supplied to them privately on the invoice/payment request, from private storage, not from this template.
 - `[DATE]`
 
 ## Template text
