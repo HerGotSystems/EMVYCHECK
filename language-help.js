@@ -28,7 +28,7 @@
         ['Colour', 'try different colour directions.'],
         ['Seed', 'create related variations of the same idea.'],
         ['Preview', 'see how the work may look in panels or a room.'],
-        ['Save Recipe', 'save the editable setup.'],
+        ['Save Recipe', 'save the lightweight rebuild file — it keeps your setup so you can reopen and reproduce compatible work later, instead of storing every giant production image. Export the large production file only when you actually need it.'],
         ['Advanced', 'use deeper controls only when you want them.']
       ],
       important: 'Important: A Preview is not a production file. A saved Recipe is not a commercial licence.',
@@ -56,7 +56,7 @@
         ['Barva', 'vyzkoušejte různé barevné směry.'],
         ['Seed', 'vytvářejte příbuzné varianty stejného nápadu.'],
         ['Náhled', 'podívejte se, jak může dílo vypadat jako panely nebo v místnosti.'],
-        ['Uložit recept', 'uložte upravitelná nastavení.'],
+        ['Uložit recept', 'uložte odlehčený soubor pro opětovné sestavení — uchová vaše nastavení, abyste mohli později znovu otevřít a reprodukovat kompatibilní dílo, místo ukládání každého obřího produkčního obrázku. Velký produkční soubor exportujte, jen když ho skutečně potřebujete.'],
         ['Pokročilé', 'hlubší ovládání použijte jen tehdy, když ho chcete.']
       ],
       important: 'Důležité: Náhled není produkční soubor. Uložený recept není komerční licence.',
@@ -84,7 +84,7 @@
         ['Boja', 'isprobajte različite smjerove boja.'],
         ['Seed', 'stvarajte povezane varijacije iste ideje.'],
         ['Pregled', 'pogledajte kako rad može izgledati kao panel ili u prostoru.'],
-        ['Spremi recept', 'spremite postavke koje možete ponovno uređivati.'],
+        ['Spremi recept', 'spremite laganu datoteku za ponovnu izradu — čuva vaše postavke kako biste kasnije mogli ponovno otvoriti i reproducirati kompatibilan rad, umjesto spremanja svake goleme produkcijske slike. Veliku produkcijsku datoteku izvezite tek kad je stvarno trebate.'],
         ['Napredno', 'koristite detaljnije kontrole samo kada ih želite.']
       ],
       important: 'Važno: Pregled nije produkcijska datoteka. Spremljeni recept nije komercijalna licenca.',
@@ -112,7 +112,7 @@
         ['Farbe', 'verschiedene Farbrichtungen ausprobieren.'],
         ['Seed', 'verwandte Varianten derselben Idee erzeugen.'],
         ['Vorschau', 'sehen, wie das Werk als Paneele oder in einem Raum wirken kann.'],
-        ['Rezept speichern', 'die bearbeitbare Einstellung speichern.'],
+        ['Rezept speichern', 'speichern Sie die leichte Wiederaufbau-Datei — sie bewahrt Ihre Einstellung, damit Sie kompatible Arbeit später wieder öffnen und reproduzieren können, statt jedes riesige Produktionsbild zu speichern. Exportieren Sie die große Produktionsdatei erst, wenn Sie sie wirklich brauchen.'],
         ['Erweitert', 'detailliertere Steuerelemente nur bei Bedarf verwenden.']
       ],
       important: 'Wichtig: Eine Vorschau ist keine Produktionsdatei. Ein gespeichertes Rezept ist keine kommerzielle Lizenz.',
@@ -140,7 +140,7 @@
         ['Couleur', 'essayez différentes directions de couleurs.'],
         ['Seed', 'créez des variations liées à la même idée.'],
         ['Aperçu', "voyez comment l'œuvre peut apparaître en panneaux ou dans une pièce."],
-        ['Enregistrer la recette', 'sauvegardez la configuration modifiable.'],
+        ['Enregistrer la recette', "enregistrez le fichier léger de reconstruction — il conserve votre configuration pour que vous puissiez rouvrir et reproduire un travail compatible plus tard, au lieu de stocker chaque immense image de production. Exportez le grand fichier de production seulement quand vous en avez vraiment besoin."],
         ['Avancé', "utilisez les contrôles plus poussés uniquement lorsque vous en avez besoin."]
       ],
       important: "Important : Un aperçu n'est pas un fichier de production. Une recette enregistrée n'est pas une licence commerciale.",
@@ -168,7 +168,7 @@
         ['Color', 'prueba distintas direcciones de color.'],
         ['Seed', 'crea variaciones relacionadas de la misma idea.'],
         ['Vista previa', 'comprueba cómo puede verse la obra en paneles o en una habitación.'],
-        ['Guardar receta', 'guarda la configuración editable.'],
+        ['Guardar receta', 'guarda el archivo ligero de reconstrucción — conserva tu configuración para que puedas volver a abrirla y reproducir una obra compatible más adelante, en lugar de guardar cada enorme imagen de producción. Exporta el archivo de producción grande solo cuando realmente lo necesites.'],
         ['Avanzado', 'usa los controles más profundos solo cuando los necesites.']
       ],
       important: 'Importante: Una vista previa no es un archivo de producción. Una receta guardada no es una licencia comercial.',
@@ -196,7 +196,7 @@
         ['Kolor', 'wypróbuj różne kierunki kolorystyczne.'],
         ['Seed', 'twórz powiązane warianty tego samego pomysłu.'],
         ['Podgląd', 'zobacz, jak praca może wyglądać jako panele lub w pomieszczeniu.'],
-        ['Zapisz recepturę', 'zapisz edytowalne ustawienia.'],
+        ['Zapisz recepturę', 'zapisz lekki plik do odtworzenia — zachowuje twoje ustawienia, dzięki czemu możesz później ponownie otworzyć i odtworzyć kompatybilną pracę, zamiast przechowywać każdy ogromny plik produkcyjny. Duży plik produkcyjny eksportuj dopiero wtedy, gdy naprawdę go potrzebujesz.'],
         ['Zaawansowane', 'używaj bardziej szczegółowych ustawień tylko wtedy, gdy ich potrzebujesz.']
       ],
       important: 'Ważne: Podgląd nie jest plikiem produkcyjnym. Zapisana receptura nie jest licencją komercyjną.',
