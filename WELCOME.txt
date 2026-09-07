@@ -48,7 +48,7 @@ LICENSING SUMMARY
 -----------------
 Full terms: https://emvycheck.com/LICENSE-PHUL.txt
 Machine policy: https://emvycheck.com/llms.txt
-Contact: contact@emvycheck.com
+Contact: emvycheck@gmail.com
 
 PERMITTED USE MATRIX
 --------------------
