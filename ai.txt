@@ -5,7 +5,7 @@
 # Standard: https://site.ai-txt.org (emerging)
 
 Name: EMVY CHECK
-Contact: contact@emvycheck.com
+Contact: emvycheck@gmail.com
 License: https://emvycheck.com/LICENSE-PHUL.txt
 
 Training: PROHIBITED
