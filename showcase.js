@@ -12,12 +12,14 @@
   'use strict';
 
   var SHOWCASE_ITEMS = [
-    { image: '', caption: 'Canvas Grid — strongest colourful single artwork' },
-    { image: '', caption: 'Canvas Grid — 3×3 / GRID9 piece' },
+    { image: 'showcase-01-hero.jpg', caption: 'EMVY CHECK ART — layered single artwork' },
+    { image: 'showcase-02-grid9.jpg', caption: 'Canvas Grid — 3×3 continuous panel study' },
     { image: '', caption: 'Canvas Grid — multi-panel presentation' },
-    { image: '', caption: 'Canvas Grid — Gallery Calm / Soft Wash direction' },
-    { image: '', caption: 'Canvas Grid — EMVY / Rave poster direction' },
-    { image: '', caption: 'Canvas Grid — related variation, same design family' }
+    { image: 'showcase-04-calm.jpg', caption: 'Canvas Grid — calm linework, interior-friendly direction' },
+    { image: 'showcase-05-emvy.jpg', caption: 'Canvas Grid — loud, high-colour EMVY direction' },
+    { image: 'showcase-06-variation-a.jpg', caption: 'Canvas Grid — related design variation, colour state 1 of 3' },
+    { image: 'showcase-06-variation-b.jpg', caption: 'Canvas Grid — related design variation, colour state 2 of 3' },
+    { image: 'showcase-06-variation-c.jpg', caption: 'Canvas Grid — related design variation, colour state 3 of 3' }
   ];
 
   function install() {

@@ -1,16 +1,24 @@
 EMVY CHECK — HOMEPAGE SHOWCASE
 
-Put the first batch of real artwork images in this folder. See
+Put real artwork images in this folder. See
 docs/SHOWCASE-UPLOAD-GUIDE-v0.1.md for full guidance.
 
-First batch (6 images), suggested filenames:
+Current status (launch batch v1):
 
-  showcase-01-hero.jpg        strongest colourful single artwork
-  showcase-02-grid9.jpg       strong 3x3 / GRID9 piece
-  showcase-03-multipanel.jpg  5x5 or multi-panel presentation
-  showcase-04-calm.jpg        quieter Gallery Calm / Soft Wash direction
-  showcase-05-emvy.jpg        aggressive EMVY / Rave / poster direction
-  showcase-06-variation.jpg   related variation / same design family
+  showcase-01-hero.jpg           in use — hero + homepage showcase
+  showcase-02-grid9.jpg          in use — 3x3 / GRID9 piece
+  showcase-03-multipanel.jpg     OPEN — still needed (5x5/8x8 or larger
+                                  multi-panel presentation). Add this file
+                                  and fill in the matching "image" field
+                                  in showcase.js when a clean derivative
+                                  (no browser/app UI, no debug captions)
+                                  is available.
+  showcase-04-calm.jpg           in use — calm/interior-friendly direction
+  showcase-05-emvy.jpg           in use — loud/high-colour EMVY direction
+  showcase-06-variation-a/b/c.jpg in use — one design family, 3 colour states
+  showcase-hero-social.jpg       in use — 1200x630 og:image/twitter:image
+                                  derivative of the hero, cropped from
+                                  showcase-01-hero.jpg
 
 Rules:
 - Use web-size derivatives (roughly 1600-2400px on the long edge), not
