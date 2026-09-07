@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Contact EMVY CHECK</title>
+<meta name="description" content="Contact EMVY CHECK about Canvas Grid, custom artwork, commercial use, partnerships, production or support.">
+<style>
+:root{--bg:#090909;--panel:#111;--paper:#f1eee8;--ink:#0b0b0b;--muted:#aaa29a;--line:#2b2b2b;--hot:#ff4f1f;--acid:#d8ff35;--max:980px}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--paper);font-family:Arial,Helvetica,sans-serif}.wrap{width:min(var(--max),calc(100% - 30px));margin:auto}header{border-bottom:1px solid var(--line)}.nav{height:66px;display:flex;align-items:center;gap:18px}.brand{font-weight:900;letter-spacing:.14em;font-size:14px;margin-right:auto;color:white;text-decoration:none}.brand b{color:var(--hot)}.nav a:not(.brand){font-size:12px;color:#bbb3aa;text-decoration:none}main{padding:70px 0 90px}.k{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--acid);margin-bottom:14px}h1{font-size:clamp(50px,9vw,100px);line-height:.88;letter-spacing:-.06em;margin:0 0 24px}.lead{font-size:20px;line-height:1.5;color:#aaa39b;max-width:760px}.grid{display:grid;grid-template-columns:.8fr 1.2fr;gap:36px;margin-top:48px}.info{padding:24px;border:1px solid var(--line);background:#0d0d0d;height:max-content}.info h2{font-size:22px;margin:0 0 14px}.info p{color:#99928a;line-height:1.55}.email{color:var(--acid);font-weight:900;word-break:break-word}.small{font-size:12px;color:#79736d!important}.form{display:grid;gap:16px}.row{display:grid;grid-template-columns:1fr 1fr;gap:14px}label{font-size:12px;font-weight:800;letter-spacing:.04em}input,select,textarea{width:100%;margin-top:7px;background:#111;border:1px solid #3a3a3a;color:white;border-radius:5px;padding:13px 14px;font:inherit}input:focus,select:focus,textarea:focus{outline:2px solid var(--acid);outline-offset:1px}textarea{min-height:190px;resize:vertical}.btn{min-height:52px;border:0;border-radius:5px;background:var(--hot);color:white;font-weight:900;cursor:pointer;font-size:14px}.note{font-size:12px;line-height:1.55;color:#7f7972}.back{display:inline-block;margin-top:24px;color:#aaa29a;text-decoration:none;font-size:12px}.honey{position:absolute;left:-9999px;opacity:0;pointer-events:none}@media(max-width:760px){.grid,.row{grid-template-columns:1fr}main{padding-top:48px}}
+</style>
+</head>
+<body>
+<header><div class="wrap nav"><a class="brand" href="/"><b>EMVY</b> CHECK</a><a href="/">HOME</a><a href="https://canvas-grid-public.veltrusky-michal.workers.dev">CANVAS GRID</a></div></header>
+<main class="wrap">
+<div class="k">Talk to us</div><h1>TELL US WHAT YOU WANT TO MAKE.</h1><p class="lead">Custom artwork, commercial use, production, partnership, support or a strange useful idea. Send the message here and it goes to the EMVY CHECK business inbox.</p>
+<div class="grid">
+<aside class="info"><h2>EMVY CHECK</h2><p><span class="email">emvycheck@gmail.com</span></p><p>You can use the form or email us directly. AI may help read, organise and draft replies so the business can keep moving while Michal is at work or away from a computer.</p><p>Important pricing exceptions, licences, exclusivity, partnerships and other material commercial decisions remain human-approved.</p><p class="small">The web form is delivered using FormSubmit. If you prefer not to use the form service, email us directly.</p></aside>
+<form class="form" action="https://formsubmit.co/emvycheck@gmail.com" method="POST">
+<input type="hidden" name="_subject" value="[WEBSITE] New EMVY CHECK enquiry">
+<input type="hidden" name="_next" value="https://emvycheck.com/thanks.html">
+<input type="hidden" name="_template" value="table">
+<input type="hidden" name="_captcha" value="false">
+<label class="honey">Leave this empty<input type="text" name="_honey" tabindex="-1" autocomplete="off"></label>
+<div class="row"><label>Your name<input name="Name" type="text" autocomplete="name" required></label><label>Your email<input name="email" type="email" autocomplete="email" required></label></div>
+<div class="row"><label>Organisation / business<input name="Organisation" type="text" autocomplete="organization"></label><label>Country<input name="Country" type="text" autocomplete="country-name"></label></div>
+<label>What is this about?<select id="topic" name="Topic" required><option value="">Choose one</option><option>Canvas Grid support</option><option>Custom artwork</option><option>Commercial use / licence</option><option>Production / printing</option><option>Partnership / work with us</option><option>Gallery / school / event project</option><option>Press / media</option><option>Something else</option></select></label>
+<label>Tell us what you need<textarea name="Message" required placeholder="What are you trying to make, use, print, sell or build? If there is a deadline, size, location, budget range or useful link, include it here."></textarea></label>
+<label>Useful link (optional)<input name="Link" type="url" placeholder="https://"></label>
+<button class="btn" type="submit">SEND TO EMVY CHECK</button>
+<p class="note">By sending this form you are asking EMVY CHECK to use the information you provide to respond to your enquiry. Do not send passwords, payment-card details or other sensitive information.</p>
+</form>
+</div><a class="back" href="/">← BACK TO EMVY CHECK</a>
+</main>
+<script>
+(function(){
+  var q=new URLSearchParams(location.search);var t=(q.get('topic')||'').toLowerCase();var s=document.getElementById('topic');if(!t||!s)return;
+  var map={support:'Canvas Grid support',custom:'Custom artwork',commercial:'Commercial use / licence',production:'Production / printing',partner:'Partnership / work with us',project:'Gallery / school / event project',press:'Press / media'};
+  if(map[t])s.value=map[t];
+})();
+</script>
+</body>
+</html>
