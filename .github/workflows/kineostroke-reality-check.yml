@@ -1,0 +1,33 @@
+name: KINEOSTROKE Reality Check
+
+on:
+  push:
+    branches: [kineostroke-reality-check-v0.1]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Syntax check flipbook modules
+        run: |
+          node --check flipbook-engine/dancer_scene_engine.js
+          node --check flipbook-engine/scene_timeline_system.js
+          node --check flipbook-engine/audio_reactive_bridge.js
+          node --check flipbook-engine/pose_tagging_system.js
+          node --check flipbook-engine/flipbook_engine_orchestrator.js
+      - name: Import full orchestrator module graph
+        run: |
+          node --experimental-default-type=module -e "import('./flipbook-engine/flipbook_engine_orchestrator.js').then(m=>{const c=m.defaultEngineConfig(); if(!c || c.bpm!==174) process.exit(1); console.log('orchestrator import PASS', c.scenePreset, c.timelinePreset);})"
+      - name: Verify reality-check page uses real cutter
+        run: |
+          grep -q "createPoseSheetSet" flipbook-engine/reality-check.html
+          grep -q "realDrawCalls" flipbook-engine/reality-check.html
+          grep -q "dancer_scene_engine.js" flipbook-engine/reality-check.html
