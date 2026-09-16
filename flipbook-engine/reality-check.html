@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>KINEOSTROKE Reality Check</title>
+<style>
+:root{color-scheme:dark;--bg:#07070a;--panel:#15161b;--line:#2a2d35;--text:#f4f4f6;--muted:#a9acb8;--ok:#83ff9d;--bad:#ff7a7a;--warn:#ffd35a}*{box-sizing:border-box}body{margin:0;background:#07070a;color:var(--text);font-family:system-ui,Segoe UI,Arial,sans-serif}.wrap{max-width:1180px;margin:auto;padding:22px;display:grid;gap:16px}.panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px}.head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap}.eyebrow{font-size:12px;letter-spacing:.08em;color:var(--muted);font-weight:800}.status-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}.status{border:1px solid var(--line);border-radius:12px;padding:12px}.status b{display:block;margin-bottom:5px}.ok{color:var(--ok)}.bad{color:var(--bad)}.warn{color:var(--warn)}canvas{width:100%;height:auto;display:block;background:#020204;border:1px solid var(--line);border-radius:14px}.controls{display:flex;gap:9px;flex-wrap:wrap;margin-top:12px}button,input{font:inherit}button{background:#252832;color:var(--text);border:1px solid #3b3f4b;border-radius:10px;padding:10px 13px;cursor:pointer}button:hover{border-color:#6bd9ff}.small{font-size:12px;color:var(--muted);line-height:1.45}.sheet-preview{display:grid;grid-template-columns:1fr 1fr;gap:14px}.sheet-preview canvas{background:#111}.log{font-family:ui-monospace,Consolas,monospace;font-size:12px;white-space:pre-wrap;background:#09090c;padding:12px;border-radius:10px;min-height:110px}@media(max-width:760px){.status-grid,.sheet-preview{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <section class="panel">
+    <div class="head">
+      <div>
+        <div class="eyebrow">EMVY CHECK · KINEOSTROKE REALITY CHECK v0.1</div>
+        <h1>Prove the real sprite path.</h1>
+        <div class="small">This page uses the actual <code>dancer_scene_engine.js</code> module and its real 5×4 <code>createPoseSheetSet()</code> cutter. A moving fallback silhouette does not count as success.</div>
+      </div>
+      <div class="small">Safety branch only · no live-site integration</div>
+    </div>
+    <div class="status-grid">
+      <div class="status"><b>MODULE LOAD</b><span id="moduleStatus" class="warn">WAITING</span></div>
+      <div class="status"><b>SPRITE CUTTER</b><span id="cutterStatus" class="warn">WAITING</span></div>
+      <div class="status"><b>REAL SPRITE DRAW</b><span id="drawStatus" class="warn">WAITING</span></div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <canvas id="stage" width="960" height="540"></canvas>
+    <div class="controls">
+      <button id="start">START</button>
+      <button id="stop">STOP</button>
+      <button id="regen">REGENERATE TEST SHEET</button>
+      <label style="display:inline-flex;align-items:center;gap:8px">LOAD REAL 5×4 SHEET <input id="upload" type="file" accept="image/*"></label>
+    </div>
+    <div class="small" style="margin-top:8px">Generated sheet = technical proof only. Uploading one of our real KINEOSTROKE 5×4 pose sheets is the visual proof we actually care about.</div>
+  </section>
+
+  <section class="panel sheet-preview">
+    <div><div class="eyebrow">CURRENT 5×4 SOURCE SHEET</div><canvas id="sheet" width="1000" height="800"></canvas></div>
+    <div><div class="eyebrow">SELF TEST LOG</div><div id="log" class="log"></div></div>
+  </section>
+</div>
+
+<script type="module">
+import { scenePresets, createPoseSheetSet } from './dancer_scene_engine.js';
+
+const $=id=>document.getElementById(id);
+const logLines=[];
+const log=(text)=>{logLines.push(text);$('log').textContent=logLines.join('\n')};
+const setStatus=(id,text,cls)=>{const el=$(id);el.textContent=text;el.className=cls};
+
+let scene=null;
+let currentImage=null;
+let realDrawCalls=0;
+
+function buildGeneratedSheet(){
+  const c=$('sheet'),ctx=c.getContext('2d');
+  ctx.clearRect(0,0,c.width,c.height);
+  const cw=c.width/5,ch=c.height/4;
+  for(let i=0;i<20;i++){
+    const col=i%5,row=Math.floor(i/5),x=col*cw,y=row*ch;
+    ctx.save();ctx.translate(x,y);
+    ctx.fillStyle=`hsl(${(i*29)%360} 52% 18%)`;ctx.fillRect(0,0,cw,ch);
+    ctx.strokeStyle='rgba(255,255,255,.28)';ctx.strokeRect(2,2,cw-4,ch-4);
+    const phase=i/19;
+    const cx=cw*.5,base=ch*.78;
+    ctx.strokeStyle='#fff';ctx.lineWidth=8;ctx.lineCap='round';
+    ctx.beginPath();ctx.arc(cx,base-ch*.50,ch*.075,0,Math.PI*2);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(cx,base-ch*.41);ctx.lineTo(cx,base-ch*.18);ctx.stroke();
+    const swing=Math.sin(phase*Math.PI*4)*cw*.16;
+    ctx.beginPath();ctx.moveTo(cx,base-ch*.34);ctx.lineTo(cx-cw*.16-swing,base-ch*.20);ctx.moveTo(cx,base-ch*.34);ctx.lineTo(cx+cw*.16+swing,base-ch*.22);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(cx,base-ch*.18);ctx.lineTo(cx-cw*.10+swing*.35,base);ctx.moveTo(cx,base-ch*.18);ctx.lineTo(cx+cw*.10-swing*.35,base);ctx.stroke();
+    ctx.fillStyle='rgba(255,255,255,.9)';ctx.font='bold 30px system-ui';ctx.fillText(String(i+1).padStart(2,'0'),14,38);
+    ctx.restore();
+  }
+  const img=new Image();
+  return new Promise((resolve,reject)=>{img.onload=()=>resolve(img);img.onerror=reject;img.src=c.toDataURL('image/png')});
+}
+
+function mirrorImageToPreview(image){
+  const c=$('sheet'),ctx=c.getContext('2d');
+  c.width=image.width;c.height=image.height;ctx.clearRect(0,0,c.width,c.height);ctx.drawImage(image,0,0);
+}
+
+function destroyScene(){if(scene){scene.stop();scene=null}}
+
+function bootWithImage(image,label){
+  destroyScene();realDrawCalls=0;currentImage=image;
+  const base=createPoseSheetSet({image,columns:5,rows:4,poseCount:20,padding:2});
+  const originalDraw=base.drawPose.bind(base);
+  base.drawPose=(ctx,pose,options)=>{realDrawCalls++;originalDraw(ctx,pose,options)};
+  if(base.poseCount===20&&base.poses.length===20){setStatus('cutterStatus','20 FRAMES · PASS','ok');log(`SPRITE CUTTER PASS · ${label} · 20 poses`)}else{setStatus('cutterStatus','FAIL','bad');log('SPRITE CUTTER FAIL')}
+
+  scene=scenePresets.warehouseStage({canvas:$('stage'),bpm:120});
+  scene.debug=true;
+  scene.addDancer({id:'reality-check',spriteSet:base,archetype:'punkIgnition',role:'lead'});
+  scene.start();
+  log(`SCENE STARTED · ${label}`);
+  setTimeout(()=>{
+    if(realDrawCalls>0){setStatus('drawStatus',`REAL SPRITE · ${realDrawCalls}+ DRAWS`,'ok');log(`REAL SPRITE DRAW PASS · drawPose called ${realDrawCalls} times`)}
+    else{setStatus('drawStatus','FALLBACK / FAIL','bad');log('REAL SPRITE DRAW FAIL · drawPose never called')}
+  },800);
+}
+
+async function regenerate(){
+  try{const img=await buildGeneratedSheet();bootWithImage(img,'generated technical sheet')}
+  catch(err){setStatus('drawStatus','ERROR','bad');log(`ERROR · ${err.message}`)}
+}
+
+setStatus('moduleStatus','ACTUAL MODULE · PASS','ok');
+log('MODULE LOAD PASS · dancer_scene_engine.js imported');
+$('start').onclick=()=>scene?.start();
+$('stop').onclick=()=>scene?.stop();
+$('regen').onclick=regenerate;
+$('upload').onchange=async(event)=>{
+  const file=event.target.files?.[0];if(!file)return;
+  const url=URL.createObjectURL(file),img=new Image();
+  img.onload=()=>{mirrorImageToPreview(img);bootWithImage(img,`uploaded ${file.name}`);URL.revokeObjectURL(url)};
+  img.onerror=()=>{log(`UPLOAD FAIL · ${file.name}`);URL.revokeObjectURL(url)};
+  img.src=url;
+};
+regenerate();
+</script>
+</body>
+</html>
