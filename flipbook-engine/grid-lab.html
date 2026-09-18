@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>KINEOSTROKE Grid Lab</title>
+<style>
+:root{color-scheme:dark;--bg:#07070a;--panel:#14151a;--line:#2b2e37;--text:#f4f4f6;--muted:#a9acb8;--cyan:#75f7ff;--pink:#ff4fc8;--green:#8cff9d;--yellow:#ffd35a}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 10% 0,#14363b55,transparent 30%),radial-gradient(circle at 90% 0,#42112f55,transparent 30%),var(--bg);color:var(--text);font-family:system-ui,Segoe UI,Arial,sans-serif}
+.wrap{max-width:1420px;margin:auto;padding:20px;display:grid;gap:16px}.panel{background:#ffffff0d;border:1px solid var(--line);border-radius:18px;padding:16px}.hero{display:flex;justify-content:space-between;gap:18px;flex-wrap:wrap;align-items:flex-start}.eyebrow{font-size:12px;letter-spacing:.09em;color:var(--muted);font-weight:900}.small{font-size:12px;color:var(--muted);line-height:1.45}.big{font-size:clamp(28px,4vw,52px);line-height:.95;margin:8px 0 10px;font-weight:950}.ok{color:var(--green)}.cards{display:grid;grid-template-columns:1fr 1fr;gap:16px}.card{background:#090a0e;border:1px solid var(--line);border-radius:16px;padding:14px;display:grid;gap:12px}.card h2{margin:0}.stats{display:flex;gap:8px;flex-wrap:wrap}.pill{border:1px solid #ffffff20;background:#ffffff0c;border-radius:999px;padding:7px 10px;font-size:12px}.stage{width:100%;aspect-ratio:16/9;background:#020204;border:1px solid var(--line);border-radius:14px;display:block}.sheet{width:100%;aspect-ratio:1;background:#0b0c10;border:1px solid var(--line);border-radius:14px;display:block}.map{display:grid;gap:5px}.map.g3{grid-template-columns:repeat(3,1fr)}.map.g5{grid-template-columns:repeat(5,1fr)}.cell{min-height:48px;border:1px solid #ffffff18;background:#ffffff08;border-radius:9px;padding:6px;font-size:11px;display:flex;align-items:center;justify-content:center;text-align:center}.cell b{color:var(--cyan)}.controls{display:flex;gap:9px;flex-wrap:wrap;align-items:center}button,input{font:inherit}button{background:#252832;color:var(--text);border:1px solid #3b3f4b;border-radius:10px;padding:9px 12px;cursor:pointer}button:hover{border-color:var(--cyan)}.status{font-family:ui-monospace,Consolas,monospace;font-size:12px;color:var(--green)}.foot{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}.note{background:#ffffff08;border:1px solid #ffffff14;border-radius:12px;padding:12px}.note b{display:block;margin-bottom:5px}@media(max-width:900px){.cards,.foot{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<section class="panel hero">
+  <div>
+    <div class="eyebrow">EMVY CHECK · KINEOSTROKE GRID LAB v0.1</div>
+    <div class="big">One grid language.<br>Different animation depth.</div>
+    <div class="small">The same cutter handles 3×3 / 9 poses and 5×5 / 25 poses. This page uses the real <code>createPoseSheetSet()</code> from <code>dancer_scene_engine.js</code>.</div>
+  </div>
+  <div>
+    <div class="pill"><span class="ok">●</span> REAL CUTTER PATH</div>
+    <div class="small" style="margin-top:9px">Synthetic sheets are technical placeholders. Replace either with a real KINEOSTROKE sprite sheet using the upload control.</div>
+  </div>
+</section>
+
+<section class="cards">
+  <article class="card">
+    <div>
+      <div class="eyebrow">GRID9 · 3×3</div>
+      <h2>Compact character vocabulary</h2>
+    </div>
+    <div class="stats"><span class="pill">9 POSES</span><span class="pill">3×3</span><span class="pill">FAST / SIMPLE</span></div>
+    <canvas id="stage9" class="stage" width="720" height="405"></canvas>
+    <div class="status" id="status9">BOOTING…</div>
+    <canvas id="sheet9" class="sheet" width="720" height="720"></canvas>
+    <div class="map g3" id="map9"></div>
+    <div class="controls">
+      <button id="regen9">REGENERATE GRID9</button>
+      <label class="pill">LOAD 3×3 SHEET <input id="upload9" type="file" accept="image/*"></label>
+    </div>
+  </article>
+
+  <article class="card">
+    <div>
+      <div class="eyebrow">GRID25 · 5×5</div>
+      <h2>Rich character vocabulary</h2>
+    </div>
+    <div class="stats"><span class="pill">25 POSES</span><span class="pill">5×5</span><span class="pill">RICH / EXPRESSIVE</span></div>
+    <canvas id="stage25" class="stage" width="720" height="405"></canvas>
+    <div class="status" id="status25">BOOTING…</div>
+    <canvas id="sheet25" class="sheet" width="900" height="900"></canvas>
+    <div class="map g5" id="map25"></div>
+    <div class="controls">
+      <button id="regen25">REGENERATE GRID25</button>
+      <label class="pill">LOAD 5×5 SHEET <input id="upload25" type="file" accept="image/*"></label>
+    </div>
+  </article>
+</section>
+
+<section class="panel foot">
+  <div class="note"><b>Same idea as Canvas Grid</b><span class="small">A square grid becomes a reusable container. In Canvas Grid the cells form visual art; here the cells form a character's movement vocabulary.</span></div>
+  <div class="note"><b>Not locked to 9 or 25</b><span class="small">The cutter already accepts arbitrary columns / rows / poseCount. Grid4, Grid16, Grid36 or rectangular legacy sheets can coexist.</span></div>
+  <div class="note"><b>Next useful step</b><span class="small">Give each cell a semantic tag. Then XXV can ask for <code>reaction.hit</code> or <code>victory</code> and KINEOSTROKE selects the correct grid cell instead of cycling blindly.</span></div>
+</section>
+</div>
+
+<script type="module">
+import { scenePresets, createPoseSheetSet } from './dancer_scene_engine.js';
+
+const labels9=['idle','step-left','step-right','action-A','action-B','reaction','turn','signature','victory'];
+const labels25=[
+'still','breathe','look','ready','recover',
+'walk-L','walk-R','advance','retreat','turn',
+'action-A','action-B','action-C','interact','signature',
+'react-light','react-hard','block','stagger','fall',
+'enter','exit','transform','victory','defeat'
+];
+
+const $=id=>document.getElementById(id);
+const labs={};
+
+function fillMap(id,labels){
+  $(id).innerHTML=labels.map((x,i)=>`<div class="cell"><span><b>${String(i+1).padStart(2,'0')}</b><br>${x}</span></div>`).join('');
+}
+fillMap('map9',labels9);fillMap('map25',labels25);
+
+function makeSheet(canvas,n,labels){
+  const ctx=canvas.getContext('2d'),cw=canvas.width/n,ch=canvas.height/n;
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  const total=n*n;
+  for(let i=0;i<total;i++){
+    const col=i%n,row=Math.floor(i/n),x=col*cw,y=row*ch,phase=i/Math.max(1,total-1);
+    ctx.save();ctx.translate(x,y);
+    ctx.fillStyle=`hsl(${(i*37+195)%360} 46% ${14+(i%3)*3}%)`;ctx.fillRect(0,0,cw,ch);
+    ctx.strokeStyle='rgba(255,255,255,.18)';ctx.lineWidth=2;ctx.strokeRect(2,2,cw-4,ch-4);
+    const cx=cw*.5,base=ch*.82,size=Math.min(cw,ch);
+    const swing=Math.sin(phase*Math.PI*5)*cw*.18,lean=Math.sin(phase*Math.PI*3)*.16;
+    ctx.translate(cx,base);ctx.rotate(lean);
+    ctx.strokeStyle='#f4f4f6';ctx.lineWidth=Math.max(4,size*.034);ctx.lineCap='round';
+    ctx.beginPath();ctx.arc(0,-size*.53,size*.075,0,Math.PI*2);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(0,-size*.44);ctx.lineTo(0,-size*.18);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(0,-size*.38);ctx.lineTo(-size*.16-swing,-size*.25);ctx.moveTo(0,-size*.38);ctx.lineTo(size*.16+swing,-size*.22);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(0,-size*.18);ctx.lineTo(-size*.10+swing*.28,0);ctx.moveTo(0,-size*.18);ctx.lineTo(size*.10-swing*.28,0);ctx.stroke();
+    ctx.restore();
+    ctx.fillStyle='rgba(255,255,255,.92)';ctx.font=`900 ${Math.max(12,size*.08)}px system-ui`;ctx.fillText(String(i+1).padStart(2,'0'),x+8,y+20);
+    ctx.font=`700 ${Math.max(10,size*.052)}px system-ui`;ctx.fillStyle='rgba(255,255,255,.68)';ctx.fillText(labels[i]||`pose-${i+1}`,x+8,y+36);
+  }
+  const img=new Image();
+  return new Promise((resolve,reject)=>{img.onload=()=>resolve(img);img.onerror=reject;img.src=canvas.toDataURL('image/png')});
+}
+
+function stopLab(key){if(labs[key]?.scene)labs[key].scene.stop();}
+
+async function boot(key,n,labels,image=null){
+  stopLab(key);
+  const sheet=$(`sheet${key}`),stage=$(`stage${key}`),status=$(`status${key}`);
+  const img=image||await makeSheet(sheet,n,labels);
+  if(image){sheet.width=image.width;sheet.height=image.height;sheet.getContext('2d').drawImage(image,0,0);}
+  let draws=0;
+  const set=createPoseSheetSet({image:img,columns:n,rows:n,poseCount:n*n,padding:2});
+  const real=set.drawPose.bind(set);set.drawPose=(ctx,pose,opts)=>{draws++;real(ctx,pose,opts)};
+  const scene=scenePresets.warehouseStage({canvas:stage,bpm:key===9?112:138});
+  scene.addDancer({id:`grid-${key}`,spriteSet:set,archetype:key===9?'expressiveStoryteller':'punkIgnition',role:'lead'});
+  scene.start();labs[key]={scene,set,img};
+  status.textContent=`GRID${n*n} · ${n}×${n} · ${set.poseCount} POSES · DRAWING…`;
+  setTimeout(()=>status.textContent=draws>0?`PASS · REAL SPRITE PATH · ${draws}+ drawPose calls`:'FAIL · FALLBACK PATH',700);
+}
+
+function bindUpload(key,n,labels){
+  $(`upload${key}`).onchange=e=>{const f=e.target.files?.[0];if(!f)return;const url=URL.createObjectURL(f),img=new Image();img.onload=()=>{boot(key,n,labels,img);URL.revokeObjectURL(url)};img.src=url};
+  $(`regen${key}`).onclick=()=>boot(key,n,labels);
+}
+bindUpload(9,3,labels9);bindUpload(25,5,labels25);
+boot(9,3,labels9);boot(25,5,labels25);
+</script>
+</body>
+</html>
