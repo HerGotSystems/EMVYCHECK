@@ -1,0 +1,84 @@
+{
+  "version": 1,
+  "updated": "2026-09-26",
+  "products": [
+    {
+      "id": "gumroad-fnhtfx",
+      "status": "live",
+      "kind": "digital",
+      "collection": "uncategorised",
+      "title": "EMVY CHECK Product 01",
+      "subtitle": "Live digital product",
+      "priceLabel": "See product page",
+      "image": "/showcase/02-grid9-desert-threads.jpg",
+      "imageAlt": "EMVY CHECK digital artwork",
+      "checkoutUrl": "https://emvycheck.gumroad.com/l/fnhtfx",
+      "checkoutProvider": "gumroad",
+      "buttonLabel": "VIEW / BUY"
+    },
+    {
+      "id": "gumroad-jnambh",
+      "status": "live",
+      "kind": "digital",
+      "collection": "uncategorised",
+      "title": "EMVY CHECK Product 02",
+      "subtitle": "Live digital product",
+      "priceLabel": "See product page",
+      "image": "/showcase/04-calm-gentle-drift.jpg",
+      "imageAlt": "EMVY CHECK digital artwork",
+      "checkoutUrl": "https://emvycheck.gumroad.com/l/jnambh",
+      "checkoutProvider": "gumroad",
+      "buttonLabel": "VIEW / BUY"
+    },
+    {
+      "id": "gumroad-abwxcm",
+      "status": "live",
+      "kind": "digital",
+      "collection": "uncategorised",
+      "title": "EMVY CHECK Product 03",
+      "subtitle": "Live digital product",
+      "priceLabel": "See product page",
+      "image": "/showcase/05-wild-emvy-coastal-spires.jpg",
+      "imageAlt": "EMVY CHECK digital artwork",
+      "checkoutUrl": "https://emvycheck.gumroad.com/l/abwxcm",
+      "checkoutProvider": "gumroad",
+      "buttonLabel": "VIEW / BUY"
+    },
+    {
+      "id": "gumroad-jhthjy",
+      "status": "live",
+      "kind": "digital",
+      "collection": "uncategorised",
+      "title": "EMVY CHECK Product 04",
+      "subtitle": "Live digital product",
+      "priceLabel": "See product page",
+      "image": "/showcase/06-variation-marble-pulse-A.jpg",
+      "imageAlt": "EMVY CHECK digital artwork",
+      "checkoutUrl": "https://emvycheck.gumroad.com/l/jhthjy",
+      "checkoutProvider": "gumroad",
+      "buttonLabel": "VIEW / BUY"
+    },
+    {
+      "id": "gumroad-uqvmw",
+      "status": "live",
+      "kind": "digital",
+      "collection": "uncategorised",
+      "title": "EMVY CHECK Product 05",
+      "subtitle": "Live digital product",
+      "priceLabel": "See product page",
+      "image": "/showcase/07-variation-marble-pulse-B.jpg",
+      "imageAlt": "EMVY CHECK digital artwork",
+      "checkoutUrl": "https://emvycheck.gumroad.com/l/uqvmw",
+      "checkoutProvider": "gumroad",
+      "buttonLabel": "VIEW / BUY"
+    }
+  ],
+  "collectionNotes": {
+    "uncategorised": "Temporary holding collection until product titles and themes are verified.",
+    "art": "General visual art and printable collections.",
+    "lyrics": "Artwork built from original EMVY CHECK lyrics and music text.",
+    "slogans": "Statement, slogan and message-led artwork.",
+    "beliefs": "Personal ideas, values and belief-led work.",
+    "political": "Clearly separated political or civic artwork. Keep descriptive product metadata distinct from EMVY CHECK's general catalogue."
+  }
+}
