@@ -8,11 +8,13 @@
 User-agent: GPTBot
 Disallow: /
 
+# User-initiated ChatGPT access and ChatGPT Search are allowed.
+# This is separate from GPTBot training access, which remains blocked above.
 User-agent: ChatGPT-User
-Disallow: /
+Allow: /
 
 User-agent: OAI-SearchBot
-Disallow: /
+Allow: /
 
 User-agent: anthropic-ai
 Disallow: /
