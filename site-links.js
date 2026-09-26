@@ -17,14 +17,22 @@
     home.title = 'EMVY CHECK home';
     home.dataset.emvySiteLink = 'true';
 
+    const shop = document.createElement('a');
+    shop.className = 'top-btn';
+    shop.href = '/shop.html';
+    shop.textContent = 'Shop';
+    shop.title = 'Shop EMVY CHECK';
+    shop.dataset.emvySiteLink = 'true';
+
     const art = document.createElement('a');
     art.className = 'top-btn';
-    art.href = '/#art';
+    art.href = '/art/';
     art.textContent = 'Art';
     art.title = 'EMVY CHECK ART';
     art.dataset.emvySiteLink = 'true';
 
     menu.insertBefore(home, order || null);
+    menu.insertBefore(shop, order || null);
     menu.insertBefore(art, order || null);
   }
 
