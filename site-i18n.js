@@ -86,10 +86,34 @@ function setLanguage(lang){
 window.EMVY_I18N={setLanguage:setLanguage,languages:['en','cs','hr','de','fr','es','pl']};
 function boot(){
   var lang='en';try{lang=localStorage.getItem('emvy-lang-help')||'en';}catch(e){}
-  setLanguage(lang);
-  var observer=new MutationObserver(function(){translateText(lang);});
+  var observer=null;
+  var translating=false;
+  function apply(){
+    if(translating)return;
+    translating=true;
+    if(observer)observer.disconnect();
+    try{translateText(lang);}finally{
+      translating=false;
+      if(observer)observer.observe(document.body,{childList:true,subtree:true});
+    }
+  }
+  apply();
+  observer=new MutationObserver(function(mutations){
+    if(translating)return;
+    var hasAdded=false;
+    for(var i=0;i<mutations.length;i++){
+      if(mutations[i].addedNodes&&mutations[i].addedNodes.length){hasAdded=true;break;}
+    }
+    if(hasAdded)apply();
+  });
   observer.observe(document.body,{childList:true,subtree:true});
-  document.addEventListener('emvy:language-request',function(e){lang=e.detail&&e.detail.lang||'en';setLanguage(lang);});
+  document.addEventListener('emvy:language-request',function(e){
+    lang=e.detail&&e.detail.lang||'en';
+    if(!T[lang]&&lang!=='en')lang='en';
+    try{localStorage.setItem('emvy-lang-help',lang);}catch(err){}
+    apply();
+    document.dispatchEvent(new CustomEvent('emvy:language',{detail:{lang:lang}}));
+  });
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
