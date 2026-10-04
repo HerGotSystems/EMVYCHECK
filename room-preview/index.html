@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>EMVY CHECK — See It In Your Space</title>
+<meta name="description" content="Preview EMVY CHECK artwork on your own wall. Your room photo stays in your browser in this first prototype.">
+<meta name="robots" content="noindex, nofollow, noai, noimageai">
+<link rel="icon" href="/icons/icon-192.png" type="image/png">
+<link rel="stylesheet" href="/room-preview/room-preview.css">
+</head>
+<body>
+<header>
+  <a class="brand" href="/"><b>EMVY</b> CHECK</a>
+  <div class="tag">ROOM PREVIEW · V0.1</div>
+  <a class="back" href="/art/">ART</a>
+</header>
+
+<main>
+  <section class="intro">
+    <div>
+      <div class="eyebrow">SHOW US YOUR WALL</div>
+      <h1>SEE IT IN <span>YOUR SPACE.</span></h1>
+      <p>Upload a room photo, mark the wall with four corners and try EMVY artwork at the angle you actually see it.</p>
+    </div>
+    <div class="privacy"><strong>LOCAL-FIRST PROTOTYPE</strong><br>Your room photo stays on this device. Nothing is uploaded by this page.</div>
+  </section>
+
+  <section class="studio">
+    <aside class="controls">
+      <label class="upload">
+        <span>01 · ROOM PHOTO</span>
+        <strong>Choose photo</strong>
+        <input id="room-file" type="file" accept="image/*">
+      </label>
+
+      <div class="control">
+        <label for="art-select">02 · ARTWORK</label>
+        <select id="art-select">
+          <option value="/showcase/showcase-02-grid9.jpg">Grid9 study</option>
+          <option value="/showcase/showcase-01-hero.jpg">Layered artwork</option>
+          <option value="/showcase/showcase-04-calm.jpg">Calm linework</option>
+          <option value="/showcase/showcase-05-emvy.jpg">High-colour EMVY</option>
+          <option value="/showcase/showcase-06-variation-a.jpg">Variation A</option>
+          <option value="/showcase/showcase-06-variation-b.jpg">Variation B</option>
+          <option value="/showcase/showcase-06-variation-c.jpg">Variation C</option>
+        </select>
+      </div>
+
+      <div class="control">
+        <label for="grid-select">03 · FORMAT</label>
+        <select id="grid-select">
+          <option value="1">Single</option>
+          <option value="3" selected>3 × 3 Grid9</option>
+          <option value="5">5 × 5 Grid25</option>
+        </select>
+      </div>
+
+      <div class="control">
+        <label for="gap-range">Panel gap <output id="gap-out">2.0%</output></label>
+        <input id="gap-range" type="range" min="0" max="8" step=".25" value="2">
+      </div>
+
+      <div class="control">
+        <label for="opacity-range">Artwork opacity <output id="opacity-out">100%</output></label>
+        <input id="opacity-range" type="range" min="20" max="100" step="1" value="100">
+      </div>
+
+      <div class="button-grid">
+        <button id="reset-wall" type="button">RESET WALL</button>
+        <button id="fit-wall" type="button">CENTRE WALL</button>
+      </div>
+
+      <button id="download" class="primary" type="button">SAVE PREVIEW IMAGE</button>
+
+      <div class="help">
+        <strong>How to use it</strong>
+        <ol>
+          <li>Take a wide photo showing the room and wall.</li>
+          <li>Drag the four orange corners onto the wall area.</li>
+          <li>Try artwork, format and spacing.</li>
+          <li>Save the preview and send it to EMVY CHECK.</li>
+        </ol>
+        <p>For accurate quoting, send one real wall measurement too.</p>
+      </div>
+    </aside>
+
+    <div class="stage-wrap">
+      <div id="empty-state" class="empty-state">
+        <strong>START WITH YOUR ROOM</strong>
+        <span>Use a wide photo if possible. We want to see the artwork in the whole space, not only the wall.</span>
+      </div>
+      <canvas id="room-canvas" aria-label="Room artwork preview"></canvas>
+      <div class="stage-note">Drag the four corner handles to match the wall perspective.</div>
+    </div>
+  </section>
+
+  <section class="next">
+    <div>
+      <span>COMING NEXT</span>
+      <h2>One saved room. Endless EMVY versions.</h2>
+    </div>
+    <p>This local prototype proves the visual placement. The next layer can add private room projects, A/B/C options, measurements, customer/EMVY sharing and live camera AR.</p>
+  </section>
+</main>
+
+<footer>© 2026 EMVY CHECK · <a href="mailto:emvycheck@gmail.com">emvycheck@gmail.com</a></footer>
+<script src="/room-preview/room-preview.js"></script>
+</body>
+</html>
