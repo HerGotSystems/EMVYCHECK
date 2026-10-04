@@ -290,6 +290,7 @@
         b.classList.add('on');
         render(panel, body, code);
         try { localStorage.setItem(STORAGE_KEY, code); } catch (e) {}
+        document.dispatchEvent(new CustomEvent('emvy:language-request', { detail: { lang: code } }));
       };
       picker.appendChild(b);
     });
@@ -299,6 +300,7 @@
     panel.appendChild(picker);
     panel.appendChild(body);
     render(panel, body, saved);
+    document.dispatchEvent(new CustomEvent('emvy:language-request', { detail: { lang: saved } }));
 
     toggle.onclick = function () { panel.classList.toggle('on'); };
     close.onclick = function () { panel.classList.remove('on'); };
