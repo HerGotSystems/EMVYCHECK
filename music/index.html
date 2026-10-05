@@ -249,6 +249,19 @@ canvas#bg{position:fixed;inset:0;width:100%;height:100%;z-index:0}
 .plb-toggle{min-width:32px;height:26px;border-radius:5px;border:1px solid rgba(255,255,255,.1);background:transparent;color:rgba(255,255,255,.4);font-size:11px;cursor:pointer}
 .plb-toggle.in{border-color:rgba(200,255,74,.35);background:rgba(200,255,74,.09);color:#c8ff4a}
 .plb-stat{font-size:9px;color:rgba(255,255,255,.3);letter-spacing:.05em}
+
+.pl-target-overlay{position:fixed;inset:0;z-index:36;background:rgba(0,0,0,.55);opacity:0;pointer-events:none;transition:opacity .2s}
+.pl-target-overlay.show{opacity:1;pointer-events:all}
+.pl-target-sheet{position:fixed;left:0;right:0;bottom:0;z-index:37;background:rgba(4,6,10,.99);border-top:1px solid rgba(255,255,255,.1);border-radius:16px 16px 0 0;padding:16px 14px max(env(safe-area-inset-bottom,0px),24px);transform:translateY(100%);transition:transform .24s cubic-bezier(.4,0,.2,1)}
+.pl-target-sheet.open{transform:translateY(0)}
+.pl-target-title{font-family:'Bebas Neue',sans-serif;font-size:20px;color:#ffb347;letter-spacing:.07em;margin-bottom:3px}
+.pl-target-sub{font-size:9px;color:rgba(255,255,255,.3);margin-bottom:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pl-target-list{display:grid;gap:6px;max-height:42vh;overflow-y:auto}
+.pl-target-btn{width:100%;padding:10px 11px;border-radius:7px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:#ddd;font:10px 'Space Mono',monospace;text-align:left;cursor:pointer}
+.pl-target-btn span{float:right;color:rgba(255,255,255,.28)}
+.pl-target-new{display:flex;gap:6px;margin-top:9px}
+.pl-target-new input{flex:1;min-width:0;padding:9px;border-radius:7px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:#fff;font:10px 'Space Mono',monospace;outline:none}
+.pl-target-cancel{width:100%;margin-top:9px;padding:9px;border-radius:7px;border:1px solid rgba(255,255,255,.08);background:transparent;color:rgba(255,255,255,.4);font:9px 'Space Mono',monospace;cursor:pointer}
  
 /* TOAST */
 .toast{position:fixed;bottom:88px;left:50%;transform:translateX(-50%) translateY(12px);
@@ -741,6 +754,19 @@ canvas#bg{position:fixed;inset:0;width:100%;height:100%;z-index:0}
     </div>
   </div>
   <div class="plb-body" id="plbBody"></div>
+</div>
+
+<!-- PLAYLIST TARGET SHEET -->
+<div class="pl-target-overlay" id="plTargetOverlay" onclick="closePlaylistTarget()"></div>
+<div class="pl-target-sheet" id="plTargetSheet">
+  <div class="pl-target-title">Save to playlist</div>
+  <div class="pl-target-sub" id="plTargetSub"></div>
+  <div class="pl-target-list" id="plTargetList"></div>
+  <div class="pl-target-new">
+    <input id="plTargetNewName" maxlength="40" placeholder="New playlist name">
+    <button class="plb-chip green" onclick="createTargetPlaylist()">+ NEW</button>
+  </div>
+  <button class="pl-target-cancel" onclick="closePlaylistTarget()">CANCEL</button>
 </div>
 
 <!-- SHARE SHEET -->
@@ -1518,6 +1544,63 @@ function renderAmGrid() {
   body.appendChild(grid);
 }
  
+var playlistTarget = null;
+
+function openPlaylistTargetForTrack(ai, ti) {
+  playlistTarget = {type:'track', ai:ai, ti:ti};
+  document.getElementById('plTargetSub').textContent = ALBUMS[ai].tracks[ti].title + ' · ' + ALBUMS[ai].name;
+  renderPlaylistTargets();
+}
+function openPlaylistTargetForAlbum(ai) {
+  playlistTarget = {type:'album', ai:ai};
+  document.getElementById('plTargetSub').textContent = 'Whole album · ' + ALBUMS[ai].name + ' · ' + ALBUMS[ai].tracks.length + ' tracks';
+  renderPlaylistTargets();
+}
+function renderPlaylistTargets() {
+  var box = document.getElementById('plTargetList');
+  box.innerHTML = '';
+  if (!savedLists.length) {
+    var empty = document.createElement('div');
+    empty.className = 'pl-empty';
+    empty.textContent = 'No playlists yet — create one below.';
+    box.appendChild(empty);
+  }
+  savedLists.forEach(function(list, li) {
+    var b = document.createElement('button');
+    b.className = 'pl-target-btn';
+    var count = document.createElement('span');
+    count.textContent = list.tracks.length + ' tracks';
+    b.appendChild(document.createTextNode(list.name));
+    b.appendChild(count);
+    b.onclick = function() { applyPlaylistTarget(li); };
+    box.appendChild(b);
+  });
+  document.getElementById('plTargetNewName').value = '';
+  document.getElementById('plTargetOverlay').classList.add('show');
+  document.getElementById('plTargetSheet').classList.add('open');
+}
+function closePlaylistTarget() {
+  document.getElementById('plTargetOverlay').classList.remove('show');
+  document.getElementById('plTargetSheet').classList.remove('open');
+}
+function applyPlaylistTarget(listIdx) {
+  if (!playlistTarget || !savedLists[listIdx]) return;
+  var added = 0;
+  if (playlistTarget.type === 'album') added = addAlbumToList(listIdx, playlistTarget.ai);
+  else if (addTrackUnique(listIdx, playlistTarget.ai, playlistTarget.ti)) { added = 1; saveLists(); }
+  showToast(added ? 'Added ' + added + ' to "' + savedLists[listIdx].name + '"' : 'Already in "' + savedLists[listIdx].name + '"');
+  closePlaylistTarget();
+  if (amViewMode === 'tracks' && amCurrentAlbum >= 0) openAmTracks(amCurrentAlbum);
+}
+function createTargetPlaylist() {
+  if (!playlistTarget) return;
+  var name = document.getElementById('plTargetNewName').value.trim();
+  if (!name) return;
+  savedLists.push({name:name, tracks:[]});
+  saveLists();
+  applyPlaylistTarget(savedLists.length - 1);
+}
+
 function openAmTracks(ai) {
   amViewMode = 'tracks';
   amCurrentAlbum = ai;
@@ -1529,8 +1612,15 @@ function openAmTracks(ai) {
   // Back button row
   var backRow = document.createElement('div');
   backRow.className = 'am-back-row';
-  backRow.innerHTML = '<div class="am-back-btn">&#8592;</div><div class="am-back-label">' + alb.name + '</div>';
-  backRow.onclick = function() { renderAmGrid(); amViewMode = 'grid'; };
+  backRow.innerHTML = '<div class="am-back-btn">&#8592;</div><div class="am-back-label">' + alb.name + '</div><button class="am-tadd" id="saveAlbumToList" title="Save whole album to playlist">&#9776;+</button>';
+  backRow.onclick = function(e) {
+    if (e.target && e.target.id === 'saveAlbumToList') return;
+    renderAmGrid(); amViewMode = 'grid';
+  };
+  backRow.querySelector('#saveAlbumToList').onclick = function(e) {
+    e.stopPropagation();
+    openPlaylistTargetForAlbum(ai);
+  };
   body.appendChild(backRow);
  
   // Tracks
@@ -1546,7 +1636,8 @@ function openAmTracks(ai) {
       '<div class="am-tactions">' +
         '<div class="am-bars"><div class="am-bar"></div><div class="am-bar"></div><div class="am-bar"></div></div>' +
         '<button class="am-tadd fav-icon" title="' + (inFav ? 'Unfavourite' : 'Love this') + '" style="color:' + (inFav ? '#ff3fb0' : '') + ';border-color:' + (inFav ? 'rgba(255,63,176,.4)' : '') + '">' + (inFav ? '&#9829;' : '&#9825;') + '</button>' +
-        '<button class="am-tadd" title="' + (inPl ? 'In queue' : 'Add to queue') + '">' + (inPl ? '&#10003;' : '&#43;') + '</button>' +
+        '<button class="am-tadd list-icon" title="Save to playlist">&#9776;</button>' +
+        '<button class="am-tadd queue-icon" title="' + (inPl ? 'In queue' : 'Add to queue') + '">' + (inPl ? '&#10003;' : '&#43;') + '</button>' +
       '</div>';
     row.addEventListener('click', function(e) {
       if (e.target.classList.contains('am-tadd')) return;
@@ -1559,7 +1650,11 @@ function openAmTracks(ai) {
       toggleFav(ai, i);
       openAmTracks(ai);
     });
-    row.querySelectorAll('.am-tadd:not(.fav-icon)')[0].addEventListener('click', function(e) {
+    row.querySelector('.list-icon').addEventListener('click', function(e) {
+      e.stopPropagation();
+      openPlaylistTargetForTrack(ai, i);
+    });
+    row.querySelector('.queue-icon').addEventListener('click', function(e) {
       e.stopPropagation();
       togglePlaylist(ai, i);
       openAmTracks(ai);
