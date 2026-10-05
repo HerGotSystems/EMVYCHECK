@@ -12,13 +12,15 @@
 
   var userWantsPlay = false;
   var manualPauseAt = 0;
-  var wakeLock = null;
   var playRetryTimer = null;
   var resumeTimer = null;
   var lastRecoverAt = 0;
+  var waitingSince = 0;
+  var recoveryTimer = null;
+  var lastGoodTime = 0;
 
-  au.preload = 'auto';
-  au.setAttribute('preload', 'auto');
+  au.preload = 'metadata';
+  au.setAttribute('preload', 'metadata');
   au.setAttribute('playsinline', '');
   au.setAttribute('webkit-playsinline', '');
 
@@ -35,7 +37,6 @@
 
   function rememberPlayIntent() {
     userWantsPlay = true;
-    tryWakeLock();
   }
 
   function rememberManualPause() {
@@ -67,22 +68,6 @@
         toast('Playback blocked — tap play once');
       }
     });
-  }
-
-  function tryWakeLock() {
-    if (!('wakeLock' in navigator)) return;
-    if (document.visibilityState !== 'visible') return;
-    if (!userWantsPlay) return;
-    if (wakeLock) return;
-    navigator.wakeLock.request('screen').then(function (lock) {
-      wakeLock = lock;
-      wakeLock.addEventListener('release', function () { wakeLock = null; });
-    }).catch(function () {});
-  }
-
-  function releaseWakeLock() {
-    if (!wakeLock) return;
-    wakeLock.release().catch(function () {}).finally(function () { wakeLock = null; });
   }
 
   function playNextFromCurrent() {
@@ -206,13 +191,12 @@
 
   au.addEventListener('play', function () {
     rememberPlayIntent();
-    tryWakeLock();
+    waitingSince = 0;
   });
 
   au.addEventListener('pause', function () {
     clearTimeout(resumeTimer);
     if (!shouldAutoResume()) {
-      if (!userWantsPlay) releaseWakeLock();
       return;
     }
     resumeTimer = setTimeout(function () {
@@ -227,35 +211,84 @@
     }, 500);
   });
 
-  function recoverStream(reason) {
+  function recoverStream(reason, forceReload) {
     if (!shouldAutoResume()) return;
-    if (Date.now() - lastRecoverAt < 2500) return;
+    if (Date.now() - lastRecoverAt < 1800) return;
     lastRecoverAt = Date.now();
-    var pos = au.currentTime || 0;
-    try { au.load(); } catch (e) {}
-    au.addEventListener('canplay', function handler() {
-      au.removeEventListener('canplay', handler);
-      try { if (pos && au.duration && pos < au.duration - 2) au.currentTime = pos; } catch (e) {}
+    clearTimeout(recoveryTimer);
+
+    var pos = Math.max(lastGoodTime || 0, au.currentTime || 0);
+    var src = au.currentSrc || au.src;
+    if (!src) return;
+
+    function replayWhenReady() {
+      try {
+        if (pos > 0 && au.duration && pos < au.duration - 1) au.currentTime = pos;
+      } catch (e) {}
       safePlay(reason, 0);
-    });
-    setTimeout(function () { safePlay(reason, 0); }, 1600);
+    }
+
+    if (forceReload || au.error || au.networkState === HTMLMediaElement.NETWORK_NO_SOURCE) {
+      try {
+        au.pause();
+        au.removeAttribute('src');
+        au.load();
+        au.src = src;
+        au.load();
+      } catch (e) {}
+      au.addEventListener('canplay', function handler() {
+        au.removeEventListener('canplay', handler);
+        replayWhenReady();
+      });
+      recoveryTimer = setTimeout(replayWhenReady, 2200);
+      return;
+    }
+
+    safePlay(reason, 0);
+    recoveryTimer = setTimeout(function () {
+      if (shouldAutoResume() && au.paused) recoverStream(reason + '-reload', true);
+    }, 2200);
   }
 
-  au.addEventListener('stalled', function () { recoverStream('stalled'); });
-  au.addEventListener('error', function () { recoverStream('media-error'); });
+  au.addEventListener('waiting', function () {
+    if (!shouldAutoResume()) return;
+    if (!waitingSince) waitingSince = Date.now();
+    clearTimeout(recoveryTimer);
+    recoveryTimer = setTimeout(function () {
+      if (shouldAutoResume() && au.paused === false && waitingSince && Date.now() - waitingSince >= 2500) {
+        recoverStream('buffering', true);
+      }
+    }, 2700);
+  });
+  au.addEventListener('playing', function () { waitingSince = 0; clearTimeout(recoveryTimer); });
+  au.addEventListener('canplay', function () {
+    waitingSince = 0;
+    if (shouldAutoResume() && au.paused) safePlay('canplay', 0);
+  });
+  au.addEventListener('stalled', function () { recoverStream('stalled', true); });
+  au.addEventListener('error', function () { recoverStream('media-error', true); });
+  au.addEventListener('suspend', function () {
+    if (navigator.onLine && shouldAutoResume() && au.paused) safePlay('suspend', 0);
+  });
 
   document.addEventListener('visibilitychange', function () {
-    if (document.visibilityState === 'visible') {
-      tryWakeLock();
-      if (shouldAutoResume()) safePlay('visible-again', 0);
-    } else {
-      releaseWakeLock();
+    if (document.visibilityState === 'visible' && shouldAutoResume()) {
+      safePlay('visible-again', 0);
     }
   });
 
-  window.addEventListener('online', function () { if (shouldAutoResume()) safePlay('online', 0); });
+  window.addEventListener('online', function () {
+    if (!shouldAutoResume()) return;
+    recoverStream('online', au.paused || au.readyState < HTMLMediaElement.HAVE_FUTURE_DATA);
+  });
+
+  window.addEventListener('offline', function () {
+    clearTimeout(recoveryTimer);
+  });
 
   window.addEventListener('beforeunload', function () {
-    releaseWakeLock();
+    clearTimeout(recoveryTimer);
+    clearTimeout(playRetryTimer);
+    clearTimeout(resumeTimer);
   });
 })();
