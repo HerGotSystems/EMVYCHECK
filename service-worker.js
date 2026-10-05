@@ -1,4 +1,4 @@
-const CACHE = 'emvy-v5-music-reliability-20261005';
+const CACHE = 'emvy-v6-playlist-builder-20261005';
 const HARDENING_SCRIPT = '<script src="/car-audio-hardening.js?v=20261005"></script>';
 const SITE_LINKS_SCRIPT = '<script src="/site-links.js?v=20260825"></script>';
 const SHELL = [
