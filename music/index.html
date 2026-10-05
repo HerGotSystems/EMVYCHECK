@@ -666,6 +666,7 @@ canvas#bg{position:fixed;inset:0;width:100%;height:100%;z-index:0}
     <div class="panel-tabs">
       <button class="ptab fav-tab on" id="tabFav" onclick="switchTab('fav')">&#9825; Fav</button>
       <button class="ptab" id="tabQueue" onclick="switchTab('queue')">&#9776; Queue</button>
+      <button class="ptab" id="tabLists" onclick="switchTab('lists')">&#9654; Lists</button>
     </div>
     <div class="panel-close" onclick="closePanel()">&#10005;</div>
   </div>
@@ -707,7 +708,7 @@ canvas#bg{position:fixed;inset:0;width:100%;height:100%;z-index:0}
 </div>
  
 <div class="toast" id="toast"></div>
-<audio id="au" crossorigin="anonymous" preload="none"></audio>
+<audio id="au" crossorigin="anonymous" preload="metadata"></audio>
 <audio id="auNext" crossorigin="anonymous" preload="auto" style="display:none"></audio>
  
 <script>
@@ -715,8 +716,9 @@ var ALBUMS = [];
 var cA = 0, cT = -1, muted = false, shuffleOn = false;
 var aCtx, anl, dArr, conn = false;
 var au = document.getElementById('au');
-var playlist = [];
+var playlist = JSON.parse(localStorage.getItem('emvy_queue') || '[]');
 var plMode = false, plIdx = -1;
+function saveQueue() { try { localStorage.setItem('emvy_queue', JSON.stringify(playlist)); } catch(e) {} }
 var shareTarget = null;
 var GR=[['#ffb347','#ff6b00'],['#4ef0ff','#0066ff'],['#ff3fb0','#9900cc'],['#c8ff4a','#00aa00'],['#ff4444','#990000'],['#ffb347','#cc6600'],['#4ef0ff','#00ccaa'],['#ff3fb0','#ff0066'],['#ffdd00','#ff8800'],['#88ff44','#006600'],['#ff88aa','#cc0044'],['#44aaff','#0033cc']];
  
@@ -913,7 +915,7 @@ function updateCarTrackInfo() {
   document.getElementById('carPlayBtn').innerHTML = au.paused ? '&#9654;' : '&#9646;&#9646;';
 }
 var favourites = JSON.parse(localStorage.getItem('emvy_favs') || '[]');
-var panelTab = 'fav'; // 'fav' | 'queue'
+var panelTab = 'fav'; // 'fav' | 'queue' | 'lists'
  
 function saveFavs() { localStorage.setItem('emvy_favs', JSON.stringify(favourites)); }
  
@@ -955,8 +957,106 @@ function switchTab(tab) {
   panelTab = tab;
   document.getElementById('tabFav').classList.toggle('on', tab === 'fav');
   document.getElementById('tabQueue').classList.toggle('on', tab === 'queue');
+  document.getElementById('tabLists').classList.toggle('on', tab === 'lists');
   if (tab === 'fav') showFavourites();
-  else showPlaylist();
+  else if (tab === 'queue') showPlaylist();
+  else showSavedLists();
+}
+
+function playSavedList(listIdx, trackIdx) {
+  var list = savedLists[listIdx];
+  if (!list || !list.tracks.length) return;
+  playlist = list.tracks.map(function(t) {
+    return { ai:t.ai, ti:t.ti, title:t.title, albumName:t.albumName, src:t.src };
+  });
+  saveQueue();
+  updatePlCount();
+  playFromPlaylist(Math.max(0, trackIdx || 0));
+}
+
+function showSavedLists() {
+  var body = document.getElementById('panelBody');
+  body.innerHTML = '';
+  document.getElementById('panelTitle').textContent = 'Playlists';
+
+  var make = document.createElement('div');
+  make.className = 'pl-actions';
+  var input = document.createElement('input');
+  input.id = 'panelNewListName';
+  input.placeholder = 'New playlist name';
+  input.maxLength = 40;
+  input.style.cssText = 'flex:1;min-width:0;padding:8px 9px;border-radius:6px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:#eef0f5;font-family:Space Mono,monospace;font-size:10px;outline:none';
+  var add = document.createElement('button');
+  add.className = 'pl-act-btn shuffle';
+  add.textContent = '+ Create';
+  add.onclick = function() {
+    var name = input.value.trim();
+    if (!name) return;
+    savedLists.push({name:name, tracks:[]});
+    saveLists();
+    showSavedLists();
+    showToast('Created "' + name + '"');
+  };
+  make.appendChild(input); make.appendChild(add); body.appendChild(make);
+
+  if (!savedLists.length) {
+    var empty = document.createElement('div');
+    empty.className = 'pl-empty';
+    empty.innerHTML = 'No playlists yet.<br>Create one here, then save tracks<br>from Car mode.';
+    body.appendChild(empty);
+    return;
+  }
+
+  savedLists.forEach(function(list, li) {
+    var wrap = document.createElement('div');
+    wrap.style.cssText = 'margin:8px 0 12px;padding:8px;border:1px solid rgba(255,255,255,.07);border-radius:8px;background:rgba(255,255,255,.02)';
+
+    var hd = document.createElement('div');
+    hd.style.cssText = 'display:flex;align-items:center;gap:6px;margin-bottom:6px';
+    var title = document.createElement('div');
+    title.style.cssText = 'flex:1;font-size:11px;font-weight:700;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap';
+    title.textContent = list.name + ' · ' + list.tracks.length;
+    var play = document.createElement('button');
+    play.className = 'pl-act-btn shuffle';
+    play.textContent = '▶ Play';
+    play.disabled = !list.tracks.length;
+    play.onclick = function() { playSavedList(li, 0); closePanel(); };
+    var del = document.createElement('button');
+    del.className = 'rm-btn';
+    del.title = 'Delete playlist';
+    del.textContent = '×';
+    del.onclick = function() {
+      if (!confirm('Delete playlist "' + list.name + '"?')) return;
+      savedLists.splice(li, 1); saveLists(); showSavedLists();
+    };
+    hd.appendChild(title); hd.appendChild(play); hd.appendChild(del);
+    wrap.appendChild(hd);
+
+    if (!list.tracks.length) {
+      var e = document.createElement('div');
+      e.className = 'pl-talb';
+      e.textContent = 'Empty — save tracks from the car Save control.';
+      wrap.appendChild(e);
+    } else {
+      list.tracks.forEach(function(item, ti) {
+        var row = document.createElement('div');
+        row.className = 'pl-track';
+        row.innerHTML = '<div><div class="pl-tname"></div><div class="pl-talb"></div></div><button class="rm-btn">×</button>';
+        row.querySelector('.pl-tname').textContent = item.title;
+        row.querySelector('.pl-talb').textContent = item.albumName;
+        row.onclick = function(e) {
+          if (e.target.classList.contains('rm-btn')) return;
+          playSavedList(li, ti); closePanel();
+        };
+        row.querySelector('.rm-btn').onclick = function(e) {
+          e.stopPropagation();
+          list.tracks.splice(ti, 1); saveLists(); showSavedLists();
+        };
+        wrap.appendChild(row);
+      });
+    }
+    body.appendChild(wrap);
+  });
 }
  
 function showFavourites() {
@@ -1319,7 +1419,7 @@ function showPlaylist() {
   var shuf = document.createElement('button'); shuf.className = 'pl-act-btn shuffle'; shuf.textContent = '⁂ Shuffle queue';
   shuf.onclick = function() { shufflePlaylist(); showToast('Queue shuffled'); showPlaylist(); };
   var clr = document.createElement('button'); clr.className = 'pl-act-btn clear'; clr.textContent = '✕ Clear';
-  clr.onclick = function() { playlist = []; plMode = false; plIdx = -1; updatePlCount(); showPlaylist(); };
+  clr.onclick = function() { playlist = []; plMode = false; plIdx = -1; saveQueue(); updatePlCount(); showPlaylist(); };
   acts.appendChild(shuf); acts.appendChild(clr); body.appendChild(acts);
  
   playlist.forEach(function(item, i) {
@@ -1335,7 +1435,7 @@ function showPlaylist() {
       e.stopPropagation();
       playlist.splice(i, 1);
       if (plMode && plIdx >= playlist.length) plIdx = playlist.length - 1;
-      updatePlCount(); showPlaylist();
+      saveQueue(); updatePlCount(); showPlaylist();
     });
     body.appendChild(d);
   });
@@ -1357,13 +1457,13 @@ function isInPlaylist(ai, ti) {
 function togglePlaylist(ai, ti) {
   for (var i = 0; i < playlist.length; i++) {
     if (playlist[i].ai === ai && playlist[i].ti === ti) {
-      playlist.splice(i, 1); updatePlCount();
+      playlist.splice(i, 1); saveQueue(); updatePlCount();
       showToast('Removed from queue');
       updateAddNowBtn(); return;
     }
   }
   playlist.push({ ai: ai, ti: ti, title: ALBUMS[ai].tracks[ti].title, albumName: ALBUMS[ai].name, src: ALBUMS[ai].tracks[ti].src });
-  updatePlCount(); showToast('Added to queue'); updateAddNowBtn();
+  saveQueue(); updatePlCount(); showToast('Added to queue'); updateAddNowBtn();
 }
  
 function addCurrentToPlaylist() {
@@ -1705,6 +1805,7 @@ fetch('https://media.emvycheck.com/playlist.json')
   .then(function(r) { return r.json(); })
   .then(function(data) {
     ALBUMS = data.albums;
+    updatePlCount();
     document.getElementById('splash').classList.add('hide');
     setTimeout(function() { document.getElementById('splash').style.display = 'none'; }, 700);
     var params = new URLSearchParams(window.location.search);
@@ -1729,10 +1830,10 @@ fetch('https://media.emvycheck.com/playlist.json')
      (window.__emvyCarAudioHardening / the data-emvy-site-link check), so
      loading them here too is safe even once the service worker later
      takes over and injects them again. -->
-<script src="/car-audio-hardening.js?v=20260709"></script>
+<script src="/car-audio-hardening.js?v=20261005"></script>
 <script src="/site-links.js?v=20260825"></script>
 <script src="/site-i18n.js" defer></script>
-<script src="/language-help.js" defer></script>
+<script src="/language-help.js?v=20261005" defer></script>
 </body>
 </html>
  
