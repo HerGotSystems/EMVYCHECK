@@ -1016,6 +1016,15 @@ function showSavedLists() {
     var title = document.createElement('div');
     title.style.cssText = 'flex:1;font-size:11px;font-weight:700;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap';
     title.textContent = list.name + ' · ' + list.tracks.length;
+    var addCurrent = document.createElement('button');
+    addCurrent.className = 'pl-act-btn shuffle';
+    addCurrent.textContent = '+ Current';
+    addCurrent.disabled = cT === -1;
+    addCurrent.onclick = function() {
+      if (cT === -1) return;
+      toggleTrackInList(li, cA, cT);
+      showSavedLists();
+    };
     var play = document.createElement('button');
     play.className = 'pl-act-btn shuffle';
     play.textContent = '▶ Play';
@@ -1029,13 +1038,13 @@ function showSavedLists() {
       if (!confirm('Delete playlist "' + list.name + '"?')) return;
       savedLists.splice(li, 1); saveLists(); showSavedLists();
     };
-    hd.appendChild(title); hd.appendChild(play); hd.appendChild(del);
+    hd.appendChild(title); hd.appendChild(addCurrent); hd.appendChild(play); hd.appendChild(del);
     wrap.appendChild(hd);
 
     if (!list.tracks.length) {
       var e = document.createElement('div');
       e.className = 'pl-talb';
-      e.textContent = 'Empty — save tracks from the car Save control.';
+      e.textContent = 'Empty — use + Current while a track is selected.';
       wrap.appendChild(e);
     } else {
       list.tracks.forEach(function(item, ti) {
