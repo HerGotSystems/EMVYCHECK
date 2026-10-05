@@ -222,6 +222,33 @@ canvas#bg{position:fixed;inset:0;width:100%;height:100%;z-index:0}
 .pl-act-btn.clear:hover{background:rgba(255,80,80,.08);border-color:rgba(255,80,80,.35);color:#ff6666}
 .pl-act-btn.shuffle{border:1px solid rgba(200,255,74,.18);color:rgba(200,255,74,.5);}
 .pl-act-btn.shuffle:hover{background:rgba(200,255,74,.08);border-color:rgba(200,255,74,.38);color:#c8ff4a}
+
+.pl-builder{position:fixed;inset:0;z-index:34;background:rgba(3,5,9,.985);display:flex;flex-direction:column;transform:translateY(100%);transition:transform .28s cubic-bezier(.4,0,.2,1)}
+.pl-builder.open{transform:translateY(0)}
+.plb-head{padding:max(env(safe-area-inset-top,0px),14px) 14px 10px;border-bottom:1px solid rgba(255,255,255,.08);display:flex;align-items:center;gap:8px;flex-shrink:0}
+.plb-title{font-family:'Bebas Neue',sans-serif;font-size:21px;letter-spacing:.08em;color:#ffb347;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.plb-close{width:34px;height:34px;border-radius:7px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:#aaa;cursor:pointer}
+.plb-tools{padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.06);display:grid;gap:8px;flex-shrink:0}
+.plb-search{width:100%;padding:9px 11px;border-radius:7px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);color:#eef0f5;font:11px 'Space Mono',monospace;outline:none}
+.plb-row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.plb-chip{padding:7px 9px;border-radius:999px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.035);color:rgba(255,255,255,.58);font:9px 'Space Mono',monospace;letter-spacing:.04em;cursor:pointer}
+.plb-chip:hover,.plb-chip:active{border-color:rgba(255,179,71,.5);color:#ffb347;background:rgba(255,179,71,.1)}
+.plb-chip.green{border-color:rgba(200,255,74,.22);color:rgba(200,255,74,.75)}
+.plb-chip.red{border-color:rgba(255,90,90,.22);color:rgba(255,120,120,.72)}
+.plb-body{flex:1;overflow-y:auto;padding:10px 12px max(env(safe-area-inset-bottom,0px),24px)}
+.plb-album{border:1px solid rgba(255,255,255,.07);border-radius:8px;background:rgba(255,255,255,.025);margin-bottom:8px;overflow:hidden}
+.plb-album summary{list-style:none;display:flex;align-items:center;gap:8px;padding:10px;cursor:pointer}
+.plb-album summary::-webkit-details-marker{display:none}
+.plb-album-name{flex:1;min-width:0;font-size:11px;font-weight:700;color:#ddd;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.plb-album-meta{font-size:9px;color:rgba(255,255,255,.24)}
+.plb-album-btn{padding:6px 8px;border-radius:5px;border:1px solid rgba(78,240,255,.2);background:rgba(78,240,255,.06);color:#4ef0ff;font:9px 'Space Mono',monospace;cursor:pointer}
+.plb-tracks{padding:0 7px 7px}
+.plb-track{display:grid;grid-template-columns:30px 1fr auto;gap:7px;align-items:center;padding:7px 5px;border-top:1px solid rgba(255,255,255,.045)}
+.plb-num{font-size:9px;color:rgba(255,255,255,.25);text-align:right}
+.plb-track-name{font-size:10px;color:rgba(255,255,255,.62);min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.plb-toggle{min-width:32px;height:26px;border-radius:5px;border:1px solid rgba(255,255,255,.1);background:transparent;color:rgba(255,255,255,.4);font-size:11px;cursor:pointer}
+.plb-toggle.in{border-color:rgba(200,255,74,.35);background:rgba(200,255,74,.09);color:#c8ff4a}
+.plb-stat{font-size:9px;color:rgba(255,255,255,.3);letter-spacing:.05em}
  
 /* TOAST */
 .toast{position:fixed;bottom:88px;left:50%;transform:translateX(-50%) translateY(12px);
@@ -693,6 +720,29 @@ canvas#bg{position:fixed;inset:0;width:100%;height:100%;z-index:0}
   <div class="am-body" id="amBody"></div>
 </div>
  
+<!-- PLAYLIST BUILDER -->
+<div class="pl-builder" id="playlistBuilder">
+  <div class="plb-head">
+    <div class="plb-title" id="plbTitle">Build playlist</div>
+    <button class="plb-close" onclick="closePlaylistBuilder()">&#10005;</button>
+  </div>
+  <div class="plb-tools">
+    <input class="plb-search" id="plbSearch" type="search" placeholder="Search albums or tracks..." oninput="renderPlaylistBuilder(this.value)">
+    <div class="plb-row">
+      <button class="plb-chip green" onclick="playlistBuilderPlay(false)">▶ IN ORDER</button>
+      <button class="plb-chip green" onclick="playlistBuilderPlay(true)">⁂ SHUFFLE</button>
+      <span class="plb-stat" id="plbStat"></span>
+    </div>
+    <div class="plb-row" id="plbNumberMixes"></div>
+    <div class="plb-row">
+      <button class="plb-chip" onclick="addRandomPerAlbumToBuilder(1)">RANDOM 1 / ALBUM</button>
+      <button class="plb-chip" onclick="addRandomPerAlbumToBuilder(2)">RANDOM 2 / ALBUM</button>
+      <button class="plb-chip red" onclick="clearBuilderPlaylist()">CLEAR PLAYLIST</button>
+    </div>
+  </div>
+  <div class="plb-body" id="plbBody"></div>
+</div>
+
 <!-- SHARE SHEET -->
 <div class="sh-overlay" id="shOverlay" onclick="closeShare()"></div>
 <div class="share-sheet" id="shareSheet">
@@ -772,6 +822,50 @@ setInterval(function() { if (!au.paused && cT !== -1) saveState(); }, 5000);
 var savedLists = JSON.parse(localStorage.getItem('emvy_lists') || '[]');
  
 function saveLists() { localStorage.setItem('emvy_lists', JSON.stringify(savedLists)); }
+
+function listTrack(ai, ti) {
+  var t = ALBUMS[ai].tracks[ti];
+  return { ai: ai, ti: ti, title: t.title, albumName: ALBUMS[ai].name, src: t.src };
+}
+function hasTrackInList(listIdx, ai, ti) {
+  var list = savedLists[listIdx];
+  return !!list && list.tracks.some(function(t) { return t.ai === ai && t.ti === ti; });
+}
+function addTrackUnique(listIdx, ai, ti) {
+  if (!savedLists[listIdx] || !ALBUMS[ai] || !ALBUMS[ai].tracks[ti]) return false;
+  if (hasTrackInList(listIdx, ai, ti)) return false;
+  savedLists[listIdx].tracks.push(listTrack(ai, ti));
+  return true;
+}
+function addAlbumToList(listIdx, ai) {
+  if (!savedLists[listIdx] || !ALBUMS[ai]) return 0;
+  var n = 0;
+  ALBUMS[ai].tracks.forEach(function(_, ti) { if (addTrackUnique(listIdx, ai, ti)) n++; });
+  if (n) saveLists();
+  return n;
+}
+function addTrackPositionToList(listIdx, pos) {
+  var n = 0, ti = pos - 1;
+  ALBUMS.forEach(function(a, ai) {
+    if (a.tracks[ti] && addTrackUnique(listIdx, ai, ti)) n++;
+  });
+  if (n) saveLists();
+  return n;
+}
+function addRandomPerAlbum(listIdx, count) {
+  var n = 0;
+  ALBUMS.forEach(function(a, ai) {
+    var ids = a.tracks.map(function(_, ti) { return ti; });
+    for (var i = ids.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1)), x = ids[i]; ids[i] = ids[j]; ids[j] = x;
+    }
+    ids.slice(0, Math.min(count, ids.length)).forEach(function(ti) {
+      if (addTrackUnique(listIdx, ai, ti)) n++;
+    });
+  });
+  if (n) saveLists();
+  return n;
+}
  
 function isInList(listIdx, ai, ti) {
   return savedLists[listIdx].tracks.some(function(t) { return t.ai === ai && t.ti === ti; });
@@ -963,15 +1057,141 @@ function switchTab(tab) {
   else showSavedLists();
 }
 
-function playSavedList(listIdx, trackIdx) {
+function playSavedList(listIdx, trackIdx, shuffled) {
   var list = savedLists[listIdx];
   if (!list || !list.tracks.length) return;
   playlist = list.tracks.map(function(t) {
     return { ai:t.ai, ti:t.ti, title:t.title, albumName:t.albumName, src:t.src };
   });
+  if (shuffled) {
+    for (var i = playlist.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1)), x = playlist[i]; playlist[i] = playlist[j]; playlist[j] = x;
+    }
+  }
   saveQueue();
   updatePlCount();
   playFromPlaylist(Math.max(0, trackIdx || 0));
+}
+
+var playlistBuilderList = -1;
+
+function openPlaylistBuilder(listIdx) {
+  if (!savedLists[listIdx]) return;
+  playlistBuilderList = listIdx;
+  document.getElementById('plbTitle').textContent = 'Build · ' + savedLists[listIdx].name;
+  document.getElementById('plbSearch').value = '';
+  var nr = document.getElementById('plbNumberMixes');
+  nr.innerHTML = '<span class="plb-stat">ADD TRACK NUMBER:</span>';
+  for (var n = 1; n <= 10; n++) {
+    var b = document.createElement('button');
+    b.className = 'plb-chip';
+    b.textContent = '#' + n;
+    b.onclick = (function(pos) { return function() {
+      var added = addTrackPositionToList(playlistBuilderList, pos);
+      showToast(added ? 'Added ' + added + ' track #' + pos + ' songs' : 'Those #' + pos + ' tracks are already in the playlist');
+      renderPlaylistBuilder(document.getElementById('plbSearch').value);
+    }; })(n);
+    nr.appendChild(b);
+  }
+  document.getElementById('playlistBuilder').classList.add('open');
+  renderPlaylistBuilder('');
+}
+function closePlaylistBuilder() {
+  document.getElementById('playlistBuilder').classList.remove('open');
+  if (panelTab === 'lists') showSavedLists();
+}
+function playlistBuilderPlay(shuffled) {
+  if (playlistBuilderList < 0) return;
+  playSavedList(playlistBuilderList, 0, !!shuffled);
+  closePlaylistBuilder();
+  closePanel();
+}
+function addRandomPerAlbumToBuilder(count) {
+  if (playlistBuilderList < 0) return;
+  var added = addRandomPerAlbum(playlistBuilderList, count);
+  showToast(added ? 'Added ' + added + ' random tracks' : 'Random picks were already in the playlist');
+  renderPlaylistBuilder(document.getElementById('plbSearch').value);
+}
+function clearBuilderPlaylist() {
+  if (playlistBuilderList < 0 || !savedLists[playlistBuilderList]) return;
+  if (!confirm('Clear playlist "' + savedLists[playlistBuilderList].name + '"?')) return;
+  savedLists[playlistBuilderList].tracks = [];
+  saveLists();
+  renderPlaylistBuilder(document.getElementById('plbSearch').value);
+}
+function toggleBuilderTrack(ai, ti) {
+  if (playlistBuilderList < 0) return;
+  var list = savedLists[playlistBuilderList];
+  var idx = list.tracks.findIndex(function(t) { return t.ai === ai && t.ti === ti; });
+  if (idx >= 0) list.tracks.splice(idx, 1);
+  else list.tracks.push(listTrack(ai, ti));
+  saveLists();
+  renderPlaylistBuilder(document.getElementById('plbSearch').value);
+}
+function toggleBuilderAlbum(ai) {
+  if (playlistBuilderList < 0 || !ALBUMS[ai]) return;
+  var allIn = ALBUMS[ai].tracks.every(function(_, ti) { return hasTrackInList(playlistBuilderList, ai, ti); });
+  if (allIn) {
+    savedLists[playlistBuilderList].tracks = savedLists[playlistBuilderList].tracks.filter(function(t) { return t.ai !== ai; });
+    saveLists();
+    showToast('Album removed');
+  } else {
+    var added = addAlbumToList(playlistBuilderList, ai);
+    showToast('Added ' + added + ' tracks from ' + ALBUMS[ai].name);
+  }
+  renderPlaylistBuilder(document.getElementById('plbSearch').value);
+}
+function renderPlaylistBuilder(query) {
+  if (playlistBuilderList < 0 || !savedLists[playlistBuilderList]) return;
+  var list = savedLists[playlistBuilderList];
+  document.getElementById('plbStat').textContent = list.tracks.length + ' tracks';
+  var body = document.getElementById('plbBody');
+  body.innerHTML = '';
+  var q = (query || '').trim().toLowerCase();
+  var shown = 0;
+
+  ALBUMS.forEach(function(a, ai) {
+    var albumMatch = !q || a.name.toLowerCase().indexOf(q) !== -1;
+    var trackMatches = [];
+    a.tracks.forEach(function(t, ti) {
+      if (!q || albumMatch || t.title.toLowerCase().indexOf(q) !== -1) trackMatches.push(ti);
+    });
+    if (!trackMatches.length) return;
+    shown++;
+
+    var d = document.createElement('details');
+    d.className = 'plb-album';
+    if (q && !albumMatch) d.open = true;
+
+    var s = document.createElement('summary');
+    var name = document.createElement('div'); name.className = 'plb-album-name'; name.textContent = a.name;
+    var meta = document.createElement('div'); meta.className = 'plb-album-meta';
+    var inCount = a.tracks.filter(function(_, ti) { return hasTrackInList(playlistBuilderList, ai, ti); }).length;
+    meta.textContent = inCount + '/' + a.tracks.length;
+    var ab = document.createElement('button'); ab.className = 'plb-album-btn';
+    ab.textContent = inCount === a.tracks.length ? '− ALBUM' : '+ ALBUM';
+    ab.onclick = function(e) { e.preventDefault(); e.stopPropagation(); toggleBuilderAlbum(ai); };
+    s.appendChild(name); s.appendChild(meta); s.appendChild(ab);
+    d.appendChild(s);
+
+    var tracks = document.createElement('div'); tracks.className = 'plb-tracks';
+    trackMatches.forEach(function(ti) {
+      var row = document.createElement('div'); row.className = 'plb-track';
+      var num = document.createElement('div'); num.className = 'plb-num'; num.textContent = String(ti + 1).padStart(2, '0');
+      var tn = document.createElement('div'); tn.className = 'plb-track-name'; tn.textContent = a.tracks[ti].title;
+      var tb = document.createElement('button');
+      var inside = hasTrackInList(playlistBuilderList, ai, ti);
+      tb.className = 'plb-toggle' + (inside ? ' in' : '');
+      tb.textContent = inside ? '✓' : '+';
+      tb.onclick = function() { toggleBuilderTrack(ai, ti); };
+      row.appendChild(num); row.appendChild(tn); row.appendChild(tb);
+      tracks.appendChild(row);
+    });
+    d.appendChild(tracks);
+    body.appendChild(d);
+  });
+
+  if (!shown) body.innerHTML = '<div class="pl-empty">No matching albums or tracks.</div>';
 }
 
 function showSavedLists() {
@@ -1016,20 +1236,20 @@ function showSavedLists() {
     var title = document.createElement('div');
     title.style.cssText = 'flex:1;font-size:11px;font-weight:700;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap';
     title.textContent = list.name + ' · ' + list.tracks.length;
-    var addCurrent = document.createElement('button');
-    addCurrent.className = 'pl-act-btn shuffle';
-    addCurrent.textContent = '+ Current';
-    addCurrent.disabled = cT === -1;
-    addCurrent.onclick = function() {
-      if (cT === -1) return;
-      toggleTrackInList(li, cA, cT);
-      showSavedLists();
-    };
+    var pick = document.createElement('button');
+    pick.className = 'pl-act-btn shuffle';
+    pick.textContent = '+ Pick';
+    pick.onclick = function() { openPlaylistBuilder(li); };
     var play = document.createElement('button');
     play.className = 'pl-act-btn shuffle';
-    play.textContent = '▶ Play';
+    play.textContent = '▶ Order';
     play.disabled = !list.tracks.length;
-    play.onclick = function() { playSavedList(li, 0); closePanel(); };
+    play.onclick = function() { playSavedList(li, 0, false); closePanel(); };
+    var mix = document.createElement('button');
+    mix.className = 'pl-act-btn shuffle';
+    mix.textContent = '⁂ Mix';
+    mix.disabled = !list.tracks.length;
+    mix.onclick = function() { playSavedList(li, 0, true); closePanel(); };
     var del = document.createElement('button');
     del.className = 'rm-btn';
     del.title = 'Delete playlist';
@@ -1038,13 +1258,13 @@ function showSavedLists() {
       if (!confirm('Delete playlist "' + list.name + '"?')) return;
       savedLists.splice(li, 1); saveLists(); showSavedLists();
     };
-    hd.appendChild(title); hd.appendChild(addCurrent); hd.appendChild(play); hd.appendChild(del);
+    hd.appendChild(title); hd.appendChild(pick); hd.appendChild(play); hd.appendChild(mix); hd.appendChild(del);
     wrap.appendChild(hd);
 
     if (!list.tracks.length) {
       var e = document.createElement('div');
       e.className = 'pl-talb';
-      e.textContent = 'Empty — use + Current while a track is selected.';
+      e.textContent = 'Empty — use + Pick to choose songs, albums or automatic mixes.';
       wrap.appendChild(e);
     } else {
       list.tracks.forEach(function(item, ti) {
