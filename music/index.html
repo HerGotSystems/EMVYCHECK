@@ -748,6 +748,8 @@ canvas#bg{position:fixed;inset:0;width:100%;height:100%;z-index:0}
     </div>
     <div class="plb-row" id="plbNumberMixes"></div>
     <div class="plb-row">
+      <button class="plb-chip" onclick="addNumberSetToBuilder([1,3,5,7,9])">ODDS 1·3·5·7·9</button>
+      <button class="plb-chip" onclick="addNumberSetToBuilder([2,4,6,8,10])">EVENS 2·4·6·8·10</button>
       <button class="plb-chip" onclick="addRandomPerAlbumToBuilder(1)">RANDOM 1 / ALBUM</button>
       <button class="plb-chip" onclick="addRandomPerAlbumToBuilder(2)">RANDOM 2 / ALBUM</button>
       <button class="plb-chip red" onclick="clearBuilderPlaylist()">CLEAR PLAYLIST</button>
@@ -1131,6 +1133,13 @@ function playlistBuilderPlay(shuffled) {
   playSavedList(playlistBuilderList, 0, !!shuffled);
   closePlaylistBuilder();
   closePanel();
+}
+function addNumberSetToBuilder(nums) {
+  if (playlistBuilderList < 0) return;
+  var added = 0;
+  nums.forEach(function(n) { added += addTrackPositionToList(playlistBuilderList, n); });
+  showToast(added ? 'Added ' + added + ' numbered tracks' : 'Those numbered tracks are already in the playlist');
+  renderPlaylistBuilder(document.getElementById('plbSearch').value);
 }
 function addRandomPerAlbumToBuilder(count) {
   if (playlistBuilderList < 0) return;
