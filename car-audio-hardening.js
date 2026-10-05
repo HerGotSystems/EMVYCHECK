@@ -19,8 +19,8 @@
   var recoveryTimer = null;
   var lastGoodTime = 0;
 
-  au.preload = 'auto';
-  au.setAttribute('preload', 'auto');
+  au.preload = 'metadata';
+  au.setAttribute('preload', 'metadata');
   au.setAttribute('playsinline', '');
   au.setAttribute('webkit-playsinline', '');
 
@@ -191,7 +191,7 @@
 
   au.addEventListener('play', function () {
     rememberPlayIntent();
-    tryWakeLock();
+    waitingSince = 0;
   });
 
   au.addEventListener('pause', function () {
@@ -272,10 +272,9 @@
   });
 
   document.addEventListener('visibilitychange', function () {
-    if (document.visibilityState === 'visible') {
-      if (shouldAutoResume()) safePlay('visible-again', 0);
-    } else {
-      }
+    if (document.visibilityState === 'visible' && shouldAutoResume()) {
+      safePlay('visible-again', 0);
+    }
   });
 
   window.addEventListener('online', function () {
