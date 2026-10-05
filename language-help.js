@@ -6,6 +6,10 @@
 (function () {
   'use strict';
 
+  // The music player has its own compact controls; the site quick guide only
+  // covers Canvas Grid/business orientation and obscures player controls on mobile.
+  if (window.location.pathname.indexOf('/music') === 0) return;
+
   var LANGS = {
     en: {
       name: 'English',
