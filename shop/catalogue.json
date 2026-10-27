@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated": "2026-09-26",
+  "updated": "2026-10-27",
   "products": [
     {
       "id": "gumroad-fnhtfx",
@@ -8,13 +8,14 @@
       "kind": "digital",
       "collection": "uncategorised",
       "title": "EMVY CHECK Product 01",
-      "subtitle": "Live digital product",
-      "priceLabel": "See product page",
+      "subtitle": "Digital product by EMVY CHECK. Full description, preview files and price are shown on the Gumroad product page before you buy.",
+      "priceLabel": "Price on product page",
       "image": "/showcase/02-grid9-desert-threads.jpg",
-      "imageAlt": "EMVY CHECK digital artwork",
+      "imageAlt": "Illustrative EMVY CHECK Canvas Grid artwork (Desert Threads) — see the product page for the exact item",
       "checkoutUrl": "https://emvycheck.gumroad.com/l/fnhtfx",
       "checkoutProvider": "gumroad",
-      "buttonLabel": "VIEW / BUY"
+      "buttonLabel": "VIEW / BUY",
+      "needsReview": "Title, collection, price and product image not yet verified against the live Gumroad listing — confirm manually before changing."
     },
     {
       "id": "gumroad-jnambh",
@@ -22,13 +23,14 @@
       "kind": "digital",
       "collection": "uncategorised",
       "title": "EMVY CHECK Product 02",
-      "subtitle": "Live digital product",
-      "priceLabel": "See product page",
+      "subtitle": "Digital product by EMVY CHECK. Full description, preview files and price are shown on the Gumroad product page before you buy.",
+      "priceLabel": "Price on product page",
       "image": "/showcase/04-calm-gentle-drift.jpg",
-      "imageAlt": "EMVY CHECK digital artwork",
+      "imageAlt": "Illustrative EMVY CHECK Canvas Grid artwork (Gentle Drift) — see the product page for the exact item",
       "checkoutUrl": "https://emvycheck.gumroad.com/l/jnambh",
       "checkoutProvider": "gumroad",
-      "buttonLabel": "VIEW / BUY"
+      "buttonLabel": "VIEW / BUY",
+      "needsReview": "Title, collection, price and product image not yet verified against the live Gumroad listing — confirm manually before changing."
     },
     {
       "id": "gumroad-abwxcm",
@@ -36,13 +38,14 @@
       "kind": "digital",
       "collection": "uncategorised",
       "title": "EMVY CHECK Product 03",
-      "subtitle": "Live digital product",
-      "priceLabel": "See product page",
+      "subtitle": "Digital product by EMVY CHECK. Full description, preview files and price are shown on the Gumroad product page before you buy.",
+      "priceLabel": "Price on product page",
       "image": "/showcase/05-wild-emvy-coastal-spires.jpg",
-      "imageAlt": "EMVY CHECK digital artwork",
+      "imageAlt": "Illustrative EMVY CHECK Canvas Grid artwork (Coastal Spires) — see the product page for the exact item",
       "checkoutUrl": "https://emvycheck.gumroad.com/l/abwxcm",
       "checkoutProvider": "gumroad",
-      "buttonLabel": "VIEW / BUY"
+      "buttonLabel": "VIEW / BUY",
+      "needsReview": "Title, collection, price and product image not yet verified against the live Gumroad listing — confirm manually before changing."
     },
     {
       "id": "gumroad-jhthjy",
@@ -50,13 +53,14 @@
       "kind": "digital",
       "collection": "uncategorised",
       "title": "EMVY CHECK Product 04",
-      "subtitle": "Live digital product",
-      "priceLabel": "See product page",
+      "subtitle": "Digital product by EMVY CHECK. Full description, preview files and price are shown on the Gumroad product page before you buy.",
+      "priceLabel": "Price on product page",
       "image": "/showcase/06-variation-marble-pulse-A.jpg",
-      "imageAlt": "EMVY CHECK digital artwork",
+      "imageAlt": "Illustrative EMVY CHECK Canvas Grid artwork (Marble Pulse A) — see the product page for the exact item",
       "checkoutUrl": "https://emvycheck.gumroad.com/l/jhthjy",
       "checkoutProvider": "gumroad",
-      "buttonLabel": "VIEW / BUY"
+      "buttonLabel": "VIEW / BUY",
+      "needsReview": "Title, collection, price and product image not yet verified against the live Gumroad listing — confirm manually before changing."
     },
     {
       "id": "gumroad-uqvmw",
@@ -64,17 +68,18 @@
       "kind": "digital",
       "collection": "uncategorised",
       "title": "EMVY CHECK Product 05",
-      "subtitle": "Live digital product",
-      "priceLabel": "See product page",
+      "subtitle": "Digital product by EMVY CHECK. Full description, preview files and price are shown on the Gumroad product page before you buy.",
+      "priceLabel": "Price on product page",
       "image": "/showcase/07-variation-marble-pulse-B.jpg",
-      "imageAlt": "EMVY CHECK digital artwork",
+      "imageAlt": "Illustrative EMVY CHECK Canvas Grid artwork (Marble Pulse B) — see the product page for the exact item",
       "checkoutUrl": "https://emvycheck.gumroad.com/l/uqvmw",
       "checkoutProvider": "gumroad",
-      "buttonLabel": "VIEW / BUY"
+      "buttonLabel": "VIEW / BUY",
+      "needsReview": "Title, collection, price and product image not yet verified against the live Gumroad listing — confirm manually before changing."
     }
   ],
   "collectionNotes": {
-    "uncategorised": "Temporary holding collection until product titles and themes are verified.",
+    "uncategorised": "Temporary holding collection until product titles and themes are verified. Displayed in the shop as \"Digital product\".",
     "art": "General visual art and printable collections.",
     "lyrics": "Artwork built from original EMVY CHECK lyrics and music text.",
     "slogans": "Statement, slogan and message-led artwork.",

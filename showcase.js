@@ -11,16 +11,22 @@
 (function () {
   'use strict';
 
+  // Titles come from the original artwork filenames (see
+  // showcase/README-MAPPING.txt). "context" is the format / Canvas
+  // context; "alt" describes what is actually visible.
   var SHOWCASE_ITEMS = [
-    { image: 'showcase-01-hero.jpg', caption: 'EMVY CHECK ART — layered single artwork' },
-    { image: 'showcase-02-grid9.jpg', caption: 'Canvas Grid — 3×3 continuous panel study' },
-    { image: '', caption: 'Canvas Grid — multi-panel presentation' },
-    { image: 'showcase-04-calm.jpg', caption: 'Canvas Grid — calm linework, interior-friendly direction' },
-    { image: 'showcase-05-emvy.jpg', caption: 'Canvas Grid — loud, high-colour EMVY direction' },
-    { image: 'showcase-06-variation-a.jpg', caption: 'Canvas Grid — related design variation, colour state 1 of 3' },
-    { image: 'showcase-06-variation-b.jpg', caption: 'Canvas Grid — related design variation, colour state 2 of 3' },
-    { image: 'showcase-06-variation-c.jpg', caption: 'Canvas Grid — related design variation, colour state 3 of 3' }
+    { image: 'showcase-01-hero.jpg', title: 'Frost Bloom', context: 'Canvas Grid · single artwork', alt: 'Frost Bloom — layered single Canvas Grid artwork by EMVY CHECK' },
+    { image: 'showcase-02-grid9.jpg', title: 'Desert Threads', context: 'Canvas Grid · continuous 3×3 panel piece', alt: 'Desert Threads — one continuous composition across a 3×3 panel grid' },
+    { image: 'showcase-03-multipanel.jpg', title: 'Bubbles', context: 'Canvas Grid · 8×8, 64-panel presentation preview', alt: 'Bubbles — 64-panel Canvas Grid presentation preview' },
+    { image: 'showcase-04-calm.jpg', title: 'Gentle Drift', context: 'Canvas Grid · calm linework, interior-friendly direction', alt: 'Gentle Drift — calm cream and neutral linework' },
+    { image: 'showcase-05-emvy.jpg', title: 'Coastal Spires', context: 'Canvas Grid · loud, layered, high-colour EMVY direction', alt: 'Coastal Spires — loud, jagged, high-colour layered composition' },
+    { image: 'showcase-06-variation-a.jpg', title: 'Marble Pulse · A', context: 'Canvas Grid · one composition, colour state 1 of 3', alt: 'Marble Pulse, colour state A' },
+    { image: 'showcase-06-variation-b.jpg', title: 'Marble Pulse · B', context: 'Canvas Grid · one composition, colour state 2 of 3', alt: 'Marble Pulse, colour state B' },
+    { image: 'showcase-06-variation-c.jpg', title: 'Marble Pulse · C', context: 'Canvas Grid · one composition, colour state 3 of 3', alt: 'Marble Pulse, colour state C' }
   ];
+
+  // Enquiry line only — not a claim that a print or licence is in stock.
+  var ENQUIRY = { text: 'Print, space or licensing enquiry →', href: '/contact.html?topic=custom' };
 
   function install() {
     var grid = document.getElementById('showcase-grid');
@@ -41,11 +47,23 @@
       card.className = 'showcase-card';
       var img = document.createElement('img');
       img.src = '/showcase/' + item.image;
-      img.alt = item.caption;
+      img.alt = item.alt || item.title;
       img.loading = i === 0 ? 'eager' : 'lazy';
       img.decoding = 'async';
       var cap = document.createElement('figcaption');
-      cap.textContent = item.caption;
+      var title = document.createElement('strong');
+      title.className = 'showcase-title';
+      title.textContent = item.title;
+      var context = document.createElement('span');
+      context.className = 'showcase-context';
+      context.textContent = item.context;
+      var enquire = document.createElement('a');
+      enquire.className = 'showcase-enquire';
+      enquire.href = ENQUIRY.href;
+      enquire.textContent = ENQUIRY.text;
+      cap.appendChild(title);
+      cap.appendChild(context);
+      cap.appendChild(enquire);
       card.appendChild(img);
       card.appendChild(cap);
       grid.appendChild(card);

@@ -20,12 +20,14 @@
     const url = esc(product.checkoutUrl || '#');
     const button = esc(product.buttonLabel || 'VIEW / BUY');
     const collection = esc((product.collection || 'art').replace(/-/g, ' '));
+    // Unverified products sit in "uncategorised"; show a neutral label instead.
+    const tag = product.collection === 'uncategorised' ? 'Digital product' : collection;
 
     return `
       <article class="product shop-live-product" data-product-id="${esc(product.id)}" data-collection="${collection}">
         <img src="${image}" alt="${alt}" loading="lazy" decoding="async">
         <div class="body">
-          <div class="tag">${collection}</div>
+          <div class="tag">${tag}</div>
           <h3>${title}</h3>
           <div class="price">${price}</div>
           <p>${subtitle}</p>

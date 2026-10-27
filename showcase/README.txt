@@ -7,12 +7,10 @@ Current status (launch batch v1):
 
   showcase-01-hero.jpg           in use — hero + homepage showcase
   showcase-02-grid9.jpg          in use — 3x3 / GRID9 piece
-  showcase-03-multipanel.jpg     OPEN — still needed (5x5/8x8 or larger
-                                  multi-panel presentation). Add this file
-                                  and fill in the matching "image" field
-                                  in showcase.js when a clean derivative
-                                  (no browser/app UI, no debug captions)
-                                  is available.
+  showcase-03-multipanel.jpg     in use — 8x8 / 64-panel "Bubbles" preview,
+                                  cropped from 03-multipanel-bubbles-8x8.png
+                                  with the "bubbles · 000000" debug caption
+                                  and empty floor area removed
   showcase-04-calm.jpg           in use — calm/interior-friendly direction
   showcase-05-emvy.jpg           in use — loud/high-colour EMVY direction
   showcase-06-variation-a/b/c.jpg in use — one design family, 3 colour states
