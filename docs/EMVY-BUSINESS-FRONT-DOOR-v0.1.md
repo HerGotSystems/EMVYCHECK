@@ -29,7 +29,7 @@ People are welcome to communicate directly, through their team, or with their ow
 Primary action: **OPEN CANVAS GRID**
 
 Live URL:
-`https://canvas-grid-public.veltrusky-michal.workers.dev`
+`https://canvas.emvycheck.com`
 
 Copy:
 
